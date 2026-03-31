@@ -425,6 +425,8 @@ const Router = {
                     <h3>${State.user ? State.user.phone : ''}</h3>
                     <p style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 20px;">Membro Especial "The Blue"</p>
                     
+                    <button class="btn btn-outline" style="width: 100%; border-color: #00d1ff; color: #00d1ff; margin-bottom: 10px;" onclick="Router.navigate('admin')"><i class="fa-solid fa-shield-halved"></i> Acessar Painel Admin</button>
+
                     <button class="btn btn-outline" style="width: 100%; border-color: #FF5252; color: #FF5252;" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Sair da Conta</button>
                 </div>
             </div>
