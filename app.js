@@ -3,6 +3,15 @@
  * High-performance, reactive-style Vanilla JS application
  */
 
+// --- Integração Real: Supabase ---
+const supabaseUrl = 'COLE_SUA_URL_SUPABASE_AQUI';
+const supabaseKey = 'COLE_SUA_CHAVE_ANON_SUPABASE_AQUI';
+
+let supabase = null;
+if (window.supabase && supabaseUrl.startsWith('http')) {
+    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+}
+
 // --- Global Application State ---
 const State = {
     user: null, // Initially null
@@ -386,6 +395,21 @@ const Router = {
                         </div>
                     </div>
                 </div>
+
+                <div class="glass-card" style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 15px;">Adicionar Saldo (Manual)</h3>
+                    <div style="background: rgba(0,209,255,0.1); border: 1px solid var(--accent-blue); padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.8rem;">
+                        Credite saldo diretamente na conta de um usuário.
+                    </div>
+                    
+                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem;">Telefone do Cliente</label>
+                    <input type="text" id="admin-add-phone" placeholder="(00) 00000-0000" class="input-field" style="width: 100%; padding: 10px; margin-bottom: 15px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+                    
+                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem;">Valor a Creditar (R$)</label>
+                    <input type="number" id="admin-add-amount" placeholder="50.00" class="input-field" style="width: 100%; padding: 10px; margin-bottom: 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+
+                    <button class="btn btn-primary" style="width: 100%;" onclick="handleAddManualBalance()"><i class="fa-solid fa-plus-circle"></i> Confirmar Crédito</button>
+                </div>
             </div>
         `,
         
@@ -419,7 +443,7 @@ window.toggleAuth = (showRegister) => {
     document.getElementById('login-fields').style.display = showRegister ? 'none' : 'block';
 };
 
-window.handleRegister = () => {
+window.handleRegister = async () => {
     const phone = document.getElementById('phone').value;
     const pass = document.getElementById('password').value;
     const withdrawPass = document.getElementById('withdraw_password').value;
@@ -430,28 +454,37 @@ window.handleRegister = () => {
         return;
     }
 
-    let db = JSON.parse(localStorage.getItem('theblue_db')) || {};
-    if (db[phone]) {
+    if (!supabase) {
+        alert("Banco de dados ainda não configurado no app.js! Insira as chaves do Supabase.");
+        return;
+    }
+
+    // Checar se o celular já existe enviando query
+    let { data: existingUser } = await supabase.from('users').select('*').eq('phone', phone).single();
+    if (existingUser) {
         alert("Telefone já cadastrado!");
         return;
     }
 
-    db[phone] = {
+    const newUser = {
         phone: phone,
+        password: pass,
+        withdraw_pass: withdrawPass,
         balance: 0,
         available: 0,
         invested: 0,
-        withdrawPass: withdrawPass,
-        transactions: []
+        sponsor: sponsor || null
     };
-    localStorage.setItem('theblue_db', JSON.stringify(db));
+
+    const { error } = await supabase.from('users').insert([newUser]);
+    if (error) { alert("Erro ao criar conta no banco!"); return; }
     
-    State.user = db[phone];
-    State.transactions = State.user.transactions;
+    State.user = newUser;
+    State.transactions = [];
     Router.navigate('dashboard');
 };
 
-window.handleLogin = () => {
+window.handleLogin = async () => {
     const phone = document.getElementById('login-phone').value;
     const pass = document.getElementById('login-password').value;
 
@@ -460,24 +493,28 @@ window.handleLogin = () => {
         return;
     }
 
-    let db = JSON.parse(localStorage.getItem('theblue_db')) || {};
+    if (!supabase) { alert("Banco de dados ausente."); return; }
+
+    const { data: user, error } = await supabase.from('users').select('*').eq('phone', phone).single();
     
-    if (!db[phone]) {
-        db[phone] = {
-            phone: phone,
-            balance: 150.00,
-            available: 50.00,
-            invested: 100.00,
-            transactions: [
-                { type: 'dep', desc: 'Depósito PIX Aprovado', amount: 100.00, date: '30/03/2026 09:15' },
-                { type: 'inv', desc: 'Início Starter Blue', amount: -50.00, date: '30/03/2026 10:00' }
-            ]
-        };
-        localStorage.setItem('theblue_db', JSON.stringify(db));
+    if (error || !user || user.password !== pass) {
+        alert("Credenciais inválidas ou conta não encontrada.");
+        return;
     }
 
-    State.user = db[phone];
-    State.transactions = State.user.transactions;
+    // Carregar transações do histórico real
+    const { data: txs } = await supabase.from('transactions')
+        .select('*')
+        .eq('user_phone', phone)
+        .order('created_at', { ascending: false });
+
+    State.user = user;
+    
+    // Mapear datas do banco para formato local visual temporário
+    State.transactions = (txs || []).map(t => ({
+        ...t,
+        date: new Date(t.created_at).toLocaleDateString('pt-BR')
+    }));
 
     Router.navigate('dashboard');
 };
@@ -499,7 +536,7 @@ window.switchWalletTab = (tab) => {
     btnTrans.style.background = tab === 'trans' ? 'var(--glass-bg)' : 'transparent';
 };
 
-window.handleTransfer = () => {
+window.handleTransfer = async () => {
     const phone = document.getElementById('trans-phone').value;
     const amount = parseFloat(document.getElementById('trans-amount').value);
     const pass = document.getElementById('trans-pass').value;
@@ -509,10 +546,8 @@ window.handleTransfer = () => {
         return;
     }
 
-    let db = JSON.parse(localStorage.getItem('theblue_db')) || {};
-    
-    if (!db[phone]) {
-        alert("O telefone informado não está cadastrado na base de testes.");
+    if (pass !== State.user.withdraw_pass) {
+        alert("Senha financeira incorreta.");
         return;
     }
 
@@ -521,34 +556,36 @@ window.handleTransfer = () => {
         return;
     }
 
-    // Origin deductions
+    // Integracao Banco
+    const { data: destUser } = await supabase.from('users').select('*').eq('phone', phone).single();
+    if (!destUser) {
+        alert("O telefone informado não foi localizado no sistema.");
+        return;
+    }
+
+    // Alterando balanços via DB Call
     State.user.available -= amount;
     State.user.balance -= amount;
-    State.user.transactions.unshift({
-        type: 'with',
-        desc: `Transf. para ${phone}`,
-        amount: -amount,
-        date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR')
-    });
+    destUser.available += amount;
+    destUser.balance += amount;
+
+    await supabase.from('users').update({ available: State.user.available, balance: State.user.balance }).eq('phone', State.user.phone);
+    await supabase.from('users').update({ available: destUser.available, balance: destUser.balance }).eq('phone', destUser.phone);
+
+    // Registrando hist de transaçoes entre os dois
+    const txOut = { user_phone: State.user.phone, type: 'with', amount: -amount, description: `Transf. para ${phone}` };
+    const txIn = { user_phone: phone, type: 'dep', amount: amount, description: `Transf. recebida de ${State.user.phone}` };
     
-    // Destination additions
-    db[phone].available += amount;
-    db[phone].balance += amount;
-    db[phone].transactions.unshift({
-        type: 'dep',
-        desc: `Transf. recebida de ${State.user.phone}`,
-        amount: amount,
-        date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR')
-    });
+    await supabase.from('transactions').insert([txOut, txIn]);
     
-    db[State.user.phone] = State.user;
-    localStorage.setItem('theblue_db', JSON.stringify(db));
+    txOut.date = new Date().toLocaleDateString('pt-BR');
+    State.transactions.unshift(txOut);
     
-    alert(`Transferência de R$ ${amount.toFixed(2)} para ${phone} realizada com sucesso!`);
+    alert(`Transferência de R$ ${amount.toFixed(2)} para ${phone} concluída via banco real!`);
     Router.navigate('wallet');
 };
 
-window.handleInvest = (planId) => {
+window.handleInvest = async (planId) => {
     const plan = State.plans.find(p => p.id === planId);
     if (!State.user || State.user.available < plan.min) {
         alert("Saldo disponível insuficiente. Faça um depósito!");
@@ -562,20 +599,69 @@ window.handleInvest = (planId) => {
     if (amount && amount >= plan.min && amount <= plan.max) {
         State.user.available -= parseFloat(amount);
         State.user.invested += parseFloat(amount);
-        State.user.transactions.unshift({
-            type: 'inv',
-            desc: `Investimento: ${plan.name}`,
-            amount: -parseFloat(amount),
-            date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR')
-        });
         
-        let db = JSON.parse(localStorage.getItem('theblue_db')) || {};
-        db[State.user.phone] = State.user;
-        localStorage.setItem('theblue_db', JSON.stringify(db));
+        await supabase.from('users').update({ available: State.user.available, invested: State.user.invested }).eq('phone', State.user.phone);
+        
+        const txInv = { user_phone: State.user.phone, type: 'inv', amount: -parseFloat(amount), description: `Investimento: ${plan.name}` };
+        await supabase.from('transactions').insert([txInv]);
 
-        alert("Investimento realizado com sucesso! Seus lucros começarão amanhã.");
+        txInv.date = new Date().toLocaleDateString('pt-BR');
+        State.transactions.unshift(txInv);
+        
+        alert("Investimento registrado no banco com sucesso!");
         Router.navigate('dashboard');
     }
+};
+
+window.handleAddManualBalance = async () => {
+    const phone = document.getElementById('admin-add-phone').value;
+    const amount = parseFloat(document.getElementById('admin-add-amount').value);
+
+    if (!phone || !amount || amount <= 0) {
+        alert("Preencha o telefone e um valor válido.");
+        return;
+    }
+
+    if (!supabase) { 
+        alert("Supabase não configurado. Adicione suas chaves no app.js."); 
+        return; 
+    }
+
+    // Buscar o usuário
+    const { data: destUser } = await supabase.from('users').select('*').eq('phone', phone).single();
+    if (!destUser) {
+        alert("O telefone informado não foi localizado na base de dados (Supabase).");
+        return;
+    }
+
+    // Injetar os fundos (Atualiza Available e Balance)
+    const newAvailable = Number(destUser.available) + amount;
+    const newBalance = Number(destUser.balance) + amount;
+
+    const { error: updateError } = await supabase.from('users').update({ 
+        available: newAvailable, 
+        balance: newBalance 
+    }).eq('phone', phone);
+
+    if (updateError) {
+        alert("Erro de banco de dados ao atualizar saldo.");
+        return;
+    }
+
+    // Registrar como Depósito Aprovado para o destinatário ver no Extrato
+    const tx = { 
+        user_phone: phone, 
+        type: 'dep', 
+        amount: amount, 
+        description: 'Depósito Aprovado (Aporte)' 
+    };
+    await supabase.from('transactions').insert([tx]);
+
+    alert(`Sucesso! Saldo de R$ ${amount.toFixed(2)} foi creditado para o usuário ${phone}.`);
+    
+    // Limpar os campos pós-sucesso
+    document.getElementById('admin-add-phone').value = '';
+    document.getElementById('admin-add-amount').value = '';
 };
 
 window.copyRef = () => {
