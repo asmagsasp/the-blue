@@ -184,10 +184,10 @@
                         ${State.transactions.slice(0, 3).map(tr => `
                             <div class="glass-card" style="display: flex; align-items: center; gap: 15px; padding: 12px;">
                                 <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                                    <i class="fa-solid ${tr.type === 'dep' ? 'fa-arrow-down' : 'fa-arrow-up'}" style="color: ${tr.type === 'dep' ? '#4CAF50' : '#FF5252'};"></i>
+                                    <i class="fa-solid ${tr.type === 'dep' || tr.type === 'pix_pendente' ? 'fa-arrow-down' : 'fa-arrow-up'}" style="color: ${tr.type === 'dep' ? '#4CAF50' : tr.type === 'pix_pendente' ? '#FF9800' : '#FF5252'};"></i>
                                 </div>
                                 <div style="flex: 1;">
-                                    <p style="font-size: 0.85rem; font-weight: 600;">${tr.desc}</p>
+                                    <p style="font-size: 0.85rem; font-weight: 600;">${tr.description || tr.desc}</p>
                                     <p style="font-size: 0.7rem; opacity: 0.5;">${tr.date}</p>
                                 </div>
                                 <p style="font-weight: 700;">R$ ${tr.amount.toFixed(2)}</p>
@@ -284,9 +284,9 @@
                     </div>
                     
                     <label style="display: block; margin-bottom: 8px;">Valor do Depósito</label>
-                    <input type="number" placeholder="Mínimo R$ 50,00" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
+                    <input type="number" id="dep-amount" placeholder="Mínimo R$ 50,00" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
                     
-                    <button class="btn btn-secondary" style="width: 100%;">Gerar Pagamento</button>
+                    <button class="btn btn-secondary" style="width: 100%;" onclick="handleDeposit()">Gerar Pagamento</button>
                 </div>
 
                  <!-- Withdrawal Section (Hidden) -->
@@ -384,16 +384,12 @@
                 </div>
 
                 <div class="glass-card" style="margin-top: 20px;">
-                    <h3 style="margin-bottom: 15px;">Aprovações Pendentes</h3>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">
-                             <p style="font-size: 0.85rem; font-weight: 600;">Depósito: R$ 500,00</p>
-                             <p style="font-size: 0.7rem; opacity: 0.6;">Usuário: 11999998888 | Método: PIX</p>
-                             <div style="display: flex; gap: 10px; margin-top: 10px;">
-                                <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.7rem;">Aprovar</button>
-                                <button class="btn btn-outline" style="padding: 5px 15px; font-size: 0.7rem; color: #FF5252;">Recusar</button>
-                             </div>
-                        </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3>Aprovações Pendentes</h3>
+                        <button class="btn btn-outline" style="padding: 5px; border-color: var(--primary-blue);" onclick="loadAdminData()"><i class="fa-solid fa-rotate-right"></i> Recarregar</button>
+                    </div>
+                    <div id="admin-pending-list" style="display: flex; flex-direction: column; gap: 10px;">
+                        <p style="text-align: center; font-size: 0.8rem; opacity: 0.5;">Clique no botão recarregar para buscar Pix pendentes.</p>
                     </div>
                 </div>
 
@@ -519,6 +515,46 @@
             date: new Date(t.created_at).toLocaleDateString('pt-BR')
         }));
 
+        Router.navigate('dashboard');
+    };
+
+    window.currentPayMethod = 'pix';
+    window.selectPayMethod = (method) => {
+        window.currentPayMethod = method;
+        alert(`Método selecionado: ${method.toUpperCase()}`);
+    };
+
+    window.handleDeposit = async () => {
+        const amount = parseFloat(document.getElementById('dep-amount').value);
+        if (!amount || amount < 50) {
+            alert("O valor mínimo de depósito é R$ 50,00.");
+            return;
+        }
+
+        if (window.currentPayMethod !== 'pix') {
+            alert("No momento, apenas PIX está liberado automaticamente.");
+            return;
+        }
+
+        const pixKey = "theblue-pagamentos@gmail.com";
+        alert(`⚠️ PIX GERADO COM SUCESSO! ⚠️\n\nEnvie exatos R$ ${amount.toFixed(2)} para a chave PIX (E-mail):\n\n🔑 ${pixKey}\n\nApós realizar a transferência, clique em OK. Nossa equipe revisará em instantes.`);
+
+        const tx = {
+            user_phone: State.user.phone,
+            type: 'pix_pendente',
+            amount: amount,
+            description: 'Depósito PIX (Aguardando)'
+        };
+
+        const { error } = await supabase.from('transactions').insert([tx]);
+        if (error) {
+            alert("Erro ao registrar intenção de depósito.");
+            return;
+        }
+
+        tx.date = new Date().toLocaleDateString('pt-BR');
+        State.transactions.unshift(tx);
+        
         Router.navigate('dashboard');
     };
 
@@ -665,6 +701,61 @@
         // Limpar os campos pós-sucesso
         document.getElementById('admin-add-phone').value = '';
         document.getElementById('admin-add-amount').value = '';
+    };
+
+    window.loadAdminData = async () => {
+        const list = document.getElementById('admin-pending-list');
+        list.innerHTML = '<p style="text-align: center;">Buscando Pix...</p>';
+
+        const { data: pendings } = await supabase.from('transactions')
+            .select('*')
+            .eq('type', 'pix_pendente')
+            .order('created_at', { ascending: false });
+
+        if (!pendings || pendings.length === 0) {
+            list.innerHTML = '<p style="text-align: center; opacity: 0.5;">Nenhum depósito pendente.</p>';
+            return;
+        }
+
+        list.innerHTML = pendings.map(p => `
+            <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 15px;">
+                 <p style="font-size: 0.85rem; font-weight: 600;">Depósito PIX: <span style="color: #4CAF50;">R$ ${p.amount.toFixed(2)}</span></p>
+                 <p style="font-size: 0.7rem; opacity: 0.6; margin-bottom: 10px;">Cliente: ${p.user_phone} | ID: ${p.id.split('-')[0]}</p>
+                 <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.7rem; flex: 1;" onclick="approvePix('${p.id}', '${p.user_phone}', ${p.amount})">✔ Aprovar PIX</button>
+                    <button class="btn btn-outline" style="padding: 5px 15px; font-size: 0.7rem; color: #FF5252; flex: 1;" onclick="rejectPix('${p.id}')">❌ Recusar</button>
+                 </div>
+            </div>
+        `).join('');
+    };
+
+    window.approvePix = async (txId, phone, amount) => {
+        if(!confirm(`Aprovar e creditar o saldo de R$ ${amount.toFixed(2)} na conta ${phone}?`)) return;
+
+        const { data: user } = await supabase.from('users').select('*').eq('phone', phone).single();
+        if(user) {
+            await supabase.from('users').update({
+                available: Number(user.available) + amount,
+                balance: Number(user.balance) + amount
+            }).eq('phone', phone);
+            
+            await supabase.from('transactions').update({
+                type: 'dep',
+                description: 'Depósito PIX (Aprovado)'
+            }).eq('id', txId);
+
+            alert("Sucesso! O PIX foi aprovado e o saldo está na conta do cliente.");
+            loadAdminData();
+        }
+    };
+
+    window.rejectPix = async (txId) => {
+        if(!confirm("Tem certeza que esse depósito é inválido/falso? Ele será marcado como Recusado.")) return;
+        await supabase.from('transactions').update({
+            type: 'pix_recusado',
+            description: 'Depósito PIX (Recusado)'
+        }).eq('id', txId);
+        loadAdminData();
     };
 
     window.copyRef = () => {
