@@ -5,78 +5,78 @@
 
 // --- Integração Real: Supabase ---
 (() => {
-const supabaseUrl = 'COLE_SUA_URL_SUPABASE_AQUI';
-const supabaseKey = 'COLE_SUA_CHAVE_ANON_SUPABASE_AQUI';
+    const supabaseUrl = 'https://kggukwkireimgexsezek.supabase.co';
+    const supabaseKey = 'sb_publishable_d9lFOKzv88k2Hv9roRdvZQ_X7K9xKAq';
 
-let supabase = null;
-if (window.supabase && supabaseUrl.startsWith('http')) {
-    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-}
+    let supabase = null;
+    if (window.supabase && supabaseUrl.startsWith('http')) {
+        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    }
 
-// --- Global Application State ---
-const State = {
-    user: null, // Initially null
-    currentView: 'auth', // 'auth', 'dashboard', 'investments', 'wallet', 'referral', 'admin'
-    plans: [
-        { id: 'starter', name: 'Starter Blue', duration: 5, dailyReturn: 0.02, min: 50, max: 100 },
-        { id: 'pro', name: 'Blue Pro', duration: 15, dailyReturn: 0.04, min: 250, max: 1000 },
-        { id: 'elite', name: 'Elite Blue', duration: 30, dailyReturn: 0.06, min: 2000, max: 10000 }
-    ],
-    investments: [],
-    transactions: [],
-    referrals: { level1: [], level2: [], level3: [] }
-};
+    // --- Global Application State ---
+    const State = {
+        user: null, // Initially null
+        currentView: 'auth', // 'auth', 'dashboard', 'investments', 'wallet', 'referral', 'admin'
+        plans: [
+            { id: 'starter', name: 'Starter Blue', duration: 5, dailyReturn: 0.02, min: 50, max: 100 },
+            { id: 'pro', name: 'Blue Pro', duration: 15, dailyReturn: 0.04, min: 250, max: 1000 },
+            { id: 'elite', name: 'Elite Blue', duration: 30, dailyReturn: 0.06, min: 2000, max: 10000 }
+        ],
+        investments: [],
+        transactions: [],
+        referrals: { level1: [], level2: [], level3: [] }
+    };
 
-// --- View Router & Rendering ---
-const Router = {
-    navigate(view) {
-        State.currentView = view;
-        this.render();
-        window.scrollTo(0, 0);
-    },
+    // --- View Router & Rendering ---
+    const Router = {
+        navigate(view) {
+            State.currentView = view;
+            this.render();
+            window.scrollTo(0, 0);
+        },
 
-    render() {
-        const app = document.getElementById('app');
-        const nav = document.getElementById('bottom-nav');
+        render() {
+            const app = document.getElementById('app');
+            const nav = document.getElementById('bottom-nav');
 
-        // Logic to show/hide navigation
-        if (State.user && State.currentView !== 'auth') {
-            nav.style.display = 'flex';
-        } else {
-            nav.style.display = 'none';
-        }
+            // Logic to show/hide navigation
+            if (State.user && State.currentView !== 'auth') {
+                nav.style.display = 'flex';
+            } else {
+                nav.style.display = 'none';
+            }
 
-        // Render matching view
-        switch (State.currentView) {
-            case 'auth': 
-                app.innerHTML = this.views.auth(); 
-                this.initAuthListeners();
-                break;
-            case 'dashboard': 
-                app.innerHTML = this.views.dashboard(); 
-                break;
-            case 'investments': 
-                app.innerHTML = this.views.investments(); 
-                break;
-            case 'wallet': 
-                app.innerHTML = this.views.wallet(); 
-                break;
-            case 'referral': 
-                app.innerHTML = this.views.referral(); 
-                break;
-            case 'admin':
-                app.innerHTML = this.views.admin();
-                break;
-            case 'profile':
-                app.innerHTML = this.views.profile();
-                break;
-            default: 
-                app.innerHTML = '<h1>404 Not Found</h1>';
-        }
-    },
+            // Render matching view
+            switch (State.currentView) {
+                case 'auth':
+                    app.innerHTML = this.views.auth();
+                    this.initAuthListeners();
+                    break;
+                case 'dashboard':
+                    app.innerHTML = this.views.dashboard();
+                    break;
+                case 'investments':
+                    app.innerHTML = this.views.investments();
+                    break;
+                case 'wallet':
+                    app.innerHTML = this.views.wallet();
+                    break;
+                case 'referral':
+                    app.innerHTML = this.views.referral();
+                    break;
+                case 'admin':
+                    app.innerHTML = this.views.admin();
+                    break;
+                case 'profile':
+                    app.innerHTML = this.views.profile();
+                    break;
+                default:
+                    app.innerHTML = '<h1>404 Not Found</h1>';
+            }
+        },
 
-    views: {
-        auth: () => `
+        views: {
+            auth: () => `
             <div class="app-container animate-fade">
                 <div class="auth-header" style="text-align: center; padding: 20px 0;">
                     <div class="mascot-container">
@@ -121,7 +121,7 @@ const Router = {
             </div>
         `,
 
-        dashboard: () => `
+            dashboard: () => `
             <div class="app-container animate-fade">
                 <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                     <div>
@@ -172,7 +172,7 @@ const Router = {
                         <span style="color: #4CAF50; font-weight: 600;">+ R$ ${(State.user.invested * 0.02).toFixed(2)}</span>
                     </div>
                     <div style="height: 60px; display: flex; align-items: flex-end; gap: 8px;">
-                        ${[20, 60, 40, 80, 50, 100, 90].map(h => `<div style="flex: 1; background: var(--primary-blue); height: ${h}%; border-radius: 4px 4px 0 0; opacity: ${h/100};"></div>`).join('')}
+                        ${[20, 60, 40, 80, 50, 100, 90].map(h => `<div style="flex: 1; background: var(--primary-blue); height: ${h}%; border-radius: 4px 4px 0 0; opacity: ${h / 100};"></div>`).join('')}
                     </div>
                 </div>
 
@@ -198,7 +198,7 @@ const Router = {
             </div>
         `,
 
-        investments: () => `
+            investments: () => `
             <div class="app-container animate-fade">
                 <h1 style="margin-bottom: 10px;">Planos de Investimento</h1>
                 <p style="margin-bottom: 30px;">Escolha o plano ideal para seu crescimento "The Blue".</p>
@@ -239,7 +239,7 @@ const Router = {
             </div>
         `,
 
-        wallet: () => `
+            wallet: () => `
             <div class="app-container animate-fade">
                 <h1>Minha Carteira</h1>
                 <p style="margin-bottom: 25px;">Gerencie seus depósitos e saques com segurança.</p>
@@ -326,7 +326,7 @@ const Router = {
             </div>
         `,
 
-        referral: () => `
+            referral: () => `
             <div class="app-container animate-fade">
                 <h1>Indique Amigos</h1>
                 <p>Ganhe comissões multinível sobre os investimentos da sua rede.</p>
@@ -366,8 +366,8 @@ const Router = {
                 </div>
             </div>
         `,
-        
-        admin: () => `
+
+            admin: () => `
             <div class="app-container animate-fade">
                 <h1>Painel Administrativo</h1>
                 <p>Gestão global da plataforma "The Blue".</p>
@@ -413,8 +413,8 @@ const Router = {
                 </div>
             </div>
         `,
-        
-        profile: () => `
+
+            profile: () => `
             <div class="app-container animate-fade">
                 <h1>Meu Perfil</h1>
                 <p>Gerencie sua conta e configurações.</p>
@@ -432,286 +432,286 @@ const Router = {
                 </div>
             </div>
         `
-    },
+        },
 
-    initAuthListeners() {
-        // Here we could add specific event listeners if needed
-    }
-};
-
-// --- Global Handlers (Exposed to HTML) ---
-
-window.toggleAuth = (showRegister) => {
-    document.getElementById('register-fields').style.display = showRegister ? 'block' : 'none';
-    document.getElementById('login-fields').style.display = showRegister ? 'none' : 'block';
-};
-
-window.handleRegister = async () => {
-    const phone = document.getElementById('phone').value;
-    const pass = document.getElementById('password').value;
-    const withdrawPass = document.getElementById('withdraw_password').value;
-    const sponsor = document.getElementById('sponsor').value;
-
-    if (!phone || !pass || !withdrawPass) {
-        alert("Por favor, preencha todos os campos obrigatórios.");
-        return;
-    }
-
-    if (!supabase) {
-        alert("Banco de dados ainda não configurado no app.js! Insira as chaves do Supabase.");
-        return;
-    }
-
-    // Checar se o celular já existe enviando query
-    let { data: existingUser } = await supabase.from('users').select('*').eq('phone', phone).single();
-    if (existingUser) {
-        alert("Telefone já cadastrado!");
-        return;
-    }
-
-    const newUser = {
-        phone: phone,
-        password: pass,
-        withdraw_pass: withdrawPass,
-        balance: 0,
-        available: 0,
-        invested: 0,
-        sponsor: sponsor || null
-    };
-
-    const { error } = await supabase.from('users').insert([newUser]);
-    if (error) { alert("Erro ao criar conta no banco!"); return; }
-    
-    State.user = newUser;
-    State.transactions = [];
-    Router.navigate('dashboard');
-};
-
-window.handleLogin = async () => {
-    const phone = document.getElementById('login-phone').value;
-    const pass = document.getElementById('login-password').value;
-
-    if (!phone || !pass) {
-        alert("Por favor, preencha os campos.");
-        return;
-    }
-
-    if (!supabase) { alert("Banco de dados ausente."); return; }
-
-    const { data: user, error } = await supabase.from('users').select('*').eq('phone', phone).single();
-    
-    if (error || !user || user.password !== pass) {
-        alert("Credenciais inválidas ou conta não encontrada.");
-        return;
-    }
-
-    // Carregar transações do histórico real
-    const { data: txs } = await supabase.from('transactions')
-        .select('*')
-        .eq('user_phone', phone)
-        .order('created_at', { ascending: false });
-
-    State.user = user;
-    
-    // Mapear datas do banco para formato local visual temporário
-    State.transactions = (txs || []).map(t => ({
-        ...t,
-        date: new Date(t.created_at).toLocaleDateString('pt-BR')
-    }));
-
-    Router.navigate('dashboard');
-};
-
-window.switchWalletTab = (tab) => {
-    const depSec = document.getElementById('deposit-section');
-    const withSec = document.getElementById('withdraw-section');
-    const transSec = document.getElementById('transfer-section');
-    const btnDep = document.getElementById('btn-dep-tab');
-    const btnWith = document.getElementById('btn-with-tab');
-    const btnTrans = document.getElementById('btn-trans-tab');
-
-    depSec.style.display = tab === 'dep' ? 'block' : 'none';
-    withSec.style.display = tab === 'with' ? 'block' : 'none';
-    transSec.style.display = tab === 'trans' ? 'block' : 'none';
-
-    btnDep.style.background = tab === 'dep' ? 'var(--glass-bg)' : 'transparent';
-    btnWith.style.background = tab === 'with' ? 'var(--glass-bg)' : 'transparent';
-    btnTrans.style.background = tab === 'trans' ? 'var(--glass-bg)' : 'transparent';
-};
-
-window.handleTransfer = async () => {
-    const phone = document.getElementById('trans-phone').value;
-    const amount = parseFloat(document.getElementById('trans-amount').value);
-    const pass = document.getElementById('trans-pass').value;
-
-    if (!phone || !amount || !pass) {
-        alert("Preencha todos os campos para transferir.");
-        return;
-    }
-
-    if (pass !== State.user.withdraw_pass) {
-        alert("Senha financeira incorreta.");
-        return;
-    }
-
-    if (amount <= 0 || amount > State.user.available) {
-        alert("Valor inválido ou saldo insuficiente.");
-        return;
-    }
-
-    // Integracao Banco
-    const { data: destUser } = await supabase.from('users').select('*').eq('phone', phone).single();
-    if (!destUser) {
-        alert("O telefone informado não foi localizado no sistema.");
-        return;
-    }
-
-    // Alterando balanços via DB Call
-    State.user.available -= amount;
-    State.user.balance -= amount;
-    destUser.available += amount;
-    destUser.balance += amount;
-
-    await supabase.from('users').update({ available: State.user.available, balance: State.user.balance }).eq('phone', State.user.phone);
-    await supabase.from('users').update({ available: destUser.available, balance: destUser.balance }).eq('phone', destUser.phone);
-
-    // Registrando hist de transaçoes entre os dois
-    const txOut = { user_phone: State.user.phone, type: 'with', amount: -amount, description: `Transf. para ${phone}` };
-    const txIn = { user_phone: phone, type: 'dep', amount: amount, description: `Transf. recebida de ${State.user.phone}` };
-    
-    await supabase.from('transactions').insert([txOut, txIn]);
-    
-    txOut.date = new Date().toLocaleDateString('pt-BR');
-    State.transactions.unshift(txOut);
-    
-    alert(`Transferência de R$ ${amount.toFixed(2)} para ${phone} concluída via banco real!`);
-    Router.navigate('wallet');
-};
-
-window.handleInvest = async (planId) => {
-    const plan = State.plans.find(p => p.id === planId);
-    if (!State.user || State.user.available < plan.min) {
-        alert("Saldo disponível insuficiente. Faça um depósito!");
-        Router.navigate('wallet');
-        return;
-    }
-
-    // Modal or input prompt for amount
-    const amount = prompt(`Quanto deseja investir no ${plan.name}?\n(Mín: R$${plan.min} | Máx: R$${plan.max})`, plan.min);
-    
-    if (amount && amount >= plan.min && amount <= plan.max) {
-        State.user.available -= parseFloat(amount);
-        State.user.invested += parseFloat(amount);
-        
-        await supabase.from('users').update({ available: State.user.available, invested: State.user.invested }).eq('phone', State.user.phone);
-        
-        const txInv = { user_phone: State.user.phone, type: 'inv', amount: -parseFloat(amount), description: `Investimento: ${plan.name}` };
-        await supabase.from('transactions').insert([txInv]);
-
-        txInv.date = new Date().toLocaleDateString('pt-BR');
-        State.transactions.unshift(txInv);
-        
-        alert("Investimento registrado no banco com sucesso!");
-        Router.navigate('dashboard');
-    }
-};
-
-window.handleAddManualBalance = async () => {
-    const phone = document.getElementById('admin-add-phone').value;
-    const amount = parseFloat(document.getElementById('admin-add-amount').value);
-
-    if (!phone || !amount || amount <= 0) {
-        alert("Preencha o telefone e um valor válido.");
-        return;
-    }
-
-    if (!supabase) { 
-        alert("Supabase não configurado. Adicione suas chaves no app.js."); 
-        return; 
-    }
-
-    // Buscar o usuário
-    const { data: destUser } = await supabase.from('users').select('*').eq('phone', phone).single();
-    if (!destUser) {
-        alert("O telefone informado não foi localizado na base de dados (Supabase).");
-        return;
-    }
-
-    // Injetar os fundos (Atualiza Available e Balance)
-    const newAvailable = Number(destUser.available) + amount;
-    const newBalance = Number(destUser.balance) + amount;
-
-    const { error: updateError } = await supabase.from('users').update({ 
-        available: newAvailable, 
-        balance: newBalance 
-    }).eq('phone', phone);
-
-    if (updateError) {
-        alert("Erro de banco de dados ao atualizar saldo.");
-        return;
-    }
-
-    // Registrar como Depósito Aprovado para o destinatário ver no Extrato
-    const tx = { 
-        user_phone: phone, 
-        type: 'dep', 
-        amount: amount, 
-        description: 'Depósito Aprovado (Aporte)' 
-    };
-    await supabase.from('transactions').insert([tx]);
-
-    alert(`Sucesso! Saldo de R$ ${amount.toFixed(2)} foi creditado para o usuário ${phone}.`);
-    
-    // Limpar os campos pós-sucesso
-    document.getElementById('admin-add-phone').value = '';
-    document.getElementById('admin-add-amount').value = '';
-};
-
-window.copyRef = () => {
-    const input = document.querySelector('input[readonly]');
-    input.select();
-    document.execCommand('copy');
-    alert('Link de convite copiado!');
-};
-
-window.handleLogout = () => {
-    State.user = null;
-    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-    document.querySelector('.tab-item[data-view="dashboard"]').classList.add('active'); // Reset tab state
-    Router.navigate('auth');
-};
-
-// --- Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
-    // Check if there's a referral code in the URL
-    const path = window.location.pathname;
-    if (path.startsWith('/ref/')) {
-        const refCode = path.replace('/ref/', '');
-        if (refCode) {
-            localStorage.setItem('theblue_ref', refCode);
-            window.history.replaceState({}, document.title, "/");
-            State.currentView = 'auth';
-            setTimeout(() => {
-                if(window.toggleAuth) window.toggleAuth(true);
-            }, 100);
+        initAuthListeners() {
+            // Here we could add specific event listeners if needed
         }
-    }
+    };
 
-    // Setup Navigation Listeners
-    document.querySelectorAll('[data-view]').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const view = e.currentTarget.getAttribute('data-view');
-            
-            // Mark active tab
-            document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-            e.currentTarget.classList.add('active');
-            
-            Router.navigate(view);
+    // --- Global Handlers (Exposed to HTML) ---
+
+    window.toggleAuth = (showRegister) => {
+        document.getElementById('register-fields').style.display = showRegister ? 'block' : 'none';
+        document.getElementById('login-fields').style.display = showRegister ? 'none' : 'block';
+    };
+
+    window.handleRegister = async () => {
+        const phone = document.getElementById('phone').value;
+        const pass = document.getElementById('password').value;
+        const withdrawPass = document.getElementById('withdraw_password').value;
+        const sponsor = document.getElementById('sponsor').value;
+
+        if (!phone || !pass || !withdrawPass) {
+            alert("Por favor, preencha todos os campos obrigatórios.");
+            return;
+        }
+
+        if (!supabase) {
+            alert("Banco de dados ainda não configurado no app.js! Insira as chaves do Supabase.");
+            return;
+        }
+
+        // Checar se o celular já existe enviando query
+        let { data: existingUser } = await supabase.from('users').select('*').eq('phone', phone).single();
+        if (existingUser) {
+            alert("Telefone já cadastrado!");
+            return;
+        }
+
+        const newUser = {
+            phone: phone,
+            password: pass,
+            withdraw_pass: withdrawPass,
+            balance: 0,
+            available: 0,
+            invested: 0,
+            sponsor: sponsor || null
+        };
+
+        const { error } = await supabase.from('users').insert([newUser]);
+        if (error) { alert("Erro ao criar conta no banco!"); return; }
+
+        State.user = newUser;
+        State.transactions = [];
+        Router.navigate('dashboard');
+    };
+
+    window.handleLogin = async () => {
+        const phone = document.getElementById('login-phone').value;
+        const pass = document.getElementById('login-password').value;
+
+        if (!phone || !pass) {
+            alert("Por favor, preencha os campos.");
+            return;
+        }
+
+        if (!supabase) { alert("Banco de dados ausente."); return; }
+
+        const { data: user, error } = await supabase.from('users').select('*').eq('phone', phone).single();
+
+        if (error || !user || user.password !== pass) {
+            alert("Credenciais inválidas ou conta não encontrada.");
+            return;
+        }
+
+        // Carregar transações do histórico real
+        const { data: txs } = await supabase.from('transactions')
+            .select('*')
+            .eq('user_phone', phone)
+            .order('created_at', { ascending: false });
+
+        State.user = user;
+
+        // Mapear datas do banco para formato local visual temporário
+        State.transactions = (txs || []).map(t => ({
+            ...t,
+            date: new Date(t.created_at).toLocaleDateString('pt-BR')
+        }));
+
+        Router.navigate('dashboard');
+    };
+
+    window.switchWalletTab = (tab) => {
+        const depSec = document.getElementById('deposit-section');
+        const withSec = document.getElementById('withdraw-section');
+        const transSec = document.getElementById('transfer-section');
+        const btnDep = document.getElementById('btn-dep-tab');
+        const btnWith = document.getElementById('btn-with-tab');
+        const btnTrans = document.getElementById('btn-trans-tab');
+
+        depSec.style.display = tab === 'dep' ? 'block' : 'none';
+        withSec.style.display = tab === 'with' ? 'block' : 'none';
+        transSec.style.display = tab === 'trans' ? 'block' : 'none';
+
+        btnDep.style.background = tab === 'dep' ? 'var(--glass-bg)' : 'transparent';
+        btnWith.style.background = tab === 'with' ? 'var(--glass-bg)' : 'transparent';
+        btnTrans.style.background = tab === 'trans' ? 'var(--glass-bg)' : 'transparent';
+    };
+
+    window.handleTransfer = async () => {
+        const phone = document.getElementById('trans-phone').value;
+        const amount = parseFloat(document.getElementById('trans-amount').value);
+        const pass = document.getElementById('trans-pass').value;
+
+        if (!phone || !amount || !pass) {
+            alert("Preencha todos os campos para transferir.");
+            return;
+        }
+
+        if (pass !== State.user.withdraw_pass) {
+            alert("Senha financeira incorreta.");
+            return;
+        }
+
+        if (amount <= 0 || amount > State.user.available) {
+            alert("Valor inválido ou saldo insuficiente.");
+            return;
+        }
+
+        // Integracao Banco
+        const { data: destUser } = await supabase.from('users').select('*').eq('phone', phone).single();
+        if (!destUser) {
+            alert("O telefone informado não foi localizado no sistema.");
+            return;
+        }
+
+        // Alterando balanços via DB Call
+        State.user.available -= amount;
+        State.user.balance -= amount;
+        destUser.available += amount;
+        destUser.balance += amount;
+
+        await supabase.from('users').update({ available: State.user.available, balance: State.user.balance }).eq('phone', State.user.phone);
+        await supabase.from('users').update({ available: destUser.available, balance: destUser.balance }).eq('phone', destUser.phone);
+
+        // Registrando hist de transaçoes entre os dois
+        const txOut = { user_phone: State.user.phone, type: 'with', amount: -amount, description: `Transf. para ${phone}` };
+        const txIn = { user_phone: phone, type: 'dep', amount: amount, description: `Transf. recebida de ${State.user.phone}` };
+
+        await supabase.from('transactions').insert([txOut, txIn]);
+
+        txOut.date = new Date().toLocaleDateString('pt-BR');
+        State.transactions.unshift(txOut);
+
+        alert(`Transferência de R$ ${amount.toFixed(2)} para ${phone} concluída via banco real!`);
+        Router.navigate('wallet');
+    };
+
+    window.handleInvest = async (planId) => {
+        const plan = State.plans.find(p => p.id === planId);
+        if (!State.user || State.user.available < plan.min) {
+            alert("Saldo disponível insuficiente. Faça um depósito!");
+            Router.navigate('wallet');
+            return;
+        }
+
+        // Modal or input prompt for amount
+        const amount = prompt(`Quanto deseja investir no ${plan.name}?\n(Mín: R$${plan.min} | Máx: R$${plan.max})`, plan.min);
+
+        if (amount && amount >= plan.min && amount <= plan.max) {
+            State.user.available -= parseFloat(amount);
+            State.user.invested += parseFloat(amount);
+
+            await supabase.from('users').update({ available: State.user.available, invested: State.user.invested }).eq('phone', State.user.phone);
+
+            const txInv = { user_phone: State.user.phone, type: 'inv', amount: -parseFloat(amount), description: `Investimento: ${plan.name}` };
+            await supabase.from('transactions').insert([txInv]);
+
+            txInv.date = new Date().toLocaleDateString('pt-BR');
+            State.transactions.unshift(txInv);
+
+            alert("Investimento registrado no banco com sucesso!");
+            Router.navigate('dashboard');
+        }
+    };
+
+    window.handleAddManualBalance = async () => {
+        const phone = document.getElementById('admin-add-phone').value;
+        const amount = parseFloat(document.getElementById('admin-add-amount').value);
+
+        if (!phone || !amount || amount <= 0) {
+            alert("Preencha o telefone e um valor válido.");
+            return;
+        }
+
+        if (!supabase) {
+            alert("Supabase não configurado. Adicione suas chaves no app.js.");
+            return;
+        }
+
+        // Buscar o usuário
+        const { data: destUser } = await supabase.from('users').select('*').eq('phone', phone).single();
+        if (!destUser) {
+            alert("O telefone informado não foi localizado na base de dados (Supabase).");
+            return;
+        }
+
+        // Injetar os fundos (Atualiza Available e Balance)
+        const newAvailable = Number(destUser.available) + amount;
+        const newBalance = Number(destUser.balance) + amount;
+
+        const { error: updateError } = await supabase.from('users').update({
+            available: newAvailable,
+            balance: newBalance
+        }).eq('phone', phone);
+
+        if (updateError) {
+            alert("Erro de banco de dados ao atualizar saldo.");
+            return;
+        }
+
+        // Registrar como Depósito Aprovado para o destinatário ver no Extrato
+        const tx = {
+            user_phone: phone,
+            type: 'dep',
+            amount: amount,
+            description: 'Depósito Aprovado (Aporte)'
+        };
+        await supabase.from('transactions').insert([tx]);
+
+        alert(`Sucesso! Saldo de R$ ${amount.toFixed(2)} foi creditado para o usuário ${phone}.`);
+
+        // Limpar os campos pós-sucesso
+        document.getElementById('admin-add-phone').value = '';
+        document.getElementById('admin-add-amount').value = '';
+    };
+
+    window.copyRef = () => {
+        const input = document.querySelector('input[readonly]');
+        input.select();
+        document.execCommand('copy');
+        alert('Link de convite copiado!');
+    };
+
+    window.handleLogout = () => {
+        State.user = null;
+        document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+        document.querySelector('.tab-item[data-view="dashboard"]').classList.add('active'); // Reset tab state
+        Router.navigate('auth');
+    };
+
+    // --- Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // Check if there's a referral code in the URL
+        const path = window.location.pathname;
+        if (path.startsWith('/ref/')) {
+            const refCode = path.replace('/ref/', '');
+            if (refCode) {
+                localStorage.setItem('theblue_ref', refCode);
+                window.history.replaceState({}, document.title, "/");
+                State.currentView = 'auth';
+                setTimeout(() => {
+                    if (window.toggleAuth) window.toggleAuth(true);
+                }, 100);
+            }
+        }
+
+        // Setup Navigation Listeners
+        document.querySelectorAll('[data-view]').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const view = e.currentTarget.getAttribute('data-view');
+
+                // Mark active tab
+                document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+
+                Router.navigate(view);
+            });
         });
-    });
 
-    // Start App
-    Router.render();
-});
+        // Start App
+        Router.render();
+    });
 })();
