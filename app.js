@@ -4,6 +4,7 @@
  */
 
 // --- Integração Real: Supabase ---
+(() => {
 const supabaseUrl = 'COLE_SUA_URL_SUPABASE_AQUI';
 const supabaseKey = 'COLE_SUA_CHAVE_ANON_SUPABASE_AQUI';
 
@@ -713,3 +714,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start App
     Router.render();
 });
+})();
