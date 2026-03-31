@@ -83,6 +83,9 @@ const Router = {
                     </div>
 
                     <div id="register-fields">
+                        <label style="display: block; margin-bottom: 8px; font-size: 0.9rem;">Código de Convite (Opcional)</label>
+                        <input type="text" placeholder="Código de Convite" class="input-field" id="sponsor" value="${localStorage.getItem('theblue_ref') || ''}" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+
                         <label style="display: block; margin-bottom: 8px; font-size: 0.9rem;">Telefone</label>
                         <input type="text" placeholder="(00) 00000-0000" class="input-field" id="phone" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
                         
@@ -400,9 +403,10 @@ window.handleRegister = () => {
     const phone = document.getElementById('phone').value;
     const pass = document.getElementById('password').value;
     const withdrawPass = document.getElementById('withdraw_password').value;
+    const sponsor = document.getElementById('sponsor').value;
 
     if (!phone || !pass || !withdrawPass) {
-        alert("Por favor, preencha todos os campos.");
+        alert("Por favor, preencha todos os campos obrigatórios.");
         return;
     }
 
@@ -504,6 +508,20 @@ window.handleLogout = () => {
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Check if there's a referral code in the URL
+    const path = window.location.pathname;
+    if (path.startsWith('/ref/')) {
+        const refCode = path.replace('/ref/', '');
+        if (refCode) {
+            localStorage.setItem('theblue_ref', refCode);
+            window.history.replaceState({}, document.title, "/");
+            State.currentView = 'auth';
+            setTimeout(() => {
+                if(window.toggleAuth) window.toggleAuth(true);
+            }, 100);
+        }
+    }
+
     // Setup Navigation Listeners
     document.querySelectorAll('[data-view]').forEach(link => {
         link.addEventListener('click', (e) => {
