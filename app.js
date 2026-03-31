@@ -24,7 +24,8 @@
         ],
         investments: [],
         transactions: [],
-        referrals: { level1: [], level2: [], level3: [] }
+        referrals: { level1: [], level2: [], level3: [] },
+        currentPix: null
     };
 
     // --- View Router & Rendering ---
@@ -66,6 +67,9 @@
                     break;
                 case 'admin':
                     app.innerHTML = this.views.admin();
+                    break;
+                case 'pix_checkout':
+                    app.innerHTML = this.views.pixCheckout();
                     break;
                 case 'profile':
                     app.innerHTML = this.views.profile();
@@ -326,6 +330,30 @@
             </div>
         `,
 
+        pixCheckout: () => `
+            <div class="app-container animate-fade" style="text-align: center; padding-top: 20px;">
+                <h2 style="color: #4CAF50; margin-bottom: 10px;"><i class="fa-brands fa-pix"></i> PIX Gerado!</h2>
+                <p>Pagamento Digital The Blue</p>
+                
+                <div class="glass-card" style="background: rgba(255,255,255,0.05); padding: 25px 15px; margin: 25px 0; border: 1px solid var(--primary-blue);">
+                    <p style="font-size: 0.9rem; margin-bottom: 20px;">O valor a ser pago é: <strong style="font-size: 1.4rem; color: white;">R$ ${(State.currentPix ? State.currentPix.amount : 0).toFixed(2)}</strong></p>
+                    
+                    <div style="background: white; padding: 15px; border-radius: 12px; display: inline-block; margin-bottom: 25px;">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(State.currentPix ? State.currentPix.payload : '')}" alt="QR Code PIX" style="width: 200px; height: 200px;" />
+                    </div>
+                    
+                    <p style="font-size: 0.8rem; margin-bottom: 8px;">Ou use o PIX Copia e Cola:</p>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" readonly value="${State.currentPix ? State.currentPix.payload : ''}" id="pix-copia-cola" style="flex: 1; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; color: #00d1ff; font-size: 0.6rem; text-align: center;">
+                        <button class="btn btn-primary" onclick="window.copyPix()"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                </div>
+                
+                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 15px; padding: 15px;" onclick="Router.navigate('dashboard')">🔄 Já fiz o pagamento</button>
+                <p style="font-size: 0.7rem; opacity: 0.6;">Aguarde alguns minutos após o pagamento para que a nossa equipe revise a transação.</p>
+            </div>
+        `,
+
             referral: () => `
             <div class="app-container animate-fade">
                 <h1>Indique Amigos</h1>
@@ -539,7 +567,9 @@
         }
 
         const pixKey = "theblue-pagamentos@gmail.com";
-        alert(`⚠️ PIX GERADO COM SUCESSO! ⚠️\n\nEnvie exatos R$ ${amount.toFixed(2)} para a chave PIX (E-mail):\n\n🔑 ${pixKey}\n\nApós realizar a transferência, clique em OK. Nossa equipe revisará em instantes.`);
+        const payload = window.generatePixPayload(pixKey, "The Blue Plataforma", "Sao Paulo", amount);
+        
+        State.currentPix = { amount: amount, payload: payload };
 
         const tx = {
             user_phone: State.user.phone,
@@ -557,7 +587,43 @@
         tx.date = new Date().toLocaleDateString('pt-BR');
         State.transactions.unshift(tx);
         
-        Router.navigate('dashboard');
+        Router.navigate('pix_checkout');
+    };
+
+    window.copyPix = () => {
+        const input = document.getElementById('pix-copia-cola');
+        input.select();
+        document.execCommand('copy');
+        alert('Código PIX Copia e Cola copiado com sucesso! Abra o app do seu banco e cole na área PIX.');
+    };
+
+    window.generatePixPayload = (chave, nome, cidade, valor) => {
+        const pad = (n, len) => n.toString().padStart(len, '0');
+        let payloadString = "000201010212";
+        let gui = "0014br.gov.bcb.pix";
+        let key = "01" + pad(chave.length, 2) + chave;
+        let accInfo = gui + key;
+        payloadString += "26" + pad(accInfo.length, 2) + accInfo;
+        payloadString += "520400005303986";
+        if (valor > 0) {
+            let valStr = valor.toFixed(2);
+            payloadString += "54" + pad(valStr.length, 2) + valStr;
+        }
+        payloadString += "5802BR59" + pad(nome.length, 2) + nome + "60" + pad(cidade.length, 2) + cidade;
+        let addData = "0503***";
+        payloadString += "62" + pad(addData.length, 2) + addData + "6304";
+        
+        // CRC16 Checksum
+        let poly = 0x1021, res = 0xFFFF;
+        for (let i = 0; i < payloadString.length; i++) {
+            res ^= (payloadString.charCodeAt(i) << 8);
+            for (let j = 0; j < 8; j++) {
+                if ((res & 0x8000) !== 0) res = (res << 1) ^ poly;
+                else res = (res << 1);
+            }
+        }
+        res &= 0xFFFF;
+        return payloadString + res.toString(16).toUpperCase().padStart(4, '0');
     };
 
     window.switchWalletTab = (tab) => {
