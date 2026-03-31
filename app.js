@@ -430,16 +430,24 @@ window.handleRegister = () => {
         return;
     }
 
-    // Success Mock
-    State.user = {
+    let db = JSON.parse(localStorage.getItem('theblue_db')) || {};
+    if (db[phone]) {
+        alert("Telefone já cadastrado!");
+        return;
+    }
+
+    db[phone] = {
         phone: phone,
         balance: 0,
         available: 0,
         invested: 0,
-        withdrawPass: withdrawPass
+        withdrawPass: withdrawPass,
+        transactions: []
     };
+    localStorage.setItem('theblue_db', JSON.stringify(db));
     
-    // Add initial bonus if needed? Let's stay clean first
+    State.user = db[phone];
+    State.transactions = State.user.transactions;
     Router.navigate('dashboard');
 };
 
@@ -452,18 +460,24 @@ window.handleLogin = () => {
         return;
     }
 
-    // Success Mock
-    State.user = {
-        phone: phone,
-        balance: 150.00,
-        available: 50.00,
-        invested: 100.00,
-    };
+    let db = JSON.parse(localStorage.getItem('theblue_db')) || {};
+    
+    if (!db[phone]) {
+        db[phone] = {
+            phone: phone,
+            balance: 150.00,
+            available: 50.00,
+            invested: 100.00,
+            transactions: [
+                { type: 'dep', desc: 'Depósito PIX Aprovado', amount: 100.00, date: '30/03/2026 09:15' },
+                { type: 'inv', desc: 'Início Starter Blue', amount: -50.00, date: '30/03/2026 10:00' }
+            ]
+        };
+        localStorage.setItem('theblue_db', JSON.stringify(db));
+    }
 
-    State.transactions = [
-        { type: 'dep', desc: 'Depósito PIX Aprovado', amount: 100.00, date: '30/03/2026 09:15' },
-        { type: 'inv', desc: 'Início Starter Blue', amount: -50.00, date: '30/03/2026 10:00' }
-    ];
+    State.user = db[phone];
+    State.transactions = State.user.transactions;
 
     Router.navigate('dashboard');
 };
@@ -495,21 +509,40 @@ window.handleTransfer = () => {
         return;
     }
 
+    let db = JSON.parse(localStorage.getItem('theblue_db')) || {};
+    
+    if (!db[phone]) {
+        alert("O telefone informado não está cadastrado na base de testes.");
+        return;
+    }
+
     if (amount <= 0 || amount > State.user.available) {
         alert("Valor inválido ou saldo insuficiente.");
         return;
     }
 
-    // Na integração real, validar a senha e a existência do usuário recebedor
+    // Origin deductions
     State.user.available -= amount;
     State.user.balance -= amount;
-    
-    State.transactions.unshift({
+    State.user.transactions.unshift({
         type: 'with',
         desc: `Transf. para ${phone}`,
         amount: -amount,
         date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR')
     });
+    
+    // Destination additions
+    db[phone].available += amount;
+    db[phone].balance += amount;
+    db[phone].transactions.unshift({
+        type: 'dep',
+        desc: `Transf. recebida de ${State.user.phone}`,
+        amount: amount,
+        date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR')
+    });
+    
+    db[State.user.phone] = State.user;
+    localStorage.setItem('theblue_db', JSON.stringify(db));
     
     alert(`Transferência de R$ ${amount.toFixed(2)} para ${phone} realizada com sucesso!`);
     Router.navigate('wallet');
@@ -529,12 +562,17 @@ window.handleInvest = (planId) => {
     if (amount && amount >= plan.min && amount <= plan.max) {
         State.user.available -= parseFloat(amount);
         State.user.invested += parseFloat(amount);
-        State.transactions.unshift({
+        State.user.transactions.unshift({
             type: 'inv',
             desc: `Investimento: ${plan.name}`,
             amount: -parseFloat(amount),
             date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR')
         });
+        
+        let db = JSON.parse(localStorage.getItem('theblue_db')) || {};
+        db[State.user.phone] = State.user;
+        localStorage.setItem('theblue_db', JSON.stringify(db));
+
         alert("Investimento realizado com sucesso! Seus lucros começarão amanhã.");
         Router.navigate('dashboard');
     }
