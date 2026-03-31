@@ -435,6 +435,8 @@
         }
     };
 
+    window.Router = Router;
+
     // --- Global Handlers (Exposed to HTML) ---
 
     window.toggleAuth = (showRegister) => {
