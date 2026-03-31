@@ -2,6 +2,12 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <script>
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            alert("ERRO NO APP: \\n" + msg + "\\nLinha: " + lineNo + "\\nArquivo: " + url);
+            return false;
+        };
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Blue | Investimentos Modernos</title>
     <link rel="stylesheet" href="/style.css">

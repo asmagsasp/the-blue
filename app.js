@@ -596,7 +596,7 @@ window.handleInvest = async (planId) => {
     }
 
     // Modal or input prompt for amount
-    const amount = prompt(`Quanto deseja investir no ${plan.name}?\n(Mín: R$${p.min} | Máx: R$${p.max})`, plan.min);
+    const amount = prompt(`Quanto deseja investir no ${plan.name}?\n(Mín: R$${plan.min} | Máx: R$${plan.max})`, plan.min);
     
     if (amount && amount >= plan.min && amount <= plan.max) {
         State.user.available -= parseFloat(amount);
