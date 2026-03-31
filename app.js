@@ -249,8 +249,9 @@ const Router = {
 
                 <!-- Tabs -->
                 <div style="display: flex; gap: 10px; margin-bottom: 25px;">
-                    <button class="btn btn-outline" style="flex: 1; background: var(--glass-bg);" id="btn-dep-tab" onclick="switchWalletTab('dep')">Depositar</button>
-                    <button class="btn btn-outline" style="flex: 1;" id="btn-with-tab" onclick="switchWalletTab('with')">Sacar</button>
+                    <button class="btn btn-outline" style="flex: 1; background: var(--glass-bg); padding: 8px;" id="btn-dep-tab" onclick="switchWalletTab('dep')">Depositar</button>
+                    <button class="btn btn-outline" style="flex: 1; padding: 8px;" id="btn-trans-tab" onclick="switchWalletTab('trans')">Transferir</button>
+                    <button class="btn btn-outline" style="flex: 1; padding: 8px;" id="btn-with-tab" onclick="switchWalletTab('with')">Sacar</button>
                 </div>
 
                 <!-- Deposit Section -->
@@ -292,6 +293,25 @@ const Router = {
                     <input type="password" placeholder="Sua senha financeira" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
                     
                     <button class="btn btn-primary" style="width: 100%;">Confirmar Saque</button>
+                </div>
+
+                 <!-- Transfer Section (Hidden) -->
+                <div id="transfer-section" style="display: none;" class="glass-card animate-fade">
+                    <h3 style="margin-bottom: 20px;">Transferência Interna</h3>
+                    <div class="alert" style="background: rgba(0,209,255,0.1); border: 1px solid var(--accent-blue); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.8rem;">
+                        Transfira saldo para outros usuários instantaneamente com taxa ZERO.
+                    </div>
+                    
+                    <label style="display: block; margin-bottom: 8px;">Telefone do Recebedor</label>
+                    <input type="text" placeholder="(00) 00000-0000" id="trans-phone" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+
+                    <label style="display: block; margin-bottom: 8px;">Valor (R$)</label>
+                    <input type="number" placeholder="Saldo: ${State.user.available.toFixed(2)}" id="trans-amount" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+                    
+                    <label style="display: block; margin-bottom: 8px;">Senha Financeira</label>
+                    <input type="password" placeholder="Sua senha de segurança" id="trans-pass" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
+                    
+                    <button class="btn btn-primary" style="width: 100%;" onclick="handleTransfer()">Realizar Transferência</button>
                 </div>
             </div>
         `,
@@ -451,20 +471,48 @@ window.handleLogin = () => {
 window.switchWalletTab = (tab) => {
     const depSec = document.getElementById('deposit-section');
     const withSec = document.getElementById('withdraw-section');
+    const transSec = document.getElementById('transfer-section');
     const btnDep = document.getElementById('btn-dep-tab');
     const btnWith = document.getElementById('btn-with-tab');
+    const btnTrans = document.getElementById('btn-trans-tab');
 
-    if (tab === 'dep') {
-        depSec.style.display = 'block';
-        withSec.style.display = 'none';
-        btnDep.style.background = 'var(--glass-bg)';
-        btnWith.style.background = 'transparent';
-    } else {
-        depSec.style.display = 'none';
-        withSec.style.display = 'block';
-        btnDep.style.background = 'transparent';
-        btnWith.style.background = 'var(--glass-bg)';
+    depSec.style.display = tab === 'dep' ? 'block' : 'none';
+    withSec.style.display = tab === 'with' ? 'block' : 'none';
+    transSec.style.display = tab === 'trans' ? 'block' : 'none';
+
+    btnDep.style.background = tab === 'dep' ? 'var(--glass-bg)' : 'transparent';
+    btnWith.style.background = tab === 'with' ? 'var(--glass-bg)' : 'transparent';
+    btnTrans.style.background = tab === 'trans' ? 'var(--glass-bg)' : 'transparent';
+};
+
+window.handleTransfer = () => {
+    const phone = document.getElementById('trans-phone').value;
+    const amount = parseFloat(document.getElementById('trans-amount').value);
+    const pass = document.getElementById('trans-pass').value;
+
+    if (!phone || !amount || !pass) {
+        alert("Preencha todos os campos para transferir.");
+        return;
     }
+
+    if (amount <= 0 || amount > State.user.available) {
+        alert("Valor inválido ou saldo insuficiente.");
+        return;
+    }
+
+    // Na integração real, validar a senha e a existência do usuário recebedor
+    State.user.available -= amount;
+    State.user.balance -= amount;
+    
+    State.transactions.unshift({
+        type: 'with',
+        desc: `Transf. para ${phone}`,
+        amount: -amount,
+        date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR')
+    });
+    
+    alert(`Transferência de R$ ${amount.toFixed(2)} para ${phone} realizada com sucesso!`);
+    Router.navigate('wallet');
 };
 
 window.handleInvest = (planId) => {
