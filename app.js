@@ -1044,9 +1044,21 @@
             return;
         }
 
-        State.user.available -= amount;
-        State.user.balance -= amount;
-        await supabase.from('users').update({ available: State.user.available, balance: State.user.balance }).eq('phone', State.user.phone);
+        // 1. Descontar saldo no banco (com verificação de sucesso)
+        const upd = { 
+            available: Number(State.user.available) - Number(amount), 
+            balance: Number(State.user.balance) - Number(amount) 
+        };
+        const { data: updRes, error: balanceError } = await supabase.from('users').update(upd).eq('phone', State.user.phone).select();
+
+        if (balanceError || !updRes || updRes.length === 0) {
+            alert("Erro ao debitar saldo: " + (balanceError ? balanceError.message : "0 linhas afetadas pelo banco."));
+            return;
+        }
+
+        // 2. Atualizar estado local
+        State.user.available = upd.available;
+        State.user.balance = upd.balance;
 
         const tx = {
             user_phone: State.user.phone,
