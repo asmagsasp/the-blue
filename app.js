@@ -1297,16 +1297,26 @@
     window.approveWithdraw = async (txId, phone, amount) => {
         if(!confirm(`Confirmação de Saque:\n\nVocê já realizou a transferência de R$ ${amount.toFixed(2)} para a conta bancária do usuário ${phone}?\n\nSe sim, clique OK para efetivar este saque na plataforma.`)) return;
 
-        await supabase.from('transactions').update({
+        const { data, error } = await supabase.from('transactions').update({
             type: 'with',
             description: 'Saque Aprovado'
-        }).eq('id', txId);
+        }).eq('id', txId).select();
 
-        alert("Sucesso! O saque foi marcado como efetuado.");
+        if (error) {
+            alert("Erro ao aprovar saque no banco: " + error.message);
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            alert("⚠️ AVISO: O registro não foi atualizado. Verifique se você tem permissão de administrador ou se o registro ainda existe.");
+            return;
+        }
+
+        alert("✅ Sucesso! O saque foi marcado como efetuado.");
         loadAdminData();
     };
 
-    window.rejectWithdraw = async (txId, phone, amount) => {
+    window.rejectWithdraw = async (txId, phone, amount) => { // FIXING_BOILERPLATE
         if(!confirm(`Recusar o saque de R$ ${amount.toFixed(2)} do usuário ${phone}? O saldo será estornado imediatamente para ele na plataforma.`)) return;
         
         const { data: user } = await supabase.from('users').select('*').eq('phone', phone).single();
@@ -1329,26 +1339,33 @@
     window.approvePix = async (txId, phone, amount) => {
         if(!confirm(`Confirmação de Segurança:\n\nVocê já conferiu a conta bancária e confirma que o PIX de R$ ${amount.toFixed(2)} já está na conta real?\n\nSe sim, clique OK para liberar o saldo na plataforma automaticamente para ${phone}.`)) return;
 
-        const { data: user } = await supabase.from('users').select('*').eq('phone', phone).single();
-        if(user) {
-            const { error: balanceError } = await supabase.from('users').update({
-                available: Number(user.available) + Number(amount),
-                balance: Number(user.balance) + Number(amount)
-            }).eq('phone', phone);
-
-            if (balanceError) {
-                alert("ERRO AO ATUALIZAR SALDO: " + balanceError.message);
-                return;
-            }
-            
-            await supabase.from('transactions').update({
-                type: 'dep',
-                description: 'Depósito PIX (Aprovado)'
-            }).eq('id', txId);
-
-            alert("Sucesso! O PIX foi aprovado e o saldo está na conta do cliente.");
-            loadAdminData();
+        const { data: user, error: userError } = await supabase.from('users').select('*').eq('phone', phone).single();
+        if (userError || !user) {
+            alert("Erro ao localizar usuário: " + (userError ? userError.message : "Não encontrado"));
+            return;
         }
+
+        const { data: updUser, error: balanceError } = await supabase.from('users').update({
+            available: Number(user.available) + Number(amount),
+            balance: Number(user.balance) + Number(amount)
+        }).eq('phone', phone).select();
+
+        if (balanceError || !updUser || updUser.length === 0) {
+            alert("ERRO AO ATUALIZAR SALDO: " + (balanceError ? balanceError.message : "0 linhas afetadas"));
+            return;
+        }
+        
+        const { data: updTx, error: txError } = await supabase.from('transactions').update({
+            type: 'dep',
+            description: 'Depósito PIX (Aprovado)'
+        }).eq('id', txId).select();
+
+        if (txError || !updTx || updTx.length === 0) {
+            alert("Saldo creditado, mas erro ao atualizar status da transação: " + (txError ? txError.message : "0 linhas afetadas"));
+        }
+
+        alert(`✅ SUCESSO! R$ ${Number(amount).toFixed(2)} creditados para ${phone}.`);
+        loadAdminData();
     };
 
     window.handleCreatePlan = async () => {
@@ -1433,18 +1450,17 @@
     window.rejectPix = async (txId) => {
         if(!confirm("Tem certeza que esse depósito é inválido/falso? Ele será marcado como Recusado.")) return;
         
-        const { error } = await supabase.from('transactions').update({
+        const { data, error } = await supabase.from('transactions').update({
             type: 'pix_recusado',
             description: 'Depósito PIX (Recusado)'
-        }).eq('id', txId);
+        }).eq('id', txId).select();
 
-        if (error) {
-            alert("Erro ao recusar PIX no banco: " + error.message);
+        if (error || !data || data.length === 0) {
+            alert("Erro ao recusar PIX no banco: " + (error ? error.message : "0 linhas afetadas"));
             return;
         }
 
         alert("Depósito recusado com sucesso.");
-        // A lista deve atualizar pois o loadAdminData busca apenas 'pix_pendente'
         loadAdminData();
     };
 
