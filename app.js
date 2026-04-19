@@ -525,6 +525,9 @@
                     <label style="display: block; margin-bottom: 8px;">Valor (R$)</label>
                     <input type="number" id="withdraw-amount" placeholder="Saldo: ${State.user.available.toFixed(2)}" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
                     
+                    <label style="display: block; margin-bottom: 8px;">Chave PIX de Recebimento</label>
+                    <input type="text" id="withdraw-pix-key" placeholder="CPF, E-mail, Celular ou Chave Aleatória" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+
                     <label style="display: block; margin-bottom: 8px;">Senha de Saque</label>
                     <input type="password" id="withdraw-pass" placeholder="Sua senha financeira" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
                     
@@ -1009,10 +1012,15 @@
 
     window.handleWithdraw = async () => {
         const amount = parseFloat(document.getElementById('withdraw-amount').value);
+        const pixKey = document.getElementById('withdraw-pix-key').value;
         const pass = document.getElementById('withdraw-pass').value;
 
         if (!amount || amount < 10) {
             alert("Valor inválido. Saque mínimo é R$ 10,00.");
+            return;
+        }
+        if (!pixKey) {
+            alert("Por favor, informe sua Chave PIX para receber o pagamento.");
             return;
         }
         if (!pass) {
@@ -1036,7 +1044,7 @@
             user_phone: State.user.phone,
             type: 'saque_pendente',
             amount: -amount,
-            description: 'Saque (Aguardando Aprovação)'
+            description: `Saque - Chave PIX: ${pixKey} (Aguardando Aprovação)`
         };
 
         const { error } = await supabase.from('transactions').insert([tx]);

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Limpando Pendências...</h1>
+    <div id="status">Iniciando...</div>
+
+    <script>
+        const supabaseUrl = 'https://kggukwkireimgexsezek.supabase.co';
+        const supabaseKey = 'sb_publishable_d9lFOKzv88k2Hv9roRdvZQ_X7K9xKAq';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function cleanup() {
+            const status = document.getElementById('status');
+            try {
+                const { data, error } = await supabase
+                    .from('transactions')
+                    .delete()
+                    .in('type', ['pix_pendente', 'saque_pendente']);
+
+                if (error) {
+                    status.innerHTML = "Erro: " + error.message;
+                } else {
+                    status.innerHTML = "Sucesso! Registros pendentes foram removidos.";
+                }
+            } catch (e) {
+                status.innerHTML = "Falha: " + e.message;
+            }
+        }
+        cleanup();
+    </script>
+</body>
+</html>
