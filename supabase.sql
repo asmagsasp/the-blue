@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   points integer DEFAULT 0 NOT NULL,
   last_checkin timestamp with time zone,
   spins_used integer DEFAULT 0 NOT NULL,
+  checkin_target integer DEFAULT 7 NOT NULL,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

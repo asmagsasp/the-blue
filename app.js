@@ -174,17 +174,17 @@
                 <div class="glass-card" style="margin-bottom: 20px; padding: 15px; border-left: 4px solid var(--secondary-orange);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-size: 0.8rem; font-weight: 600;">Progresso de Recompensa</span>
-                        <span style="font-size: 0.8rem; color: var(--secondary-orange); font-weight: 700;">${State.user.points || 0}/100</span>
+                        <span style="font-size: 0.8rem; color: var(--secondary-orange); font-weight: 700;">${State.user.points || 0}/${State.user.checkin_target || 7}</span>
                     </div>
                     <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; margin-bottom: 10px;">
-                        <div style="width: ${Math.min((State.user.points || 0), 100)}%; height: 100%; background: linear-gradient(to right, var(--secondary-orange), #FFB74D); border-radius: 4px; transition: width 1s ease-in-out;"></div>
+                        <div style="width: ${Math.min(((State.user.points || 0) / (State.user.checkin_target || 7)) * 100, 100)}%; height: 100%; background: linear-gradient(to right, var(--secondary-orange), #FFB74D); border-radius: 4px; transition: width 1s ease-in-out;"></div>
                     </div>
-                    ${(State.user.points || 0) >= 100 ? `
+                    ${(State.user.points || 0) >= (State.user.checkin_target || 7) ? `
                         <button class="btn btn-primary" style="width: 100%; font-size: 0.8rem; background: linear-gradient(45deg, #4CAF50, #2E7D32); border: none; animation: animate-pulse-gold 2s infinite;" onclick="handleExchangePoints()">
-                            🎁 RESGATAR R$ 5,00 AGORA
+                            🎁 RESGATAR R$ ${(State.user.checkin_target || 7).toFixed(2)} AGORA
                         </button>
                     ` : `
-                        <p style="font-size: 0.65rem; opacity: 0.7; text-align: center;">Junte 100 pontos para trocar por saldo real!</p>
+                        <p style="font-size: 0.65rem; opacity: 0.7; text-align: center;">Complete ${State.user.checkin_target || 7} dias para ganhar R$ ${(State.user.checkin_target || 7).toFixed(2)} no saldo!</p>
                     `}
                 </div>
 
@@ -1469,23 +1469,27 @@
     };
 
     window.handleExchangePoints = async () => {
-        if (!State.user || (State.user.points || 0) < 100) {
-            alert("Você precisa de pelo menos 100 pontos.");
+        const target = State.user.checkin_target || 7;
+        const reward = target; // R$ 7 for 7 days, R$ 15 for 15 days
+
+        if (!State.user || (State.user.points || 0) < target) {
+            alert(`Você precisa de pelo menos ${target} pontos.`);
             return;
         }
 
-        if (!confirm("Deseja trocar 100 pontos por R$ 5,00 de saldo disponível?")) return;
+        if (!confirm(`Deseja resgatar sua recompensa de R$ ${reward.toFixed(2)} e iniciar o próximo ciclo?`)) return;
 
-        const newPoints = State.user.points - 100;
-        const newAvailable = State.user.available + 5;
-        const newBalance = State.user.balance + 5;
+        const newTarget = target === 7 ? 15 : 7;
+        const newPoints = 0; // Reset as requested
+        const newAvailable = State.user.available + reward;
+        const newBalance = State.user.balance + reward;
 
         // Registrar transação
         const { error: txError } = await supabase.from('transactions').insert([{
             user_phone: State.user.phone,
             type: 'dep',
-            amount: 5,
-            description: 'Troca de Pontos (Fidelidade)'
+            amount: reward,
+            description: `Recompensa Check-in (${target} dias)`
         }]);
 
         if (txError) {
@@ -1495,16 +1499,18 @@
 
         const { error: userError } = await supabase.from('users').update({
             points: newPoints,
+            checkin_target: newTarget,
             available: newAvailable,
             balance: newBalance
         }).eq('phone', State.user.phone);
 
         if (userError) {
-            alert("Erro ao atualizar saldo: " + userError.message);
+            alert("Erro ao atualizar cadastro: " + userError.message);
             return;
         }
 
         State.user.points = newPoints;
+        State.user.checkin_target = newTarget;
         State.user.available = newAvailable;
         State.user.balance = newBalance;
 
@@ -1518,7 +1524,7 @@
             });
         }
 
-        alert("🎉 Parabéns! R$ 5,00 foram adicionados ao seu saldo disponível.");
+        alert(`🎉 Parabéns! R$ ${reward.toFixed(2)} foram adicionados ao seu saldo disponível. Próximo objetivo: ${newTarget} dias!`);
         Router.render();
     };
 
