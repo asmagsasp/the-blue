@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   sponsor text,
   points integer DEFAULT 0 NOT NULL,
   last_checkin timestamp with time zone,
+  spins_used integer DEFAULT 0 NOT NULL,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

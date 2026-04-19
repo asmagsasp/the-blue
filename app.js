@@ -21,7 +21,8 @@
         investments: [],
         transactions: [],
         referrals: { level1: [], level2: [], level3: [] },
-        currentPix: null
+        currentPix: null,
+        fortune_session: { accumulated: 0, spinsLeft: 0, isSpinning: false }
     };
 
     // --- View Router & Rendering ---
@@ -75,6 +76,10 @@
                     break;
                 case 'pix_checkout':
                     app.innerHTML = this.views.pixCheckout();
+                    break;
+                case 'fortune_wheel':
+                    app.innerHTML = this.views.fortune_wheel();
+                    // Reset session UI if needed
                     break;
                 case 'profile':
                     app.innerHTML = this.views.profile();
@@ -247,6 +252,84 @@
                 </div>
             </div>
         `,
+
+            fortune_wheel: () => {
+                const totalInvested = State.user.invested || 0;
+                const totalEarned = Math.floor(totalInvested / 1000) * 3;
+                const totalRemaining = totalEarned - (State.user.spins_used || 0);
+                
+                if (!State.fortune_session.isActive) {
+                    State.fortune_session.spinsLeft = Math.min(totalRemaining, 3);
+                    State.fortune_session.accumulated = 0;
+                    State.fortune_session.isActive = true;
+                }
+
+                return `
+                <div class="app-container animate-fade" style="text-align: center;">
+                    <h1>Roda da Fortuna</h1>
+                    <p style="margin-bottom: 20px;">Gire e ganhe prêmios reais! <br>A cada R$ 1.000 investidos, você ganha 3 giros.</p>
+
+                    <div class="glass-card" style="margin-bottom: 20px; border-left: 4px solid var(--accent-blue);">
+                        <div style="display: flex; justify-content: space-around;">
+                            <div>
+                                <p style="font-size: 0.7rem;">Acumulado</p>
+                                <h2 id="fortune-accumulated" style="color: #4CAF50;">R$ ${State.fortune_session.accumulated.toFixed(2)}</h2>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.7rem;">Giros Restantes</p>
+                                <h2 id="fortune-spins" style="color: var(--secondary-orange);">${State.fortune_session.spinsLeft}</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wheel-container">
+                        <div class="wheel-pointer"></div>
+                        <div id="main-wheel" class="wheel">
+                            <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; transform: rotate(-22.5deg);">
+                                <circle cx="50" cy="50" r="50" fill="#111" />
+                                <path d="M50 50 L100 50 A50 50 0 0 1 85.3 85.3 Z" fill="#4CAF50" />
+                                <path d="M50 50 L85.3 85.3 A50 50 0 0 1 50 100 Z" fill="#FF5252" />
+                                <path d="M50 50 L50 100 A50 50 0 0 1 14.7 85.3 Z" fill="#00D1FF" />
+                                <path d="M50 50 L14.7 85.3 A50 50 0 0 1 0 50 Z" fill="#FFD700" />
+                                <path d="M50 50 L0 50 A50 50 0 0 1 14.7 14.7 Z" fill="#FF5252" />
+                                <path d="M50 50 L14.7 14.7 A50 50 0 0 1 50 0 Z" fill="#9C27B0" />
+                                <path d="M50 50 L50 0 A50 50 0 0 1 85.3 14.7 Z" fill="#FFD700" />
+                                <path d="M50 50 L85.3 14.7 A50 50 0 0 1 100 50 Z" fill="#4CAF50" />
+                                
+                                <g font-size="4" font-weight="900" fill="white" style="pointer-events: none; text-anchor: middle;">
+                                    <text x="82" y="55" transform="rotate(22.5, 82, 55)">R$ 5</text>
+                                    <text x="65" y="80" transform="rotate(67.5, 65, 80)" font-size="3">PERDEU TUDO</text>
+                                    <text x="45" y="85" transform="rotate(112.5, 45, 85)">R$ 20</text>
+                                    <text x="18" y="70" transform="rotate(157.5, 18, 70)">R$ 10</text>
+                                    <text x="15" y="45" transform="rotate(202.5, 15, 45)" font-size="3">PERDEU TUDO</text>
+                                    <text x="35" y="20" transform="rotate(247.5, 35, 20)">R$ 50</text>
+                                    <text x="55" y="15" transform="rotate(292.5, 55, 15)">R$ 100</text>
+                                    <text x="80" y="35" transform="rotate(337.5, 80, 35)">R$ 5</text>
+                                </g>
+                            </svg>
+                        </div>
+                        <div class="wheel-center">BLUE</div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button id="spin-btn" class="btn btn-primary" style="flex: 2; height: 55px; border-radius: 12px; font-size: 1.1rem;" onclick="handleFortuneSpin()" ${State.fortune_session.spinsLeft === 0 || State.fortune_session.isSpinning ? 'disabled' : ''}>
+                           <i class="fa-solid fa-sync-alt"></i> GIRAR AGORA
+                        </button>
+                        <button id="claim-btn" class="btn btn-outline" style="flex: 1; border-color: #4CAF50; color: #4CAF50; display: ${State.fortune_session.accumulated > 0 && !State.fortune_session.isSpinning ? 'block' : 'none'};" onclick="handleFortuneClaim()">
+                           RESGATAR
+                        </button>
+                    </div>
+
+                    <div id="fortune-msg" style="margin-top: 20px; font-size: 0.9rem; font-weight: 600; min-height: 20px;"></div>
+
+                    <div style="margin-top: 30px; font-size: 0.75rem; opacity: 0.6; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+                        <p>Total Investido: <strong>R$ ${totalInvested.toFixed(2)}</strong></p>
+                        <p>Giros Totais Ganhos: <strong>${totalEarned}</strong></p>
+                        <p>Giros já utilizados: <strong>${State.user.spins_used || 0}</strong></p>
+                    </div>
+                </div>
+                `;
+            },
 
             investments: () => `
             <div class="app-container animate-fade">
@@ -1438,6 +1521,152 @@
         alert("🎉 Parabéns! R$ 5,00 foram adicionados ao seu saldo disponível.");
         Router.render();
     };
+
+    let currentRotation = 0;
+    window.handleFortuneSpin = async () => {
+        if (State.fortune_session.isSpinning || State.fortune_session.spinsLeft <= 0) return;
+
+        State.fortune_session.isSpinning = true;
+        State.fortune_session.spinsLeft--;
+        
+        const wheel = document.getElementById('main-wheel');
+        const spinBtn = document.getElementById('spin-btn');
+        const claimBtn = document.getElementById('claim-btn');
+        const fortuneMsg = document.getElementById('fortune-msg');
+        
+        spinBtn.disabled = true;
+        if(claimBtn) claimBtn.style.display = 'none';
+        fortuneMsg.innerHTML = "Sorteando prêmio...";
+
+        // Logic for landing
+        // 8 segments, 45deg each. Starts at -22.5.
+        // Segments relative to pointer (at top, 0deg target):
+        // Index 0 (82, 55): R$ 5 (0-45deg)
+        // Index 1 (65, 80): PERDEU TUDO (45-90)
+        // Index 2 (45, 85): R$ 20 (90-135)
+        // Index 3 (18, 70): R$ 10 (135-180)
+        // Index 4 (15, 45): PERDEU TUDO (180-225)
+        // Index 5 (35, 20): R$ 50 (225-270)
+        // Index 6 (55, 15): R$ 100 (270-315)
+        // Index 7 (80, 35): R$ 5 (315-360)
+        
+        const prizes = [
+            { label: 'R$ 5', value: 5 },
+            { label: 'PERDEU TUDO', value: -1 },
+            { label: 'R$ 20', value: 20 },
+            { label: 'R$ 10', value: 10 },
+            { label: 'PERDEU TUDO', value: -1 },
+            { label: 'R$ 50', value: 50 },
+            { label: 'R$ 100', value: 100 },
+            { label: 'R$ 5', value: 5 }
+        ];
+
+        // Random spin
+        const extraDegrees = Math.floor(Math.random() * 360);
+        const spins = 5 + Math.floor(Math.random() * 5); // 5 to 10 full spins
+        currentRotation += (spins * 360) + extraDegrees;
+        
+        wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+        setTimeout(async () => {
+            State.fortune_session.isSpinning = false;
+            
+            // Calculate which segment is at the pointer (top is index 0 in our logic)
+            // The pointer is at 0 degrees. The wheel rotated by currentRotation.
+            // Normalize currentRotation to 0-359.
+            const normalized = (360 - (currentRotation % 360)) % 360;
+            const segmentIdx = Math.floor(normalized / 45);
+            const prize = prizes[segmentIdx];
+
+            if (prize.value === -1) {
+                State.fortune_session.accumulated = 0;
+                fortuneMsg.innerHTML = '<span style="color: #FF5252;">😱 AH NÃO! Você caiu no PERDEU TUDO!</span>';
+                // Only mark as used on DB if they lost or claimed
+            } else {
+                State.fortune_session.accumulated += prize.value;
+                fortuneMsg.innerHTML = `<span style="color: #4CAF50;">💰 PARABÉNS! Ganhou ${prize.label}!</span>`;
+            }
+
+            // Sync with UI
+            document.getElementById('fortune-accumulated').innerText = `R$ ${State.fortune_session.accumulated.toFixed(2)}`;
+            document.getElementById('fortune-spins').innerText = State.fortune_session.spinsLeft;
+            
+            // Re-enable buttons
+            spinBtn.disabled = State.fortune_session.spinsLeft <= 0;
+            if (claimBtn) {
+                claimBtn.style.display = (State.fortune_session.accumulated > 0) ? 'block' : 'none';
+                claimBtn.disabled = false;
+            }
+
+            // If spins ended, they MUST claim (if > 0) or it ends
+            if (State.fortune_session.spinsLeft === 0) {
+                if (State.fortune_session.accumulated > 0) {
+                    fortuneMsg.innerHTML += '<br>Giros acabaram! Resgate seu prêmio agora.';
+                } else {
+                    fortuneMsg.innerHTML += '<br>Que pena! Tente investir mais para ganhar novos giros.';
+                    await finalizeSpinsUsed(1); // Increment used
+                    State.fortune_session.isActive = false;
+                    setTimeout(() => Router.render(), 2000);
+                }
+            }
+        }, 5100);
+    };
+
+    window.handleFortuneClaim = async () => {
+        if (State.fortune_session.isSpinning || State.fortune_session.accumulated <= 0) return;
+
+        const prize = State.fortune_session.accumulated;
+        
+        const { error: txError } = await supabase.from('transactions').insert([{
+            user_phone: State.user.phone,
+            type: 'dep',
+            amount: prize,
+            description: 'Prêmio da Roda da Fortuna'
+        }]);
+
+        if (txError) {
+            alert("Erro ao resgatar prêmio: " + txError.message);
+            return;
+        }
+
+        const newAvailable = State.user.available + prize;
+        const newBalance = State.user.balance + prize;
+        
+        const { error: userError } = await supabase.from('users').update({
+            available: newAvailable,
+            balance: newBalance
+        }).eq('phone', State.user.phone);
+
+        if (userError) {
+            alert("Erro ao creditar saldo: " + userError.message);
+            return;
+        }
+
+        await finalizeSpinsUsed(1); // Consumed the session
+
+        State.user.available = newAvailable;
+        State.user.balance = newBalance;
+        State.fortune_session.accumulated = 0;
+        State.fortune_session.isActive = false;
+
+        if (typeof confetti === 'function') {
+            confetti({
+                particleCount: 200,
+                spread: 90,
+                origin: { y: 0.5 },
+                colors: ['#FFD700', '#0066FF', '#FFFFFF']
+            });
+        }
+
+        alert(`🤑 SUCESSO! R$ ${prize.toFixed(2)} foram creditados na sua conta!`);
+        Router.render();
+    };
+
+    async function finalizeSpinsUsed(count) {
+        const newSpinsUsed = (State.user.spins_used || 0) + (count * 3); // Each session is 3 spins used
+        await supabase.from('users').update({ spins_used: newSpinsUsed }).eq('phone', State.user.phone);
+        State.user.spins_used = newSpinsUsed;
+    }
 
     window.handleLogout = () => {
         State.user = null;
