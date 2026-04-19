@@ -208,19 +208,19 @@
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 30px;">
                     <button class="glass-card" onclick="Router.navigate('wallet'); setTimeout(() => switchWalletTab('dep'), 50);" style="padding: 12px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
                         <i class="fa-solid fa-plus-circle" style="color: var(--secondary-orange); font-size: 1.1rem;"></i>
-                        <span style="font-size: 0.65rem; font-weight: 600;">Depositar</span>
+                        <span style="font-size: 0.7rem; font-weight: 700; color: #ffffff;">Depositar</span>
                     </button>
                     <button class="glass-card" onclick="Router.navigate('wallet'); setTimeout(() => switchWalletTab('trans'), 50);" style="padding: 12px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
                          <i class="fa-solid fa-paper-plane" style="color: #00D1FF; font-size: 1.1rem;"></i>
-                        <span style="font-size: 0.65rem; font-weight: 600;">Transferir</span>
+                        <span style="font-size: 0.7rem; font-weight: 700; color: #ffffff;">Transferir</span>
                     </button>
                     <button class="glass-card" onclick="Router.navigate('investments')" style="padding: 12px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
                          <i class="fa-solid fa-bolt" style="color: #4CAF50; font-size: 1.1rem;"></i>
-                        <span style="font-size: 0.65rem; font-weight: 600;">Investir</span>
+                        <span style="font-size: 0.7rem; font-weight: 700; color: #ffffff;">Investir</span>
                     </button>
                     <button class="glass-card" onclick="Router.navigate('wallet'); setTimeout(() => switchWalletTab('with'), 50);" style="padding: 12px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
                          <i class="fa-solid fa-wallet" style="color: #FF5252; font-size: 1.1rem;"></i>
-                        <span style="font-size: 0.65rem; font-weight: 600;">Saque</span>
+                        <span style="font-size: 0.7rem; font-weight: 700; color: #ffffff;">Saque</span>
                     </button>
                 </div>
 
