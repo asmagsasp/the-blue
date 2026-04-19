@@ -17,11 +17,7 @@
     const State = {
         user: null, // Initially null
         currentView: 'auth', // 'auth', 'dashboard', 'investments', 'wallet', 'referral', 'admin'
-        plans: [
-            { id: 'starter', name: 'Starter Blue', duration: 5, dailyReturn: 0.02, min: 50, max: 100 },
-            { id: 'pro', name: 'Blue Pro', duration: 15, dailyReturn: 0.04, min: 250, max: 1000 },
-            { id: 'elite', name: 'Elite Blue', duration: 30, dailyReturn: 0.06, min: 2000, max: 10000 }
-        ],
+        plans: [],
         investments: [],
         transactions: [],
         referrals: { level1: [], level2: [], level3: [] },
@@ -31,6 +27,13 @@
     // --- View Router & Rendering ---
     const Router = {
         navigate(view) {
+            if (view === 'admin') {
+                const cleanPhone = State.user && State.user.phone ? State.user.phone.replace(/\D/g, '') : '';
+                if (cleanPhone !== '19999995149' && cleanPhone !== '1934585300') {
+                    alert('🔒 Área Restrita. Apenas administradores autorizados têm acesso a esta tela.');
+                    return;
+                }
+            }
             State.currentView = view;
             this.render();
             window.scrollTo(0, 0);
@@ -67,6 +70,8 @@
                     break;
                 case 'admin':
                     app.innerHTML = this.views.admin();
+                    if (window.loadAdminStats) window.loadAdminStats();
+                    if (window.loadAdminData) window.loadAdminData();
                     break;
                 case 'pix_checkout':
                     app.innerHTML = this.views.pixCheckout();
@@ -207,16 +212,90 @@
                 <h1 style="margin-bottom: 10px;">Planos de Investimento</h1>
                 <p style="margin-bottom: 30px;">Escolha o plano ideal para seu crescimento "The Blue".</p>
 
+                ${State.plans.length === 0 ? '<p style="text-align: center; opacity: 0.5; margin-top: 50px;">Ainda não há planos ativos na plataforma. Aguarde novidades!</p>' : ''}
+
                 <div style="display: flex; flex-direction: column; gap: 20px;">
-                    ${State.plans.map(p => `
-                        <div class="glass-card" style="position: relative; overflow: hidden; border-left: 4px solid var(--primary-blue);">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                <div>
-                                    <h2 style="font-size: 1.4rem; color: var(--primary-blue);">${p.name}</h2>
-                                    <p style="font-size: 0.9rem;">Duração: <span style="color: white; font-weight: 600;">${p.duration} dias</span></p>
+                    ${State.plans.map(p => {
+                        const now = new Date();
+                        const startsAt = p.startsAt ? new Date(p.startsAt) : null;
+                        const expiresAt = p.expiresAt ? new Date(p.expiresAt) : null;
+                        
+                        let state = 'NORMAL';
+                        if (p.isSurprise) {
+                            if (startsAt && now < startsAt) state = 'LOCKED';
+                            else if (expiresAt && now > expiresAt) state = 'EXPIRED';
+                            else state = 'SURPRISE_ACTIVE';
+                        }
+
+                        const n = String(p.name).toLowerCase();
+                        let icon = '🚀'; let color = 'var(--primary-blue)';
+                        if (n.includes('diamante')) { icon = '💎'; color = '#00f2fe'; }
+                        else if (n.includes('esmeralda')) { icon = '❇️'; color = '#00ff88'; }
+                        else if (n.includes('ouro') || n.includes('gold')) { icon = '🥇'; color = '#FFD700'; }
+                        else if (n.includes('prata') || n.includes('silver')) { icon = '🥈'; color = '#C0C0C0'; }
+                        else if (n.includes('bronze')) { icon = '🥉'; color = '#cd7f32'; }
+
+                        if (state === 'LOCKED') {
+                            return `
+                            <div class="glass-card surprise-card" style="position: relative; overflow: hidden; border: 2px solid #555; background: linear-gradient(135deg, #1a1a1a 0%, #000 100%); min-height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                                <div style="position: absolute; top: 10px; left: 15px; font-size: 1.5rem; font-weight: 800; color: #444; opacity: 0.5;">J</div>
+                                <div style="position: absolute; bottom: 10px; right: 15px; font-size: 1.5rem; font-weight: 800; color: #444; opacity: 0.5; transform: rotate(180deg);">J</div>
+                                
+                                <div style="font-size: 5rem; margin-bottom: 5px; filter: grayscale(1) brightness(0.5); opacity: 0.3;">🃏</div>
+                                <h2 style="font-size: 1.2rem; color: #888; letter-spacing: 2px;">MISTÉRIO "VALETE"</h2>
+                                <p style="font-size: 0.8rem; margin: 10px 0; opacity: 0.6; padding: 0 40px;">Uma oportunidade única está sendo preparada...</p>
+                                
+                                <div style="background: rgba(255,255,255,0.05); padding: 5px 15px; border-radius: 20px; border: 1px solid #333; margin-bottom: 15px;">
+                                    <p style="font-size: 0.7rem;">Custo de Entrada: <span style="color: #4CAF50; font-weight: 700;">R$ ${p.min}</span></p>
+                                </div>
+
+                                <div class="timer-badge" data-endtime="${p.startsAt}" style="background: rgba(255, 82, 82, 0.1); color: #FF5252; padding: 8px 15px; border-radius: 8px; font-family: monospace; font-size: 1.1rem; border: 1px solid #FF525240;">
+                                    Abre em: --:--:--
+                                </div>
+                            </div>
+                            `;
+                        }
+
+                        if (state === 'EXPIRED') {
+                            return `
+                            <div class="glass-card" style="opacity: 0.5; position: relative;">
+                                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 2;">
+                                    <h2 style="transform: rotate(-15deg); border: 4px solid #FF5252; color: #FF5252; padding: 10px 20px; border-radius: 12px; font-weight: 900;">ESGOTADO</h2>
+                                </div>
+                                <div style="filter: blur(2px);">
+                                    <h2 style="font-size: 1.2rem;">${p.name}</h2>
+                                    <p>Este investimento de tempo limitado foi encerrado.</p>
+                                </div>
+                            </div>
+                            `;
+                        }
+
+                        // SURPRISE_ACTIVE or NORMAL
+                        const isSurpriseActive = state === 'SURPRISE_ACTIVE';
+                        const cardBorder = isSurpriseActive ? '2px solid #FFD700' : `4px solid ${color}`;
+                        const cardBg = isSurpriseActive ? 'linear-gradient(135deg, rgba(20,20,20,0.9) 0%, rgba(0,0,0,1) 100%)' : '';
+
+                        return `
+                        <div class="glass-card ${isSurpriseActive ? 'animate-pulse-gold' : ''}" style="position: relative; overflow: hidden; border-left: ${cardBorder}; background: ${cardBg};">
+                            ${isSurpriseActive ? `
+                                <div style="position: absolute; top: -10px; right: -30px; background: #FFD700; color: black; font-weight: 900; font-size: 0.6rem; padding: 20px 40px 5px 40px; transform: rotate(45deg); box-shadow: 0 0 15px #FFD70080;">OFERTA VIP</div>
+                            ` : ''}
+                            
+                            <div style="display: inline-block; background: rgba(0,209,255,0.1); color: var(--accent-blue); font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; margin-bottom: 15px;">
+                                ${p.category || 'Geral'}
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="font-size: 2rem; background: rgba(0,0,0,0.3); width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid ${color}; box-shadow: 0 0 15px ${color}40;">
+                                        ${icon}
+                                    </div>
+                                    <div>
+                                        <h2 style="font-size: 1.4rem; color: ${color}; text-shadow: 0 0 10px ${color}40;">${p.name}</h2>
+                                        <p style="font-size: 0.9rem;">Duração: <span style="color: white; font-weight: 600;">${p.duration} dias</span></p>
+                                    </div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <p style="color: #4CAF50; font-weight: 800; font-size: 1.2rem;">${(p.dailyReturn * 100)}% ao dia</p>
+                                    <p style="color: #4CAF50; font-weight: 800; font-size: 1.2rem;">${(p.dailyReturn * 100).toFixed(2)}% ao dia</p>
                                     <p style="font-size: 0.7rem;">Rendimento Diário</p>
                                 </div>
                             </div>
@@ -232,13 +311,22 @@
                                 </div>
                                 <div>
                                     <p style="font-size: 0.7rem;">Retorno Total</p>
-                                    <p style="font-weight: 700; color: var(--secondary-orange);">+${(p.dailyReturn * p.duration * 100)}%</p>
+                                    <p style="font-weight: 700; color: var(--secondary-orange);">+${(p.dailyReturn * p.duration * 100).toFixed(2)}%</p>
                                 </div>
                             </div>
 
-                            <button class="btn btn-primary" style="width: 100%;" onclick="handleInvest('${p.id}')">Investir Agora</button>
+                            ${isSurpriseActive ? `
+                                <div style="background: rgba(255,215,0,0.1); border: 1px dashed #FFD700; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+                                    <p style="font-size: 0.7rem; color: #FFD700; font-weight: 700; text-transform: uppercase;">🔥 Promoção Ativa! Termina em:</p>
+                                    <div class="timer-badge" data-endtime="${p.expiresAt}" style="color: white; font-family: monospace; font-size: 1.2rem; font-weight: 900;">--:--:--</div>
+                                </div>
+                            ` : ''}
+
+                            <button class="btn btn-primary" style="width: 100%; border: none; background: ${isSurpriseActive ? 'linear-gradient(45deg, #FFD700, #FFA500)' : `linear-gradient(45deg, ${color}80, transparent)`}; color: ${isSurpriseActive ? 'black' : 'white'}; font-weight: ${isSurpriseActive ? '900' : 'normal'}; border-top: 1px solid ${color}40;" onclick="handleInvest('${p.id}')">
+                                ${isSurpriseActive ? 'APROVEITAR AGORA' : 'Investir Agora'}
+                            </button>
                         </div>
-                    `).join('')}
+                    `;}).join('')}
                 </div>
             </div>
         `,
@@ -301,12 +389,12 @@
                     </div>
                     
                     <label style="display: block; margin-bottom: 8px;">Valor (R$)</label>
-                    <input type="number" placeholder="Saldo: ${State.user.available.toFixed(2)}" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+                    <input type="number" id="withdraw-amount" placeholder="Saldo: ${State.user.available.toFixed(2)}" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
                     
                     <label style="display: block; margin-bottom: 8px;">Senha de Saque</label>
-                    <input type="password" placeholder="Sua senha financeira" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
+                    <input type="password" id="withdraw-pass" placeholder="Sua senha financeira" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
                     
-                    <button class="btn btn-primary" style="width: 100%;">Confirmar Saque</button>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="handleWithdraw()">Confirmar Saque</button>
                 </div>
 
                  <!-- Transfer Section (Hidden) -->
@@ -403,21 +491,21 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
                     <div class="glass-card" style="padding: 15px;">
                         <p style="font-size: 0.7rem;">Usuários Totais</p>
-                        <h2 style="color: var(--primary-blue);">1.248</h2>
+                        <h2 id="admin-total-users" style="color: var(--primary-blue);">...</h2>
                     </div>
                     <div class="glass-card" style="padding: 15px;">
-                        <p style="font-size: 0.7rem;">Depósitos Pendentes</p>
-                        <h2 style="color: var(--secondary-orange);">12</h2>
+                        <p style="font-size: 0.7rem;">Aprovações Pendentes</p>
+                        <h2 id="admin-total-pending" style="color: var(--secondary-orange);">...</h2>
                     </div>
                 </div>
 
                 <div class="glass-card" style="margin-top: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3>Aprovações Pendentes</h3>
+                        <h3>Pendências (Depósitos e Saques)</h3>
                         <button class="btn btn-outline" style="padding: 5px; border-color: var(--primary-blue);" onclick="loadAdminData()"><i class="fa-solid fa-rotate-right"></i> Recarregar</button>
                     </div>
                     <div id="admin-pending-list" style="display: flex; flex-direction: column; gap: 10px;">
-                        <p style="text-align: center; font-size: 0.8rem; opacity: 0.5;">Clique no botão recarregar para buscar Pix pendentes.</p>
+                        <p style="text-align: center; font-size: 0.8rem; opacity: 0.5;">Clique no botão recarregar para buscar pendências.</p>
                     </div>
                 </div>
 
@@ -435,6 +523,121 @@
 
                     <button class="btn btn-primary" style="width: 100%;" onclick="handleAddManualBalance()"><i class="fa-solid fa-plus-circle"></i> Confirmar Crédito</button>
                 </div>
+
+                <div class="glass-card" style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 15px;">Gerenciar Planos (Investimentos)</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                        <div style="grid-column: span 2;">
+                            <label style="display: block; font-size: 0.8rem; margin-bottom: 5px;">Nome do Plano (ex: Ouro, Diamante)</label>
+                            <input type="text" id="plan-name" class="input-field" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--glass-border);">
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <label style="display: block; font-size: 0.8rem; margin-bottom: 5px;">Categoria / Prazo</label>
+                            <select id="plan-category" class="input-field" style="width: 100%; padding: 8px; border-radius: 8px; background: #111; color: white; border: 1px solid var(--glass-border);">
+                                <option value="Curto Prazo">Curto Prazo</option>
+                                <option value="Médio Prazo">Médio Prazo</option>
+                                <option value="Longo Prazo">Longo Prazo</option>
+                                <option value="Vip Premium">Vip Premium</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; margin-bottom: 5px;">Duração (Dias)</label>
+                            <input type="number" id="plan-duration" placeholder="ex: 15" class="input-field" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--glass-border);">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; margin-bottom: 5px;">Retorno Diário (%)</label>
+                            <input type="number" id="plan-return" placeholder="ex: 2.5" step="0.01" class="input-field" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--glass-border);">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; margin-bottom: 5px;">Aporte Mínimo (R$)</label>
+                            <input type="number" id="plan-min" placeholder="50.00" class="input-field" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--glass-border);">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; margin-bottom: 5px;">Aporte Máx. (R$)</label>
+                            <input type="number" id="plan-max" placeholder="1000.00" class="input-field" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--glass-border);">
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(255, 82, 82, 0.1); border: 1px solid #FF5252; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="plan-is-surprise" onchange="document.getElementById('surprise-config').style.display = this.checked ? 'block' : 'none'">
+                            <span style="font-weight: 600; color: #FF5252;">🃏 Este é um Investimento Surpresa (Escassez)</span>
+                        </label>
+                        <p style="font-size: 0.7rem; opacity: 0.8; margin-top: 5px;">Oculta o investimento sob uma carta "Valete" até o horário de abertura.</p>
+                        
+                        <div id="surprise-config" style="display: none; margin-top: 15px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <label style="display: block; font-size: 0.8rem; margin-bottom: 5px; color: #4CAF50;">Abertura</label>
+                                    <input type="datetime-local" id="plan-starts-at" class="input-field" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.5); color: white; border: 1px solid #4CAF50;">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 0.8rem; margin-bottom: 5px; color: #FF9800;">Encerramento</label>
+                                    <input type="datetime-local" id="plan-expires-at" class="input-field" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.5); color: white; border: 1px solid #FF9800;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" style="width: 100%; margin-bottom: 15px;" onclick="handleCreatePlan()">+ Criar Novo Plano</button>
+
+                    <div id="admin-plans-list" style="display: flex; flex-direction: column; gap: 10px;">
+                        ${State.plans.length === 0 ? '<p style="text-align: center; opacity: 0.5;">Nenhum plano cadastrado.</p>' : State.plans.map(p => `
+                            <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--primary-blue);">
+                                <div>
+                                    <p style="font-weight: 600; color: var(--primary-blue); font-size: 0.9rem;">${p.name} <span style="font-size: 0.6rem; color: white; background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 4px;">${p.category || ''}</span></p>
+                                    <p style="font-size: 0.7rem; opacity: 0.8;">${p.duration} dias | ${(p.dailyReturn * 100).toFixed(2)}% a.d. | Mín: R$ ${p.min}</p>
+                                </div>
+                                <button class="btn btn-outline" style="padding: 5px 10px; color: #FF5252; border-color: #FF5252;" onclick="handleDeletePlan('${p.id}')"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="glass-card" style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 15px;">Relatórios Gerenciais (Caixa Diário)</h3>
+                    <p style="font-size: 0.8rem; margin-bottom: 15px; opacity: 0.8;">Filtre depósitos e saques para conciliar com seu banco.</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; margin-bottom: 5px;">Data (Deixe em branco p/ Histórico Geral)</label>
+                            <input type="date" id="report-date" class="input-field" style="width: 100%; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--glass-border);">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.8rem; margin-bottom: 5px;">Tipo</label>
+                            <select id="report-type" class="input-field" style="width: 100%; padding: 8px; border-radius: 8px; background: #111; color: white; border: 1px solid var(--glass-border);">
+                                <option value="all">Todos</option>
+                                <option value="dep">Depósitos</option>
+                                <option value="with">Saques</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline" style="width: 100%; margin-bottom: 20px;" onclick="loadAdminReports()"><i class="fa-solid fa-search"></i> Gerar Relatório</button>
+
+                    <div id="report-results" style="display: none; flex-direction: column; gap: 15px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; padding: 10px; border-radius: 8px; text-align: center;">
+                                <p style="font-size: 0.7rem; color: #4CAF50;">🟢 Depósitos</p>
+                                <h3 id="report-dep-approved" style="color: white; margin-top: 5px;">R$ 0,00</h3>
+                                <p id="report-dep-pending" style="font-size: 0.65rem; color: #FF9800; margin-top: 5px;">Pendente: R$ 0,00</p>
+                            </div>
+                            <div style="background: rgba(255, 82, 82, 0.1); border: 1px solid #FF5252; padding: 10px; border-radius: 8px; text-align: center;">
+                                <p style="font-size: 0.7rem; color: #FF5252;">🔴 Saques</p>
+                                <h3 id="report-with-approved" style="color: white; margin-top: 5px;">R$ 0,00</h3>
+                                <p id="report-with-pending" style="font-size: 0.65rem; color: #FF9800; margin-top: 5px;">Pendente: R$ 0,00</p>
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;">
+                            <p style="font-size: 0.7rem;">Saldo Líquido no Banco (Aprovados)</p>
+                            <h2 id="report-net-balance" style="color: var(--primary-blue); margin-top: 5px;">R$ 0,00</h2>
+                        </div>
+
+                        <div id="report-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                            <!-- List will be populated here -->
+                        </div>
+                    </div>
+                </div>
             </div>
         `,
 
@@ -450,7 +653,9 @@
                     <h3>${State.user ? State.user.phone : ''}</h3>
                     <p style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 20px;">Membro Especial "The Blue"</p>
                     
-                    <button class="btn btn-outline" style="width: 100%; border-color: #00d1ff; color: #00d1ff; margin-bottom: 10px;" onclick="Router.navigate('admin')"><i class="fa-solid fa-shield-halved"></i> Acessar Painel Admin</button>
+                    ${['19999995149', '1934585300'].includes(State.user && State.user.phone ? State.user.phone.replace(/\D/g, '') : '') ? `
+                        <button class="btn btn-outline" style="width: 100%; border-color: #00d1ff; color: #00d1ff; margin-bottom: 10px;" onclick="Router.navigate('admin')"><i class="fa-solid fa-shield-halved"></i> Acessar Painel Admin</button>
+                    ` : ''}
 
                     <button class="btn btn-outline" style="width: 100%; border-color: #FF5252; color: #FF5252;" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Sair da Conta</button>
                 </div>
@@ -643,6 +848,53 @@
         btnTrans.style.background = tab === 'trans' ? 'var(--glass-bg)' : 'transparent';
     };
 
+    window.handleWithdraw = async () => {
+        const amount = parseFloat(document.getElementById('withdraw-amount').value);
+        const pass = document.getElementById('withdraw-pass').value;
+
+        if (!amount || amount < 10) {
+            alert("Valor inválido. Saque mínimo é R$ 10,00.");
+            return;
+        }
+        if (!pass) {
+            alert("Digite sua senha de saque.");
+            return;
+        }
+        if (pass !== State.user.withdraw_pass) {
+            alert("Senha de saque incorreta.");
+            return;
+        }
+        if (amount > State.user.available) {
+            alert("Saldo insuficiente para este saque.");
+            return;
+        }
+
+        State.user.available -= amount;
+        State.user.balance -= amount;
+        await supabase.from('users').update({ available: State.user.available, balance: State.user.balance }).eq('phone', State.user.phone);
+
+        const tx = {
+            user_phone: State.user.phone,
+            type: 'saque_pendente',
+            amount: -amount,
+            description: 'Saque (Aguardando Aprovação)'
+        };
+
+        const { error } = await supabase.from('transactions').insert([tx]);
+        if (error) {
+            alert("Erro ao registrar tentativa de saque.");
+            return;
+        }
+
+        tx.date = new Date().toLocaleDateString('pt-BR');
+        State.transactions.unshift(tx);
+
+        alert("Solicitação de saque enviada com sucesso! Aguarde a aprovação do administrador.");
+        document.getElementById('withdraw-amount').value = '';
+        document.getElementById('withdraw-pass').value = '';
+        Router.navigate('wallet');
+    };
+
     window.handleTransfer = async () => {
         const phone = document.getElementById('trans-phone').value;
         const amount = parseFloat(document.getElementById('trans-amount').value);
@@ -771,34 +1023,96 @@
         document.getElementById('admin-add-amount').value = '';
     };
 
+    window.loadAdminStats = async () => {
+        if (!supabase) return;
+        const { count: usersCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
+        
+        const { count: pendingDepCount } = await supabase.from('transactions').select('*', { count: 'exact', head: true }).eq('type', 'pix_pendente');
+        const { count: pendingWithCount } = await supabase.from('transactions').select('*', { count: 'exact', head: true }).eq('type', 'saque_pendente');
+        
+        const totalPending = (pendingDepCount || 0) + (pendingWithCount || 0);
+
+        const uEl = document.getElementById('admin-total-users');
+        const pEl = document.getElementById('admin-total-pending');
+        if (uEl) uEl.innerText = usersCount !== null ? usersCount : '...';
+        if (pEl) pEl.innerText = totalPending !== null ? totalPending : '...';
+    };
+
     window.loadAdminData = async () => {
         const list = document.getElementById('admin-pending-list');
-        list.innerHTML = '<p style="text-align: center;">Buscando Pix...</p>';
+        list.innerHTML = '<p style="text-align: center;">Buscando pendências...</p>';
 
         const { data: pendings } = await supabase.from('transactions')
             .select('*')
-            .eq('type', 'pix_pendente')
+            .in('type', ['pix_pendente', 'saque_pendente'])
             .order('created_at', { ascending: false });
 
         if (!pendings || pendings.length === 0) {
-            list.innerHTML = '<p style="text-align: center; opacity: 0.5;">Nenhum depósito pendente.</p>';
+            list.innerHTML = '<p style="text-align: center; opacity: 0.5;">Nenhuma pendência no momento.</p>';
             return;
         }
 
-        list.innerHTML = pendings.map(p => `
-            <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 15px;">
-                 <p style="font-size: 0.85rem; font-weight: 600;">Depósito PIX: <span style="color: #4CAF50;">R$ ${p.amount.toFixed(2)}</span></p>
-                 <p style="font-size: 0.7rem; opacity: 0.6; margin-bottom: 10px;">Cliente: ${p.user_phone} | ID: ${p.id.split('-')[0]}</p>
-                 <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.7rem; flex: 1;" onclick="approvePix('${p.id}', '${p.user_phone}', ${p.amount})">✔ Aprovar PIX</button>
-                    <button class="btn btn-outline" style="padding: 5px 15px; font-size: 0.7rem; color: #FF5252; flex: 1;" onclick="rejectPix('${p.id}')">❌ Recusar</button>
-                 </div>
-            </div>
-        `).join('');
+        list.innerHTML = pendings.map(p => {
+            if (p.type === 'pix_pendente') {
+                return `
+                <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 15px;">
+                     <p style="font-size: 0.85rem; font-weight: 600;">Depósito PIX: <span style="color: #4CAF50;">R$ ${p.amount.toFixed(2)}</span></p>
+                     <p style="font-size: 0.7rem; opacity: 0.6; margin-bottom: 10px;">Cliente: ${p.user_phone} | ID: ${p.id.split('-')[0]}</p>
+                     <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.7rem; flex: 1;" onclick="approvePix('${p.id}', '${p.user_phone}', ${Math.abs(p.amount)})">✔ Aprovar PIX</button>
+                        <button class="btn btn-outline" style="padding: 5px 15px; font-size: 0.7rem; color: #FF5252; flex: 1;" onclick="rejectPix('${p.id}')">❌ Recusar</button>
+                     </div>
+                </div>
+                `;
+            } else {
+                return `
+                <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 15px;">
+                     <p style="font-size: 0.85rem; font-weight: 600;">Solicitação de Saque: <span style="color: #FF9800;">R$ ${Math.abs(p.amount).toFixed(2)}</span></p>
+                     <p style="font-size: 0.7rem; opacity: 0.6; margin-bottom: 10px;">Cliente: ${p.user_phone} | ID: ${p.id.split('-')[0]}</p>
+                     <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.7rem; flex: 1; background: var(--secondary-orange); border-color: var(--secondary-orange);" onclick="approveWithdraw('${p.id}', '${p.user_phone}', ${Math.abs(p.amount)})">✔ Efetivar Saque</button>
+                        <button class="btn btn-outline" style="padding: 5px 15px; font-size: 0.7rem; color: #FF5252; flex: 1;" onclick="rejectWithdraw('${p.id}', '${p.user_phone}', ${Math.abs(p.amount)})">❌ Recusar</button>
+                     </div>
+                </div>
+                `;
+            }
+        }).join('');
+    };
+
+    window.approveWithdraw = async (txId, phone, amount) => {
+        if(!confirm(`Confirmação de Saque:\n\nVocê já realizou a transferência de R$ ${amount.toFixed(2)} para a conta bancária do usuário ${phone}?\n\nSe sim, clique OK para efetivar este saque na plataforma.`)) return;
+
+        await supabase.from('transactions').update({
+            type: 'with',
+            description: 'Saque Aprovado'
+        }).eq('id', txId);
+
+        alert("Sucesso! O saque foi marcado como efetuado.");
+        loadAdminData();
+    };
+
+    window.rejectWithdraw = async (txId, phone, amount) => {
+        if(!confirm(`Recusar o saque de R$ ${amount.toFixed(2)} do usuário ${phone}? O saldo será estornado imediatamente para ele na plataforma.`)) return;
+        
+        const { data: user } = await supabase.from('users').select('*').eq('phone', phone).single();
+        if(user) {
+            await supabase.from('users').update({
+                available: Number(user.available) + amount,
+                balance: Number(user.balance) + amount
+            }).eq('phone', phone);
+            
+            await supabase.from('transactions').update({
+                type: 'saque_recusado',
+                description: 'Saque Recusado (Estornado)'
+            }).eq('id', txId);
+
+            alert("Saque recusado e valor estornado para o cliente.");
+            loadAdminData();
+        }
     };
 
     window.approvePix = async (txId, phone, amount) => {
-        if(!confirm(`Aprovar e creditar o saldo de R$ ${amount.toFixed(2)} na conta ${phone}?`)) return;
+        if(!confirm(`Confirmação de Segurança:\n\nVocê já conferiu a conta bancária e confirma que o PIX de R$ ${amount.toFixed(2)} já está na conta real?\n\nSe sim, clique OK para liberar o saldo na plataforma automaticamente para ${phone}.`)) return;
 
         const { data: user } = await supabase.from('users').select('*').eq('phone', phone).single();
         if(user) {
@@ -817,6 +1131,85 @@
         }
     };
 
+    window.handleCreatePlan = async () => {
+        const name = document.getElementById('plan-name').value;
+        const category = document.getElementById('plan-category').value;
+        const duration = parseInt(document.getElementById('plan-duration').value);
+        const dailyReturn = parseFloat(document.getElementById('plan-return').value);
+        const minAmount = parseFloat(document.getElementById('plan-min').value);
+        const maxAmount = parseFloat(document.getElementById('plan-max').value);
+        
+        const isSurprise = document.getElementById('plan-is-surprise').checked;
+        const rawStart = document.getElementById('plan-starts-at').value;
+        const rawEnd = document.getElementById('plan-expires-at').value;
+
+        if (!name || isNaN(duration) || isNaN(dailyReturn) || isNaN(minAmount) || isNaN(maxAmount)) {
+            alert("Preencha todos os campos do plano com valores válidos.");
+            return;
+        }
+
+        if (isSurprise && (!rawStart || !rawEnd)) {
+            alert("Para planos surpresa, você deve definir obrigatoriamente a data/hora de abertura e de encerramento.");
+            return;
+        }
+
+        let startsAt = null, expiresAt = null;
+        if (isSurprise) {
+            // Convert to local ISO for Supabase (preserving exact local time context)
+            startsAt = new Date(rawStart).toISOString();
+            expiresAt = new Date(rawEnd).toISOString();
+        }
+
+        const planRef = {
+            name: name,
+            category: category,
+            duration: duration,
+            daily_return: dailyReturn,
+            min_amount: minAmount,
+            max_amount: maxAmount,
+            is_surprise: isSurprise,
+            starts_at: startsAt,
+            expires_at: expiresAt
+        };
+
+        const { data, error } = await supabase.from('plans').insert([planRef]).select();
+        if (error) {
+            alert("Erro ao criar plano. Verificou se você rodou o código SQL no seu Supabase? Erro original: " + error.message);
+            return;
+        }
+
+        if (data && data[0]) {
+            State.plans.push({
+                id: data[0].id,
+                name: data[0].name,
+                category: data[0].category,
+                duration: data[0].duration,
+                dailyReturn: parseFloat(data[0].daily_return) / 100,
+                min: parseFloat(data[0].min_amount),
+                max: parseFloat(data[0].max_amount),
+                isSurprise: data[0].is_surprise || false,
+                startsAt: data[0].starts_at || null,
+                expiresAt: data[0].expires_at || null
+            });
+            alert("Plano criado com sucesso!");
+            Router.render();
+        }
+    };
+
+    window.handleDeletePlan = async (id) => {
+        if (!confirm("Deletar esse plano de investimento permanentemente da plataforma? Isso impedirá novas assinaturas.")) return;
+
+        const { error } = await supabase.from('plans').delete().eq('id', id);
+        if (error) {
+            alert("Erro ao deletar: " + error.message);
+            return;
+        }
+
+        State.plans = State.plans.filter(p => p.id !== id);
+        alert("Plano removido.");
+        Router.render();
+    };
+
     window.rejectPix = async (txId) => {
         if(!confirm("Tem certeza que esse depósito é inválido/falso? Ele será marcado como Recusado.")) return;
         await supabase.from('transactions').update({
@@ -824,6 +1217,93 @@
             description: 'Depósito PIX (Recusado)'
         }).eq('id', txId);
         loadAdminData();
+    };
+
+    window.loadAdminReports = async () => {
+        const dateStr = document.getElementById('report-date').value;
+        const typeFilter = document.getElementById('report-type').value;
+
+        const reportResultsDiv = document.getElementById('report-results');
+        const reportListDiv = document.getElementById('report-list');
+        reportListDiv.innerHTML = '<p style="text-align:center; opacity: 0.5;">Buscando dados no servidor...</p>';
+        reportResultsDiv.style.display = 'flex';
+
+        let query = supabase.from('transactions').select('*').order('created_at', { ascending: false });
+
+        if (dateStr) {
+            // Definindo ranges GMT-3 para bater exatamente com a data Brasileira selecionada
+            const start = new Date(`${dateStr}T00:00:00-03:00`).toISOString();
+            const end = new Date(`${dateStr}T23:59:59-03:00`).toISOString();
+            query = query.gte('created_at', start).lte('created_at', end);
+        }
+
+        if (typeFilter === 'dep') {
+            query = query.in('type', ['dep', 'pix_pendente', 'pix_recusado']);
+        } else if (typeFilter === 'with') {
+            query = query.in('type', ['with', 'saque_pendente', 'saque_recusado']);
+        } else {
+            query = query.in('type', ['dep', 'pix_pendente', 'pix_recusado', 'with', 'saque_pendente', 'saque_recusado']);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+            reportListDiv.innerHTML = `<p style="text-align:center; color: red;">Erro: ${error.message}</p>`;
+            return;
+        }
+
+        let depApproved = 0, depPending = 0;
+        let withApproved = 0, withPending = 0;
+        let htmlSnippet = '';
+
+        if (!data || data.length === 0) {
+            htmlSnippet = '<p style="text-align:center; opacity: 0.5; font-size: 0.8rem;">Nenhum registro (Pix/Saque) encontrado nesta data.</p>';
+        } else {
+            data.forEach(tx => {
+                const amount = Math.abs(parseFloat(tx.amount));
+                
+                let readableType = ''; let color = ''; let statTxt = '';
+                if (tx.type === 'dep') {
+                    depApproved += amount;
+                    readableType = 'Depósito'; color = '#4CAF50'; statTxt = 'APROVADO';
+                } else if (tx.type === 'pix_pendente') {
+                    depPending += amount;
+                    readableType = 'Depósito'; color = '#FF9800'; statTxt = 'PENDENTE';
+                } else if (tx.type === 'with') {
+                    withApproved += amount;
+                    readableType = 'Saque'; color = '#FF5252'; statTxt = 'APROVADO';
+                } else if (tx.type === 'saque_pendente') {
+                    withPending += amount;
+                    readableType = 'Saque'; color = '#FF9800'; statTxt = 'PENDENTE';
+                } else if (tx.type.includes('recusado')) {
+                    readableType = tx.type.includes('pix') ? 'Depósito' : 'Saque';
+                    color = '#607D8B'; statTxt = 'RECUSADO';
+                }
+
+                htmlSnippet += `
+                    <div style="background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid ${color};">
+                        <div>
+                            <p style="font-size: 0.8rem; font-weight: 600;">${tx.user_phone}</p>
+                            <p style="font-size: 0.65rem; opacity: 0.8;">${readableType} | ${new Date(tx.created_at).toLocaleTimeString('pt-BR')}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="font-size: 0.9rem; font-weight: 700; color: ${color};">R$ ${amount.toFixed(2)}</p>
+                            <p style="font-size: 0.6rem; color: ${color}; font-weight: 600;">${statTxt}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        document.getElementById('report-dep-approved').innerText = `R$ ${depApproved.toFixed(2)}`;
+        document.getElementById('report-dep-pending').innerText = `Pendente: R$ ${depPending.toFixed(2)}`;
+        document.getElementById('report-with-approved').innerText = `R$ ${withApproved.toFixed(2)}`;
+        document.getElementById('report-with-pending').innerText = `Pendente: R$ ${withPending.toFixed(2)}`;
+
+        const net = depApproved - withApproved;
+        document.getElementById('report-net-balance').innerText = `R$ ${net.toFixed(2)}`;
+        document.getElementById('report-net-balance').style.color = net >= 0 ? '#4CAF50' : '#FF5252';
+
+        reportListDiv.innerHTML = htmlSnippet;
     };
 
     window.copyRef = () => {
@@ -841,7 +1321,26 @@
     };
 
     // --- Initialization ---
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Fetch Plans from Supabase
+        if (supabase) {
+            const { data } = await supabase.from('plans').select('*').order('min_amount', { ascending: true });
+            if (data && data.length > 0) {
+                State.plans = data.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    category: p.category,
+                    duration: p.duration,
+                    dailyReturn: parseFloat(p.daily_return) / 100,
+                    min: parseFloat(p.min_amount),
+                    max: parseFloat(p.max_amount),
+                    isSurprise: p.is_surprise || false,
+                    startsAt: p.starts_at || null,
+                    expiresAt: p.expires_at || null
+                }));
+            }
+        }
+
         // Check if there's a referral code in the URL
         const path = window.location.pathname;
         if (path.startsWith('/ref/')) {
@@ -856,8 +1355,42 @@
             }
         }
 
-        // Setup Navigation Listeners
-        document.querySelectorAll('[data-view]').forEach(link => {
+    // --- Global Timer Updater ---
+    setInterval(() => {
+        document.querySelectorAll('.timer-badge').forEach(el => {
+            const end = new Date(el.getAttribute('data-endtime')).getTime();
+            const now = new Date().getTime();
+            const diff = end - now;
+
+            if (diff <= 0) {
+                el.innerText = "LIBERADO!";
+                // If the view is investments, trigger a re-render to reveal
+                if (State.currentView === 'investments') {
+                    // Logic to avoid infinite re-renders
+                    if (!el.dataset.expired) {
+                        el.dataset.expired = "true";
+                        Router.render();
+                    }
+                }
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const mins = Math.floor((diff / 1000 / 60) % 60);
+            const secs = Math.floor((diff / 1000) % 60);
+
+            let str = "";
+            if (days > 0) str += `${days}d `;
+            str += `${String(hours).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+            
+            const prefix = el.innerText.includes('Abre em') ? 'Abre em: ' : '';
+            el.innerText = prefix + str;
+        });
+    }, 1000);
+
+    // Setup Navigation Listeners
+    document.querySelectorAll('[data-view]').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const view = e.currentTarget.getAttribute('data-view');

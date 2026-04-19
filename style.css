@@ -206,3 +206,34 @@ p { color: var(--text-dim); line-height: 1.6; }
     from { border-radius: 40% 60% 60% 40% / 40% 40% 60% 60%; transform: rotate(0deg); }
     to { border-radius: 60% 40% 40% 60% / 60% 60% 40% 40%; transform: rotate(10deg) scale(1.1); }
 }
+
+/* Surprise & Mystery Animations */
+@keyframes pulse-gold {
+    0% { box-shadow: 0 0 5px #FFD70040; border-color: #FFD70080; }
+    50% { box-shadow: 0 0 25px #FFD70080; border-color: #FFD700; }
+    100% { box-shadow: 0 0 5px #FFD70040; border-color: #FFD70080; }
+}
+
+.animate-pulse-gold {
+    animation: pulse-gold 2s infinite ease-in-out;
+}
+
+@keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade {
+    animation: fade-in-up 0.5s forwards ease-out;
+}
+
+.surprise-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+    pointer-events: none;
+}
