@@ -894,6 +894,8 @@
     };
 
     window.handleDeposit = async () => {
+        if (window.isDepositing) return;
+        
         const amount = parseFloat(document.getElementById('dep-amount').value);
         if (!amount || amount < 5) {
             alert("O valor mínimo de depósito é R$ 5,00.");
@@ -922,11 +924,26 @@
             description: `Depósito PIX - Cliente: ${State.user.phone} em ${dateStr} às ${timeStr}`
         };
 
+        window.isDepositing = true;
+        const btn = document.querySelector('.btn-secondary[onclick="handleDeposit()"]');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "Processando...";
+        }
+
         const { error } = await supabase.from('transactions').insert([tx]);
+        
         if (error) {
-            alert("Erro ao registrar intenção de depósito.");
+            alert("Erro ao registrar intenção de depósito: " + error.message);
+            window.isDepositing = false;
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = "Gerar Pagamento";
+            }
             return;
         }
+        
+        window.isDepositing = false;
 
         tx.date = new Date().toLocaleDateString('pt-BR');
         State.transactions.unshift(tx);
@@ -1277,10 +1294,15 @@
 
         const { data: user } = await supabase.from('users').select('*').eq('phone', phone).single();
         if(user) {
-            await supabase.from('users').update({
-                available: Number(user.available) + amount,
-                balance: Number(user.balance) + amount
+            const { error: balanceError } = await supabase.from('users').update({
+                available: Number(user.available) + Number(amount),
+                balance: Number(user.balance) + Number(amount)
             }).eq('phone', phone);
+
+            if (balanceError) {
+                alert("ERRO AO ATUALIZAR SALDO: " + balanceError.message);
+                return;
+            }
             
             await supabase.from('transactions').update({
                 type: 'dep',
@@ -1373,10 +1395,19 @@
 
     window.rejectPix = async (txId) => {
         if(!confirm("Tem certeza que esse depósito é inválido/falso? Ele será marcado como Recusado.")) return;
-        await supabase.from('transactions').update({
+        
+        const { error } = await supabase.from('transactions').update({
             type: 'pix_recusado',
             description: 'Depósito PIX (Recusado)'
         }).eq('id', txId);
+
+        if (error) {
+            alert("Erro ao recusar PIX no banco: " + error.message);
+            return;
+        }
+
+        alert("Depósito recusado com sucesso.");
+        // A lista deve atualizar pois o loadAdminData busca apenas 'pix_pendente'
         loadAdminData();
     };
 
