@@ -137,10 +137,51 @@
                         <p style="margin-bottom: 2px;">Olá, <span style="color: white; font-weight: 600;">${State.user.phone}</span></p>
                         <h2 style="font-size: 1.2rem;">Bem-vindo ao Azul!</h2>
                     </div>
-                    <div style="background: var(--glass-bg); padding: 8px; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
-                         <i class="fa-solid fa-user-ninja" style="color: var(--primary-blue);"></i>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div id="checkin-btn-container">
+                            ${(() => {
+                                let isLocked = false;
+                                if (State.user && State.user.last_checkin) {
+                                    const last = new Date(State.user.last_checkin);
+                                    const now = new Date();
+                                    isLocked = (now - last < 24 * 60 * 60 * 1000);
+                                }
+                                
+                                return `
+                                <button class="btn ${isLocked ? 'btn-outline' : 'btn-secondary'}" 
+                                        style="font-size: 0.73rem; padding: 10px 14px; border-radius: 20px; ${isLocked ? 'opacity: 0.5; cursor: not-allowed;' : 'box-shadow: 0 0 20px var(--secondary-orange)50;'}"
+                                        onclick="${isLocked ? "alert('Você já fez o check-in! Volte amanhã.')" : 'handleDailyCheckin()'}">
+                                    <i class="fa-solid fa-calendar-check"></i> ${isLocked ? 'Feito' : 'Check-in'}
+                                </button>
+                                `;
+                            })()}
+                        </div>
+                        <div style="background: var(--glass-bg); padding: 8px; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; position: relative; border: 1px solid var(--glass-border);">
+                             <i class="fa-solid fa-user-ninja" style="color: var(--primary-blue); font-size: 1.2rem;"></i>
+                             <div style="position: absolute; top: -5px; right: -5px; background: var(--secondary-orange); color: white; font-size: 0.65rem; padding: 2px 7px; border-radius: 12px; font-weight: 800; border: 2px solid var(--primary-deep); box-shadow: 0 0 10px var(--secondary-orange)40;">
+                                ${State.user.points || 0}
+                             </div>
+                        </div>
                     </div>
                 </header>
+
+                <!-- Points Progress -->
+                <div class="glass-card" style="margin-bottom: 20px; padding: 15px; border-left: 4px solid var(--secondary-orange);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 0.8rem; font-weight: 600;">Progresso de Recompensa</span>
+                        <span style="font-size: 0.8rem; color: var(--secondary-orange); font-weight: 700;">${State.user.points || 0}/100</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; margin-bottom: 10px;">
+                        <div style="width: ${Math.min((State.user.points || 0), 100)}%; height: 100%; background: linear-gradient(to right, var(--secondary-orange), #FFB74D); border-radius: 4px; transition: width 1s ease-in-out;"></div>
+                    </div>
+                    ${(State.user.points || 0) >= 100 ? `
+                        <button class="btn btn-primary" style="width: 100%; font-size: 0.8rem; background: linear-gradient(45deg, #4CAF50, #2E7D32); border: none; animation: animate-pulse-gold 2s infinite;" onclick="handleExchangePoints()">
+                            🎁 RESGATAR R$ 5,00 AGORA
+                        </button>
+                    ` : `
+                        <p style="font-size: 0.65rem; opacity: 0.7; text-align: center;">Junte 100 pontos para trocar por saldo real!</p>
+                    `}
+                </div>
 
                 <!-- Balance Cards Carousel-style -->
                 <div class="glass-card" style="background: linear-gradient(135deg, var(--primary-blue), #003399); border: none; margin-bottom: 20px;">
@@ -1310,7 +1351,92 @@
         const input = document.querySelector('input[readonly]');
         input.select();
         document.execCommand('copy');
-        alert('Link de convite copiado!');
+        alert("Link copiado! Envie para seus amigos.");
+    };
+
+    window.handleDailyCheckin = async () => {
+        if (!State.user) return;
+        
+        const last = State.user.last_checkin ? new Date(State.user.last_checkin) : null;
+        const now = new Date();
+        
+        if (last && (now - last < 24 * 60 * 60 * 1000)) {
+            alert("Você já fez o check-in hoje! Volte em 24h.");
+            return;
+        }
+
+        const newPoints = (State.user.points || 0) + 1;
+        const checkinDate = now.toISOString();
+
+        const { error } = await supabase.from('users').update({
+            points: newPoints,
+            last_checkin: checkinDate
+        }).eq('phone', State.user.phone);
+
+        if (error) {
+            alert("Erro ao salvar check-in: " + error.message);
+            return;
+        }
+
+        State.user.points = newPoints;
+        State.user.last_checkin = checkinDate;
+        
+        alert("💎 +1 Ponto de Fidelidade! Continue assim.");
+        Router.render();
+    };
+
+    window.handleExchangePoints = async () => {
+        if (!State.user || (State.user.points || 0) < 100) {
+            alert("Você precisa de pelo menos 100 pontos.");
+            return;
+        }
+
+        if (!confirm("Deseja trocar 100 pontos por R$ 5,00 de saldo disponível?")) return;
+
+        const newPoints = State.user.points - 100;
+        const newAvailable = State.user.available + 5;
+        const newBalance = State.user.balance + 5;
+
+        // Registrar transação
+        const { error: txError } = await supabase.from('transactions').insert([{
+            user_phone: State.user.phone,
+            type: 'dep',
+            amount: 5,
+            description: 'Troca de Pontos (Fidelidade)'
+        }]);
+
+        if (txError) {
+            alert("Erro ao processar recompensa: " + txError.message);
+            return;
+        }
+
+        const { error: userError } = await supabase.from('users').update({
+            points: newPoints,
+            available: newAvailable,
+            balance: newBalance
+        }).eq('phone', State.user.phone);
+
+        if (userError) {
+            alert("Erro ao atualizar saldo: " + userError.message);
+            return;
+        }
+
+        State.user.points = newPoints;
+        State.user.available = newAvailable;
+        State.user.balance = newBalance;
+
+        // Efeito de Confete
+        if (typeof confetti === 'function') {
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#0066FF', '#FFD700', '#FFFFFF']
+            });
+        }
+
+        alert("🎉 Parabéns! R$ 5,00 foram adicionados ao seu saldo disponível.");
+        Router.render();
     };
 
     window.handleLogout = () => {

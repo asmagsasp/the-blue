@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS public.users (
   available numeric DEFAULT 0 NOT NULL,
   invested numeric DEFAULT 0 NOT NULL,
   sponsor text,
+  points integer DEFAULT 0 NOT NULL,
+  last_checkin timestamp with time zone,
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
