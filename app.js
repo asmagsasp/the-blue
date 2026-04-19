@@ -205,18 +205,22 @@
                 </div>
 
                 <!-- Quick Actions -->
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px;">
-                    <button class="glass-card" onclick="Router.navigate('wallet')" style="padding: 15px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-plus-circle" style="color: var(--secondary-orange); font-size: 1.2rem;"></i>
-                        <span style="font-size: 0.75rem; font-weight: 600;">Depositar</span>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 30px;">
+                    <button class="glass-card" onclick="Router.navigate('wallet'); setTimeout(() => switchWalletTab('dep'), 50);" style="padding: 12px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-plus-circle" style="color: var(--secondary-orange); font-size: 1.1rem;"></i>
+                        <span style="font-size: 0.65rem; font-weight: 600;">Depositar</span>
                     </button>
-                    <button class="glass-card" onclick="Router.navigate('investments')" style="padding: 15px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                         <i class="fa-solid fa-bolt" style="color: var(--accent-blue); font-size: 1.2rem;"></i>
-                        <span style="font-size: 0.75rem; font-weight: 600;">Investir</span>
+                    <button class="glass-card" onclick="Router.navigate('wallet'); setTimeout(() => switchWalletTab('trans'), 50);" style="padding: 12px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                         <i class="fa-solid fa-paper-plane" style="color: #00D1FF; font-size: 1.1rem;"></i>
+                        <span style="font-size: 0.65rem; font-weight: 600;">Transferir</span>
                     </button>
-                    <button class="glass-card" onclick="Router.navigate('wallet')" style="padding: 15px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                         <i class="fa-solid fa-arrow-up-from-bracket" style="color: #4CAF50; font-size: 1.2rem;"></i>
-                        <span style="font-size: 0.75rem; font-weight: 600;">Sacar</span>
+                    <button class="glass-card" onclick="Router.navigate('investments')" style="padding: 12px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                         <i class="fa-solid fa-bolt" style="color: #4CAF50; font-size: 1.1rem;"></i>
+                        <span style="font-size: 0.65rem; font-weight: 600;">Investir</span>
+                    </button>
+                    <button class="glass-card" onclick="Router.navigate('wallet'); setTimeout(() => switchWalletTab('with'), 50);" style="padding: 12px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                         <i class="fa-solid fa-wallet" style="color: #FF5252; font-size: 1.1rem;"></i>
+                        <span style="font-size: 0.65rem; font-weight: 600;">Saque</span>
                     </button>
                 </div>
 
@@ -474,10 +478,16 @@
                 </div>
 
                 <!-- Tabs -->
-                <div style="display: flex; gap: 10px; margin-bottom: 25px;">
-                    <button class="btn btn-outline" style="flex: 1; background: var(--glass-bg); padding: 8px;" id="btn-dep-tab" onclick="switchWalletTab('dep')">Depositar</button>
-                    <button class="btn btn-outline" style="flex: 1; padding: 8px;" id="btn-trans-tab" onclick="switchWalletTab('trans')">Transferir</button>
-                    <button class="btn btn-outline" style="flex: 1; padding: 8px;" id="btn-with-tab" onclick="switchWalletTab('with')">Sacar</button>
+                <div style="display: flex; gap: 8px; margin-bottom: 25px;">
+                    <button class="btn btn-outline" style="flex: 1; background: var(--glass-bg); padding: 12px 5px; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 5px;" id="btn-dep-tab" onclick="switchWalletTab('dep')">
+                        <i class="fa-solid fa-plus-circle" style="color: var(--secondary-orange);"></i> Depósito
+                    </button>
+                    <button class="btn btn-outline" style="flex: 1; padding: 12px 5px; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 5px;" id="btn-trans-tab" onclick="switchWalletTab('trans')">
+                        <i class="fa-solid fa-paper-plane" style="color: #00D1FF;"></i> Transferir
+                    </button>
+                    <button class="btn btn-outline" style="flex: 1; padding: 12px 5px; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 5px;" id="btn-with-tab" onclick="switchWalletTab('with')">
+                        <i class="fa-solid fa-money-bill-transfer" style="color: #FF5252;"></i> Sacar
+                    </button>
                 </div>
 
                 <!-- Deposit Section -->
@@ -1028,12 +1038,19 @@
     };
 
     window.handleTransfer = async () => {
-        const phone = document.getElementById('trans-phone').value;
+        const rawPhone = document.getElementById('trans-phone').value;
         const amount = parseFloat(document.getElementById('trans-amount').value);
         const pass = document.getElementById('trans-pass').value;
 
-        if (!phone || !amount || !pass) {
+        if (!rawPhone || !amount || !pass) {
             alert("Preencha todos os campos para transferir.");
+            return;
+        }
+
+        const phone = rawPhone.replace(/\D/g, ''); // Limpando o telefone para o banco
+
+        if (phone === State.user.phone.replace(/\D/g, '')) {
+            alert("Você não pode transferir para si mesmo.");
             return;
         }
 
@@ -1050,29 +1067,41 @@
         // Integracao Banco
         const { data: destUser } = await supabase.from('users').select('*').eq('phone', phone).single();
         if (!destUser) {
-            alert("O telefone informado não foi localizado no sistema.");
+            alert("O telefone informado não foi localizado no sistema. Verifique se o destinatário já possui cadastro.");
             return;
         }
 
-        // Alterando balanços via DB Call
-        State.user.available -= amount;
-        State.user.balance -= amount;
-        destUser.available += amount;
-        destUser.balance += amount;
+        if(!confirm(`Confirma a transferência de R$ ${amount.toFixed(2)} para ${destUser.phone}?`)) return;
 
-        await supabase.from('users').update({ available: State.user.available, balance: State.user.balance }).eq('phone', State.user.phone);
-        await supabase.from('users').update({ available: destUser.available, balance: destUser.balance }).eq('phone', destUser.phone);
+        // Alterando balanços via DB Call
+        const newSenderAvailable = State.user.available - amount;
+        const newSenderBalance = State.user.balance - amount;
+        const newDestAvailable = Number(destUser.available) + amount;
+        const newDestBalance = Number(destUser.balance) + amount;
+
+        // Atualização em cascata (idealmente seria uma transação RPC, mas faremos sequencial no teste)
+        const { error: err1 } = await supabase.from('users').update({ available: newSenderAvailable, balance: newSenderBalance }).eq('phone', State.user.phone);
+        const { error: err2 } = await supabase.from('users').update({ available: newDestAvailable, balance: newDestBalance }).eq('phone', phone);
+
+        if (err1 || err2) {
+            alert("Erro técnico ao processar transferência. Verifique sua conexão.");
+            return;
+        }
 
         // Registrando hist de transaçoes entre os dois
-        const txOut = { user_phone: State.user.phone, type: 'with', amount: -amount, description: `Transf. para ${phone}` };
-        const txIn = { user_phone: phone, type: 'dep', amount: amount, description: `Transf. recebida de ${State.user.phone}` };
+        const txOut = { user_phone: State.user.phone, type: 'with', amount: -amount, description: `P2P: Enviado para ${phone}` };
+        const txIn = { user_phone: phone, type: 'dep', amount: amount, description: `P2P: Recebido de ${State.user.phone}` };
 
         await supabase.from('transactions').insert([txOut, txIn]);
 
+        // Sync Local State
+        State.user.available = newSenderAvailable;
+        State.user.balance = newSenderBalance;
+        
         txOut.date = new Date().toLocaleDateString('pt-BR');
         State.transactions.unshift(txOut);
 
-        alert(`Transferência de R$ ${amount.toFixed(2)} para ${phone} concluída via banco real!`);
+        alert(`✅ Sucesso! R$ ${amount.toFixed(2)} transferidos para ${phone}.`);
         Router.navigate('wallet');
     };
 
