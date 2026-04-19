@@ -519,7 +519,8 @@
                 <div id="withdraw-section" style="display: none;" class="glass-card animate-fade">
                     <h3 style="margin-bottom: 20px;">Solicitar Saque</h3>
                     <div class="alert" style="background: rgba(255,130,0,0.1); border: 1px solid var(--secondary-orange); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.8rem;">
-                        Saques são processados em até 24h úteis.
+                        <i class="fa-solid fa-circle-info"></i> Saques são processados em até 24h úteis.<br>
+                        <strong style="color: #FFD700;">Taxa de Saque: 8%</strong> (Mínimo R$ 5,00)
                     </div>
                     
                     <label style="display: block; margin-bottom: 8px;">Valor (R$)</label>
@@ -1015,8 +1016,8 @@
         const pixKey = document.getElementById('withdraw-pix-key').value;
         const pass = document.getElementById('withdraw-pass').value;
 
-        if (!amount || amount < 10) {
-            alert("Valor inválido. Saque mínimo é R$ 10,00.");
+        if (!amount || amount < 5) {
+            alert("Valor inválido. Saque mínimo é R$ 5,00.");
             return;
         }
         if (!pixKey) {
@@ -1036,6 +1037,13 @@
             return;
         }
 
+        const fee = amount * 0.08;
+        const netAmount = amount - fee;
+
+        if (!confirm(`Solicitação de Saque:\n\nValor Bruto: R$ ${amount.toFixed(2)}\nTaxa (8%): R$ ${fee.toFixed(2)}\nValor LÍQUIDO a receber: R$ ${netAmount.toFixed(2)}\n\nConfirma o pedido de saque?`)) {
+            return;
+        }
+
         State.user.available -= amount;
         State.user.balance -= amount;
         await supabase.from('users').update({ available: State.user.available, balance: State.user.balance }).eq('phone', State.user.phone);
@@ -1044,7 +1052,7 @@
             user_phone: State.user.phone,
             type: 'saque_pendente',
             amount: -amount,
-            description: `Saque - Chave PIX: ${pixKey} (Aguardando Aprovação)`
+            description: `Saque - Chave PIX: ${pixKey} | Bruto: R$ ${amount.toFixed(2)} | Líquido (após 8%): R$ ${netAmount.toFixed(2)}`
         };
 
         const { error } = await supabase.from('transactions').insert([tx]);
