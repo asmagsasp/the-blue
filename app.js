@@ -574,7 +574,7 @@
                 <div class="glass-card" style="margin-top: 25px; margin-bottom: 25px; background: linear-gradient(to bottom right, var(--primary-dark), rgba(0,209,255,0.1));">
                     <p style="font-size: 0.8rem; margin-bottom: 10px;">Seu Link de Convite</p>
                     <div style="display: flex; gap: 10px; align-items: center;">
-                        <input type="text" readonly value="${window.location.origin}/ref/${State.user.phone}" style="flex: 1; background: rgba(255,255,255,0.05); border: 1px dashed var(--glass-border); padding: 10px; border-radius: 8px; color: var(--accent-blue); font-size: 0.8rem;">
+                        <input type="text" readonly value="${window.location.origin}/?ref=${State.user.phone}" style="flex: 1; background: rgba(255,255,255,0.05); border: 1px dashed var(--glass-border); padding: 10px; border-radius: 8px; color: var(--accent-blue); font-size: 0.8rem;">
                         <button class="btn btn-outline" style="padding: 10px;" onclick="copyRef()"><i class="fa-solid fa-copy"></i></button>
                     </div>
                 </div>
@@ -1697,6 +1697,20 @@
         }
 
         // Check if there's a referral code in the URL
+        // Referral Link Handler (?ref=PHONE)
+        const urlParams = new URLSearchParams(window.location.search);
+        const refParam = urlParams.get('ref');
+        if (refParam) {
+            localStorage.setItem('theblue_ref', refParam);
+            // Clean URL and show register form
+            window.history.replaceState({}, document.title, window.location.pathname);
+            State.currentView = 'auth';
+            setTimeout(() => {
+                if (window.toggleAuth) window.toggleAuth(true);
+            }, 150);
+        }
+
+        // Keep legacy /ref/ support just in case, but knowing it might 404
         const path = window.location.pathname;
         if (path.startsWith('/ref/')) {
             const refCode = path.replace('/ref/', '');
@@ -1706,7 +1720,7 @@
                 State.currentView = 'auth';
                 setTimeout(() => {
                     if (window.toggleAuth) window.toggleAuth(true);
-                }, 100);
+                }, 150);
             }
         }
 
