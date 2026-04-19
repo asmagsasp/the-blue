@@ -895,8 +895,13 @@
             return;
         }
 
-        const pixKey = "theblue-pagamentos@gmail.com";
-        const payload = window.generatePixPayload(pixKey, "The Blue Plataforma", "Sao Paulo", amount);
+        const pixKey = "theblueplataforma@gmail.com";
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('pt-BR');
+        const timeStr = now.toLocaleTimeString('pt-BR');
+        
+        // Incluindo o telefone como Identificador no PIX (Tag 62)
+        const payload = window.generatePixPayload(pixKey, "The Blue Plataforma", "Sao Paulo", amount, State.user.phone);
         
         State.currentPix = { amount: amount, payload: payload };
 
@@ -904,7 +909,7 @@
             user_phone: State.user.phone,
             type: 'pix_pendente',
             amount: amount,
-            description: 'Depósito PIX (Aguardando)'
+            description: `Depósito PIX - Cliente: ${State.user.phone} em ${dateStr} às ${timeStr}`
         };
 
         const { error } = await supabase.from('transactions').insert([tx]);
@@ -926,7 +931,7 @@
         alert('Código PIX Copia e Cola copiado com sucesso! Abra o app do seu banco e cole na área PIX.');
     };
 
-    window.generatePixPayload = (chave, nome, cidade, valor) => {
+    window.generatePixPayload = (chave, nome, cidade, valor, id = "***") => {
         const pad = (n, len) => n.toString().padStart(len, '0');
         let payloadString = "000201010212";
         let gui = "0014br.gov.bcb.pix";
@@ -939,7 +944,10 @@
             payloadString += "54" + pad(valStr.length, 2) + valStr;
         }
         payloadString += "5802BR59" + pad(nome.length, 2) + nome + "60" + pad(cidade.length, 2) + cidade;
-        let addData = "0503***";
+        
+        // Tag 62 - Campo 05: Identificador da transação
+        const cleanId = id.replace(/\D/g, '').substring(0, 25); // Limpando para garantir compatibilidade
+        let addData = "05" + pad(cleanId.length, 2) + cleanId;
         payloadString += "62" + pad(addData.length, 2) + addData + "6304";
         
         // CRC16 Checksum
