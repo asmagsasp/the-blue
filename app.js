@@ -1259,13 +1259,34 @@
                 </div>
                 `;
             } else {
+                const gross = Math.abs(p.amount);
+                const fee = gross * 0.08;
+                const net = gross - fee;
+                const timeStr = new Date(p.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = new Date(p.created_at).toLocaleDateString('pt-BR');
+
                 return `
-                <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 15px;">
-                     <p style="font-size: 0.85rem; font-weight: 600;">Solicitação de Saque: <span style="color: #FF9800;">R$ ${Math.abs(p.amount).toFixed(2)}</span></p>
-                     <p style="font-size: 0.7rem; opacity: 0.6; margin-bottom: 10px;">Cliente: ${p.user_phone} | ID: ${p.id.split('-')[0]}</p>
+                <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 15px; background: rgba(255,130,0,0.03); padding: 12px; border-radius: 8px;">
+                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <p style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; font-weight: 700;">Solicitação de Saque</p>
+                            <h3 style="color: #FF9800; margin: 5px 0;">R$ ${net.toFixed(2)} <span style="font-size: 0.7rem; color: white; opacity: 0.5;">(Líquido)</span></h3>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="font-size: 0.65rem; opacity: 0.8;">${dateStr} às ${timeStr}</p>
+                            <p style="font-size: 0.65rem; color: #4CAF50; font-weight: 600;">ID: ${p.id.split('-')[0]}</p>
+                        </div>
+                     </div>
+
+                     <div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; margin: 10px 0; font-size: 0.75rem;">
+                        <p>👤 <strong>Cliente:</strong> ${p.user_phone}</p>
+                        <p>💰 <strong>Bruto:</strong> R$ ${gross.toFixed(2)} | 🏷️ <strong>Taxa (8%):</strong> R$ ${fee.toFixed(2)}</p>
+                        <p style="margin-top: 5px; color: var(--primary-blue); font-weight: 600; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 5px;">📍 ${p.description.split('|')[0]}</p>
+                     </div>
+
                      <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.7rem; flex: 1; background: var(--secondary-orange); border-color: var(--secondary-orange);" onclick="approveWithdraw('${p.id}', '${p.user_phone}', ${Math.abs(p.amount)})">✔ Efetivar Saque</button>
-                        <button class="btn btn-outline" style="padding: 5px 15px; font-size: 0.7rem; color: #FF5252; flex: 1;" onclick="rejectWithdraw('${p.id}', '${p.user_phone}', ${Math.abs(p.amount)})">❌ Recusar</button>
+                        <button class="btn btn-primary" style="padding: 8px; font-size: 0.75rem; flex: 1.5; background: var(--secondary-orange); border-color: var(--secondary-orange);" onclick="approveWithdraw('${p.id}', '${p.user_phone}', ${gross})">✔ Efetivar Saque</button>
+                        <button class="btn btn-outline" style="padding: 8px; font-size: 0.75rem; color: #FF5252; flex: 1;" onclick="rejectWithdraw('${p.id}', '${p.user_phone}', ${gross})">❌ Recusar</button>
                      </div>
                 </div>
                 `;
