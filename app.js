@@ -510,7 +510,7 @@
                     </div>
                     
                     <label style="display: block; margin-bottom: 8px;">Valor do Depósito</label>
-                    <input type="number" id="dep-amount" placeholder="Mínimo R$ 50,00" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
+                    <input type="number" id="dep-amount" placeholder="Mínimo R$ 5,00" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
                     
                     <button class="btn btn-secondary" style="width: 100%;" onclick="handleDeposit()">Gerar Pagamento</button>
                 </div>
@@ -895,8 +895,8 @@
 
     window.handleDeposit = async () => {
         const amount = parseFloat(document.getElementById('dep-amount').value);
-        if (!amount || amount < 50) {
-            alert("O valor mínimo de depósito é R$ 50,00.");
+        if (!amount || amount < 5) {
+            alert("O valor mínimo de depósito é R$ 5,00.");
             return;
         }
 
