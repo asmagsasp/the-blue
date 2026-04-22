@@ -1,4 +1,4 @@
-const CACHE_NAME = 'the-blue-cache-v1';
+const CACHE_NAME = 'the-blue-cache-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -9,6 +9,8 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
+  // Force waiting worker to become active
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -17,15 +19,41 @@ self.addEventListener('install', event => {
   );
 });
 
+self.addEventListener('activate', event => {
+  // Take control of all clients immediately
+  event.waitUntil(self.clients.claim());
+  
+  // Clear old caches
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
+
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
+    // Network First strategy
+    fetch(event.request)
       .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
+        // Cache the new response if it's successful
+        if (response && response.status === 200 && response.type === 'basic') {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
         }
-        return fetch(event.request);
+        return response;
+      })
+      .catch(() => {
+        // Fallback to cache if network fails (offline mode)
+        return caches.match(event.request);
       })
   );
 });
