@@ -771,6 +771,8 @@
                             <h2 id="report-net-balance" style="color: var(--primary-blue); margin-top: 5px;">R$ 0,00</h2>
                         </div>
 
+                        <button class="btn btn-secondary" style="width: 100%; margin-top: 10px; background: #207245; border-color: #207245;" onclick="exportAdminReportsToExcel()"><i class="fa-solid fa-file-excel"></i> Exportar para Excel (CSV)</button>
+
                         <div id="report-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
                             <!-- List will be populated here -->
                         </div>
@@ -1507,6 +1509,8 @@
             reportListDiv.innerHTML = `<p style="text-align:center; color: red;">Erro: ${error.message}</p>`;
             return;
         }
+        
+        window.lastAdminReportData = data;
 
         let depApproved = 0, depPending = 0;
         let withApproved = 0, withPending = 0;
@@ -1561,6 +1565,40 @@
         document.getElementById('report-net-balance').style.color = net >= 0 ? '#4CAF50' : '#FF5252';
 
         reportListDiv.innerHTML = htmlSnippet;
+    };
+
+    window.exportAdminReportsToExcel = () => {
+        if (!window.lastAdminReportData || window.lastAdminReportData.length === 0) {
+            alert("Nenhum dado para exportar. Gere o relatório primeiro.");
+            return;
+        }
+
+        let csvContent = "Data/Hora;Cliente;Tipo;Status;Valor (R$)\n";
+        
+        window.lastAdminReportData.forEach(tx => {
+            const date = new Date(tx.created_at).toLocaleString('pt-BR');
+            const amount = Math.abs(parseFloat(tx.amount)).toFixed(2).replace('.', ',');
+            const client = tx.user_phone;
+            
+            let type = ''; let status = '';
+            if (tx.type === 'dep') { type = 'Depósito'; status = 'Aprovado'; }
+            else if (tx.type === 'pix_pendente') { type = 'Depósito'; status = 'Pendente'; }
+            else if (tx.type === 'with') { type = 'Saque'; status = 'Aprovado'; }
+            else if (tx.type === 'saque_pendente') { type = 'Saque'; status = 'Pendente'; }
+            else if (tx.type.includes('recusado')) { type = tx.type.includes('pix') ? 'Depósito' : 'Saque'; status = 'Recusado'; }
+            else { type = tx.type; status = '-'; }
+
+            csvContent += `${date};${client};${type};${status};${amount}\n`;
+        });
+
+        const blob = new Blob(["\uFEFF", csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `relatorio_caixa_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     };
 
     window.copyRef = () => {
