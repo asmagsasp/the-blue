@@ -172,6 +172,15 @@ p { color: var(--text-dim); line-height: 1.6; }
     letter-spacing: -1px;
 }
 
+@media (max-height: 650px) {
+    .auth-header {
+        display: none !important;
+    }
+    .app-container {
+        padding-top: 10px !important;
+    }
+}
+
 /* Mascot Placeholder */
 .mascot-container {
     width: 120px;

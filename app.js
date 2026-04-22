@@ -107,29 +107,29 @@
                     </div>
 
                     <div id="register-fields">
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.9rem;">Código de Convite (Opcional)</label>
-                        <input type="text" placeholder="Código de Convite" class="input-field" id="sponsor" value="${localStorage.getItem('theblue_ref') || ''}" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 2px; font-size: 0.8rem; color: var(--text-dim);">Código de Convite (Opcional)</label>
+                        <input type="text" placeholder="Código de Convite" class="input-field" id="sponsor" value="${localStorage.getItem('theblue_ref') || ''}" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 10px;">
 
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.9rem;">Telefone</label>
-                        <input type="text" placeholder="(00) 00000-0000" class="input-field" id="phone" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 2px; font-size: 0.8rem; color: var(--text-dim);">Telefone</label>
+                        <input type="text" placeholder="(00) 00000-0000" class="input-field" id="phone" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 10px;">
                         
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.9rem;">Senha de Acesso</label>
-                        <input type="password" placeholder="••••••••" class="input-field" id="password" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 2px; font-size: 0.8rem; color: var(--text-dim);">Senha de Acesso</label>
+                        <input type="password" placeholder="••••••••" class="input-field" id="password" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 10px;">
                         
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.9rem;">Senha de Saque</label>
-                        <input type="password" placeholder="••••••••" class="input-field" id="withdraw_password" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 2px; font-size: 0.8rem; color: var(--text-dim);">Senha de Saque</label>
+                        <input type="password" placeholder="••••••••" class="input-field" id="withdraw_password" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
                         
-                        <button class="btn btn-primary" style="width: 100%;" onclick="handleRegister()">Criar Conta Grátis</button>
+                        <button class="btn btn-primary" style="width: 100%; padding: 14px;" onclick="handleRegister()">Criar Conta Grátis</button>
                     </div>
 
                     <div id="login-fields" style="display: none;">
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.9rem;">Telefone</label>
+                        <label style="display: block; margin-bottom: 2px; font-size: 0.8rem; color: var(--text-dim);">Telefone</label>
                         <input type="text" placeholder="(00) 00000-0000" class="input-field" id="login-phone" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
                         
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.9rem;">Senha</label>
+                        <label style="display: block; margin-bottom: 2px; font-size: 0.8rem; color: var(--text-dim);">Senha</label>
                         <input type="password" placeholder="••••••••" class="input-field" id="login-password" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
                         
-                        <button class="btn btn-secondary" style="width: 100%;" onclick="handleLogin()">Acessar Plataforma</button>
+                        <button class="btn btn-secondary" style="width: 100%; padding: 14px;" onclick="handleLogin()">Acessar Plataforma</button>
                     </div>
                 </div>
             </div>
