@@ -92,12 +92,12 @@
         views: {
             auth: () => `
             <div class="app-container animate-fade">
-                <div class="auth-header" style="text-align: center; padding: 20px 0;">
+                <div class="auth-header" style="text-align: center; padding: 0 0 10px 0;">
                     <div class="mascot-container">
                         <div class="mascot-shape"></div>
                     </div>
-                    <h1 style="color: var(--primary-blue); font-size: 3rem; margin-top: 10px;">The Blue</h1>
-                    <p>O Azul que transforma seu futuro.</p>
+                    <h1 style="color: var(--primary-blue); font-size: 2.5rem; margin-top: 5px;">The Blue</h1>
+                    <p style="font-size: 0.85rem;">O Azul que transforma seu futuro.</p>
                 </div>
                 
                 <div id="auth-form" class="glass-card">
