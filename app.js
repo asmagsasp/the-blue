@@ -1324,6 +1324,8 @@
             .in('type', ['pix_pendente', 'saque_pendente'])
             .order('created_at', { ascending: false });
 
+        window.lastAdminPendings = pendings || []; // Cache to avoid complex onclick strings
+
         if (!pendings || pendings.length === 0) {
             list.innerHTML = '<p style="text-align: center; opacity: 0.5;">Nenhuma pendência no momento.</p>';
             return;
@@ -1346,8 +1348,8 @@
                      `}
 
                      <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.7rem; flex: 1;" onclick="window.approvePix('${p.id}', '${p.user_phone}', ${Math.abs(p.amount)})">✔ Aprovar PIX</button>
-                        <button class="btn btn-outline" style="padding: 5px 15px; font-size: 0.7rem; color: #FF5252; flex: 1;" onclick="window.rejectPix('${p.id}')">❌ Recusar</button>
+                        <button class="btn btn-primary" style="padding: 10px; font-size: 0.75rem; flex: 1; cursor: pointer;" onclick="window.handleAdminApprove('${p.id}')">✔ Aprovar</button>
+                        <button class="btn btn-outline" style="padding: 10px; font-size: 0.75rem; color: #FF5252; flex: 1; cursor: pointer;" onclick="window.handleAdminReject('${p.id}')">❌ Recusar</button>
                      </div>
                 </div>
                 `;
@@ -1378,8 +1380,8 @@
                      </div>
 
                      <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="padding: 8px; font-size: 0.75rem; flex: 1.5; background: var(--secondary-orange); border-color: var(--secondary-orange);" onclick="approveWithdraw('${p.id}', '${p.user_phone}', ${gross})">✔ Efetivar Saque</button>
-                        <button class="btn btn-outline" style="padding: 8px; font-size: 0.75rem; color: #FF5252; flex: 1;" onclick="rejectWithdraw('${p.id}', '${p.user_phone}', ${gross})">❌ Recusar</button>
+                        <button class="btn btn-primary" style="padding: 10px; font-size: 0.75rem; flex: 1.5; background: var(--secondary-orange); border-color: var(--secondary-orange); cursor: pointer;" onclick="window.handleAdminApprove('${p.id}')">✔ Efetivar Saque</button>
+                        <button class="btn btn-outline" style="padding: 10px; font-size: 0.75rem; color: #FF5252; flex: 1; cursor: pointer;" onclick="window.handleAdminReject('${p.id}')">❌ Recusar</button>
                      </div>
                 </div>
                 `;
@@ -1387,78 +1389,62 @@
         }).join('');
     };
 
-    window.approveWithdraw = async (txId, phone, amount) => {
-        if(!confirm(`Confirmação de Saque:\n\nVocê já realizou a transferência de R$ ${amount.toFixed(2)} para a conta bancária do usuário ${phone}?\n\nSe sim, clique OK para efetivar este saque na plataforma.`)) return;
+    window.handleAdminApprove = async (txId) => {
+        const p = window.lastAdminPendings.find(x => x.id === txId);
+        if (!p) return;
 
-        const { data, error } = await supabase.from('transactions').update({
-            type: 'with',
-            description: 'Saque Aprovado'
-        }).eq('id', txId).select();
+        if (p.type === 'pix_pendente') {
+            const phone = p.user_phone;
+            const amount = Math.abs(p.amount);
+            if(!confirm(`Confirmação de Segurança:\n\nVocê já conferiu a conta bancária e confirma que o PIX de R$ ${amount.toFixed(2)} já está na conta real?\n\nSe sim, clique OK para liberar o saldo na plataforma automaticamente para ${phone}.`)) return;
 
-        if (error) {
-            alert("Erro ao aprovar saque no banco: " + error.message);
-            return;
-        }
+            const { data: user } = await supabase.from('users').select('*').eq('phone', phone).single();
+            if (!user) { alert("Usuário não encontrado."); return; }
 
-        if (!data || data.length === 0) {
-            alert("⚠️ AVISO: O registro não foi atualizado. Verifique se você tem permissão de administrador ou se o registro ainda existe.");
-            return;
-        }
-
-        alert("✅ Sucesso! O saque foi marcado como efetuado.");
-        loadAdminData();
-    };
-
-    window.rejectWithdraw = async (txId, phone, amount) => { // FIXING_BOILERPLATE
-        if(!confirm(`Recusar o saque de R$ ${amount.toFixed(2)} do usuário ${phone}? O saldo será estornado imediatamente para ele na plataforma.`)) return;
-        
-        const { data: user } = await supabase.from('users').select('*').eq('phone', phone).single();
-        if(user) {
-            await supabase.from('users').update({
+            const { error: balanceError } = await supabase.from('users').update({
                 available: Number(user.available) + amount,
                 balance: Number(user.balance) + amount
             }).eq('phone', phone);
-            
-            await supabase.from('transactions').update({
-                type: 'saque_recusado',
-                description: 'Saque Recusado (Estornado)'
-            }).eq('id', txId);
 
-            alert("Saque recusado e valor estornado para o cliente.");
-            loadAdminData();
+            if (balanceError) { alert("Erro ao atualizar saldo."); return; }
+            
+            await supabase.from('transactions').update({ type: 'dep', description: 'Depósito PIX (Aprovado)' }).eq('id', txId);
+            alert(`✅ SUCESSO! R$ ${amount.toFixed(2)} creditados.`);
+        } else {
+            const gross = Math.abs(p.amount);
+            const fee = gross * 0.08;
+            const net = gross - fee;
+            if(!confirm(`Confirmação de Saque:\n\nVocê já realizou a transferência de R$ ${net.toFixed(2)} (Líquido) para ${p.user_phone}?\n\nSe sim, clique OK para efetivar.`)) return;
+
+            await supabase.from('transactions').update({ type: 'with', description: 'Saque Aprovado' }).eq('id', txId);
+            alert("✅ Saque marcado como efetuado.");
         }
+        loadAdminData();
     };
 
-    window.approvePix = async (txId, phone, amount) => {
-        console.log("Iniciando aprovação de PIX:", {txId, phone, amount});
-        if(!confirm(`Confirmação de Segurança:\n\nVocê já conferiu a conta bancária e confirma que o PIX de R$ ${Number(amount).toFixed(2)} já está na conta real?\n\nSe sim, clique OK para liberar o saldo na plataforma automaticamente para ${phone}.`)) return;
+    window.handleAdminReject = async (txId) => {
+        const p = window.lastAdminPendings.find(x => x.id === txId);
+        if (!p) return;
 
-        const { data: user, error: userError } = await supabase.from('users').select('*').eq('phone', phone).single();
-        if (userError || !user) {
-            alert("Erro ao localizar usuário: " + (userError ? userError.message : "Não encontrado"));
-            return;
+        if (p.type === 'pix_pendente') {
+            if(!confirm("Recusar este depósito?")) return;
+            await supabase.from('transactions').update({ type: 'pix_recusado', description: 'Depósito PIX (Recusado)' }).eq('id', txId);
+            alert("Depósito recusado.");
+        } else {
+            const amount = Math.abs(p.amount);
+            if(!confirm(`Recusar saque e estornar R$ ${amount.toFixed(2)}?`)) return;
+            
+            const { data: user } = await supabase.from('users').select('*').eq('phone', p.user_phone).single();
+            if(user) {
+                await supabase.from('users').update({
+                    available: Number(user.available) + amount,
+                    balance: Number(user.balance) + amount
+                }).eq('phone', p.user_phone);
+                
+                await supabase.from('transactions').update({ type: 'saque_recusado', description: 'Saque Recusado (Estornado)' }).eq('id', txId);
+                alert("Saque recusado e valor estornado.");
+            }
         }
-
-        const { data: updUser, error: balanceError } = await supabase.from('users').update({
-            available: Number(user.available) + Number(amount),
-            balance: Number(user.balance) + Number(amount)
-        }).eq('phone', phone).select();
-
-        if (balanceError || !updUser || updUser.length === 0) {
-            alert("ERRO AO ATUALIZAR SALDO: " + (balanceError ? balanceError.message : "0 linhas afetadas"));
-            return;
-        }
-        
-        const { data: updTx, error: txError } = await supabase.from('transactions').update({
-            type: 'dep',
-            description: 'Depósito PIX (Aprovado)'
-        }).eq('id', txId).select();
-
-        if (txError || !updTx || updTx.length === 0) {
-            alert("Saldo creditado, mas erro ao atualizar status da transação: " + (txError ? txError.message : "0 linhas afetadas"));
-        }
-
-        alert(`✅ SUCESSO! R$ ${Number(amount).toFixed(2)} creditados para ${phone}.`);
         loadAdminData();
     };
 
