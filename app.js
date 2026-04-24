@@ -1409,8 +1409,10 @@
                 const phone = p.user_phone;
                 const amount = Math.abs(parseFloat(p.amount));
                 console.log(`💰 Processando Depósito PIX: R$ ${amount} para ${phone}`);
-
-                if(!confirm(`Confirmação de Segurança:\n\nVocê já conferiu a conta bancária e confirma que o PIX de R$ ${amount.toFixed(2)} já está na conta real?\n\nSe sim, clique OK para liberar o saldo na plataforma automaticamente para ${phone}.`)) {
+                console.log(`🙋 Aguardando confirmação do admin para R$ ${amount}...`);
+                const confirmed = confirm("CONFIRMAR RECEBIMENTO?\n\nValor: R$ " + amount.toFixed(2) + "\nCliente: " + phone + "\n\nClique OK apenas se o dinheiro já estiver na conta.");
+                
+                if(!confirmed) {
                     console.log("🚫 Aprovação cancelada pelo usuário (confirm).");
                     return;
                 }
@@ -1461,7 +1463,7 @@
                 const net = gross - fee;
                 console.log(`💸 Processando Saque: R$ ${net} (Líquido) para ${p.user_phone}`);
 
-                if(!confirm(`Confirmação de Saque:\n\nVocê já realizou a transferência de R$ ${net.toFixed(2)} (Líquido) para ${p.user_phone}?\n\nSe sim, clique OK para efetivar.`)) {
+                if(!confirm("EFETIVAR SAQUE?\n\nValor Líquido: R$ " + net.toFixed(2) + "\nCliente: " + p.user_phone + "\n\nConfirma que já fez a transferência?")) {
                     console.log("🚫 Efetivação de saque cancelada.");
                     return;
                 }
