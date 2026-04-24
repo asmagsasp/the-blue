@@ -1408,179 +1408,101 @@
             if (p.type === 'pix_pendente') {
                 const phone = p.user_phone;
                 const amount = Math.abs(parseFloat(p.amount));
-                console.log(`💰 Processando Depósito PIX: R$ ${amount} para ${phone}`);
-                console.log(`🙋 Aguardando confirmação do admin para R$ ${amount}...`);
-                const confirmed = confirm("CONFIRMAR RECEBIMENTO?\n\nValor: R$ " + amount.toFixed(2) + "\nCliente: " + phone + "\n\nClique OK apenas se o dinheiro já estiver na conta.");
                 
-                if(!confirmed) {
-                    console.log("🚫 Aprovação cancelada pelo usuário (confirm).");
-                    return;
-                }
-
-                console.log("🔍 Buscando usuário no banco...");
-                const { data: user, error: userFetchError } = await supabase.from('users').select('*').eq('phone', phone).single();
+                const msg = `<strong>APROVAR PIX?</strong><br><br>Valor: R$ ${amount.toFixed(2)}<br>Cliente: ${phone}<br><br>Clique em confirmar se o valor já caiu na sua conta.`;
                 
-                if (userFetchError) {
-                    console.error("❌ Erro ao buscar usuário:", userFetchError);
-                    alert("Erro ao buscar usuário no banco: " + userFetchError.message);
-                    return;
-                }
-                
-                if (!user) { 
-                    console.error("❌ Usuário não encontrado para o telefone:", phone);
-                    alert("Usuário não encontrado."); 
-                    return; 
-                }
+                window.showCustomModal(msg, async () => {
+                    console.log("🔍 Buscando usuário no banco...");
+                    const { data: user, error: userFetchError } = await supabase.from('users').select('*').eq('phone', phone).single();
+                    
+                    if (userFetchError || !user) {
+                        alert("Erro ao buscar usuário.");
+                        return;
+                    }
 
-                console.log("🆙 Atualizando saldo do usuário...");
-                const { error: balanceError } = await supabase.from('users').update({
-                    available: Number(user.available) + amount,
-                    balance: Number(user.balance) + amount
-                }).eq('phone', phone);
+                    console.log("🆙 Atualizando saldo...");
+                    const { error: balanceError } = await supabase.from('users').update({
+                        available: Number(user.available) + amount,
+                        balance: Number(user.balance) + amount
+                    }).eq('phone', phone);
 
-                if (balanceError) { 
-                    console.error("❌ Erro ao atualizar saldo:", balanceError);
-                    alert("Erro ao atualizar saldo: " + balanceError.message); 
-                    return; 
-                }
-                
-                console.log("📝 Atualizando status da transação...");
-                const { error: txUpdateError } = await supabase.from('transactions').update({ 
-                    type: 'dep', 
-                    description: 'Depósito PIX (Aprovado)' 
-                }).eq('id', txId);
-
-                if (txUpdateError) {
-                    console.error("⚠️ Erro ao atualizar transação (porém o saldo foi creditado):", txUpdateError);
-                    alert("Atenção: O saldo foi creditado, mas houve um erro ao atualizar o status da transação.");
-                } else {
-                    console.log("✅ Transação atualizada com sucesso.");
+                    if (balanceError) {
+                        alert("Erro ao atualizar saldo.");
+                        return;
+                    }
+                    
+                    await supabase.from('transactions').update({ type: 'dep', description: 'Depósito PIX (Aprovado)' }).eq('id', txId);
                     alert(`✅ SUCESSO! R$ ${amount.toFixed(2)} creditados.`);
-                }
+                    
+                    if (window.loadAdminData) window.loadAdminData();
+                    if (window.loadAdminReports && document.getElementById('report-results') && document.getElementById('report-results').style.display !== 'none') {
+                        window.loadAdminReports();
+                    }
+                });
             } else {
                 const gross = Math.abs(parseFloat(p.amount));
                 const fee = gross * 0.08;
                 const net = gross - fee;
-                console.log(`💸 Processando Saque: R$ ${net} (Líquido) para ${p.user_phone}`);
+                
+                const msg = `<strong>EFETIVAR SAQUE?</strong><br><br>Valor Líquido: R$ ${net.toFixed(2)}<br>Cliente: ${p.user_phone}<br><br>Confirma que já realizou o PIX para o cliente?`;
 
-                if(!confirm("EFETIVAR SAQUE?\n\nValor Líquido: R$ " + net.toFixed(2) + "\nCliente: " + p.user_phone + "\n\nConfirma que já fez a transferência?")) {
-                    console.log("🚫 Efetivação de saque cancelada.");
-                    return;
-                }
+                window.showCustomModal(msg, async () => {
+                    const { error: txUpdateError } = await supabase.from('transactions').update({ 
+                        type: 'with', 
+                        description: 'Saque Aprovado' 
+                    }).eq('id', txId);
 
-                console.log("📝 Atualizando status do saque...");
-                const { error: txUpdateError } = await supabase.from('transactions').update({ 
-                    type: 'with', 
-                    description: 'Saque Aprovado' 
-                }).eq('id', txId);
-
-                if (txUpdateError) {
-                    console.error("❌ Erro ao atualizar saque:", txUpdateError);
-                    alert("Erro ao efetivar saque no banco.");
-                } else {
-                    console.log("✅ Saque efetivado com sucesso.");
-                    alert("✅ Saque marcado como efetuado.");
-                }
-            }
-            
-            // Refresh inteligente
-            console.log("🔄 Recarregando dados da interface...");
-            if (window.loadAdminData) window.loadAdminData();
-            if (window.loadAdminReports && document.getElementById('report-results') && document.getElementById('report-results').style.display !== 'none') {
-                window.loadAdminReports();
+                    if (txUpdateError) {
+                        alert("Erro ao efetivar saque.");
+                    } else {
+                        alert("✅ Saque marcado como efetuado.");
+                    }
+                    
+                    if (window.loadAdminData) window.loadAdminData();
+                    if (window.loadAdminReports && document.getElementById('report-results') && document.getElementById('report-results').style.display !== 'none') {
+                        window.loadAdminReports();
+                    }
+                });
             }
         } catch (err) {
-            console.error("💥 ERRO CRÍTICO em handleAdminApprove:", err);
-            alert("Ocorreu um erro inesperado ao aprovar. Veja o console.");
+            console.error("💥 ERRO:", err);
         }
     };
 
     window.handleAdminReject = async (txId) => {
-        console.log("🚀 handleAdminReject iniciado para:", txId);
+        console.log("🚀 handleAdminReject iniciado:", txId);
         
         try {
             const p = (window.lastAdminPendings || []).find(x => x.id === txId) || 
                       (window.lastAdminReportData || []).find(x => x.id === txId);
-            
-            console.log("📦 Transação encontrada no cache (Reject):", p);
 
-            if (!p) {
-                console.error("❌ ERRO (Reject): Transação não localizada.");
-                alert("Erro: Transação não localizada.");
-                return;
-            }
+            if (!p) return;
 
-            if (p.type === 'pix_pendente') {
-                if(!confirm("Recusar este depósito?")) {
-                    console.log("🚫 Recusa cancelada.");
-                    return;
-                }
-                console.log("📝 Marcando PIX como recusado...");
-                const { error } = await supabase.from('transactions').update({ 
-                    type: 'pix_recusado', 
-                    description: 'Depósito PIX (Recusado)' 
-                }).eq('id', txId);
+            const msg = `<strong>RECUSAR TRANSAÇÃO?</strong><br><br>Isso marcará o pedido como inválido. No caso de saque, o valor voltará para o saldo do cliente.`;
 
-                if (error) {
-                    console.error("❌ Erro ao recusar PIX:", error);
-                    alert("Erro ao recusar PIX no banco.");
-                } else {
-                    console.log("✅ Depósito recusado.");
+            window.showCustomModal(msg, async () => {
+                if (p.type === 'pix_pendente') {
+                    await supabase.from('transactions').update({ type: 'pix_recusado', description: 'Depósito PIX (Recusado)' }).eq('id', txId);
                     alert("Depósito recusado.");
-                }
-            } else {
-                const amount = Math.abs(parseFloat(p.amount));
-                if(!confirm(`Recusar saque e estornar R$ ${amount.toFixed(2)}?`)) {
-                    console.log("🚫 Recusa de saque cancelada.");
-                    return;
-                }
-                
-                console.log(`🔍 Buscando usuário para estorno: ${p.user_phone}`);
-                const { data: user, error: userError } = await supabase.from('users').select('*').eq('phone', p.user_phone).single();
-                
-                if (userError || !user) {
-                    console.error("❌ Erro ao buscar usuário para estorno:", userError);
-                    alert("Erro ao localizar usuário para estorno.");
-                    return;
-                }
-
-                console.log("🆙 Estornando saldo...");
-                const { error: balanceError } = await supabase.from('users').update({
-                    available: Number(user.available) + amount,
-                    balance: Number(user.balance) + amount
-                }).eq('phone', p.user_phone);
-                
-                if (balanceError) {
-                    console.error("❌ Erro ao estornar saldo:", balanceError);
-                    alert("Erro ao estornar saldo ao usuário.");
-                    return;
-                }
-
-                console.log("📝 Marcando saque como recusado...");
-                const { error: txError } = await supabase.from('transactions').update({ 
-                    type: 'saque_recusado', 
-                    description: 'Saque Recusado (Estornado)' 
-                }).eq('id', txId);
-
-                if (txError) {
-                    console.error("⚠️ Erro ao atualizar status da transação (saldo foi estornado):", txError);
-                    alert("Saldo estornado, mas erro ao atualizar status da transação.");
                 } else {
-                    console.log("✅ Saque recusado e valor estornado.");
-                    alert("Saque recusado e valor estornado.");
+                    const amount = Math.abs(parseFloat(p.amount));
+                    const { data: user } = await supabase.from('users').select('*').eq('phone', p.user_phone).single();
+                    if (user) {
+                        await supabase.from('users').update({
+                            available: Number(user.available) + amount,
+                            balance: Number(user.balance) + amount
+                        }).eq('phone', p.user_phone);
+                        
+                        await supabase.from('transactions').update({ type: 'saque_recusado', description: 'Saque Recusado (Estornado)' }).eq('id', txId);
+                        alert("Saque recusado e valor estornado.");
+                    }
                 }
-            }
-            
-            // Refresh inteligente
-            console.log("🔄 Recarregando interface...");
-            if (window.loadAdminData) window.loadAdminData();
-            if (window.loadAdminReports && document.getElementById('report-results') && document.getElementById('report-results').style.display !== 'none') {
-                window.loadAdminReports();
-            }
-        } catch (err) {
-            console.error("💥 ERRO CRÍTICO em handleAdminReject:", err);
-            alert("Ocorreu um erro inesperado ao recusar. Veja o console.");
-        }
+                if (window.loadAdminData) window.loadAdminData();
+                if (window.loadAdminReports && document.getElementById('report-results') && document.getElementById('report-results').style.display !== 'none') {
+                    window.loadAdminReports();
+                }
+            });
+        } catch (err) { console.error(err); }
     };
 
     window.handleCreatePlan = async () => {
@@ -2065,6 +1987,49 @@
         document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
         document.querySelector('.tab-item[data-view="dashboard"]').classList.add('active'); // Reset tab state
         Router.navigate('auth');
+    };
+
+    // --- Custom Modal System ---
+    window.showCustomModal = (htmlContent, onConfirm) => {
+        // Create modal overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'custom-modal-overlay';
+        overlay.style = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center;
+            z-index: 10000; backdrop-filter: blur(5px); padding: 20px;
+        `;
+
+        const modal = document.createElement('div');
+        modal.style = `
+            background: #151515; border: 1px solid #333; border-radius: 16px;
+            width: 100%; max-width: 400px; padding: 25px; text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); animation: animate-pop 0.3s ease-out;
+        `;
+
+        modal.innerHTML = `
+            <div style="font-size: 1.1rem; color: #fff; margin-bottom: 25px; line-height: 1.5;">${htmlContent}</div>
+            <div style="display: flex; gap: 10px;">
+                <button id="modal-cancel" class="btn btn-outline" style="flex: 1; padding: 12px; font-weight: 700;">CANCELAR</button>
+                <button id="modal-confirm" class="btn btn-primary" style="flex: 1; padding: 12px; font-weight: 700;">CONFIRMAR</button>
+            </div>
+        `;
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        // Listeners
+        document.getElementById('modal-cancel').onclick = () => {
+            document.body.removeChild(overlay);
+        };
+
+        document.getElementById('modal-confirm').onclick = async () => {
+            const btn = document.getElementById('modal-confirm');
+            btn.disabled = true;
+            btn.innerText = "Processando...";
+            await onConfirm();
+            document.body.removeChild(overlay);
+        };
     };
 
     // --- Initialization ---
