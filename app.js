@@ -575,7 +575,22 @@
                     </div>
                 </div>
                 
-                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 15px; padding: 15px;" onclick="Router.navigate('dashboard')">🔄 Já fiz o pagamento</button>
+                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 25px; padding: 15px;" onclick="Router.navigate('dashboard')">🔄 Já fiz o pagamento</button>
+                
+                <div class="glass-card" style="margin-bottom: 20px; border-left: 4px solid var(--secondary-orange); text-align: left;">
+                    <h3 style="font-size: 1rem; margin-bottom: 10px;"><i class="fa-solid fa-file-invoice"></i> Enviar Comprovante</h3>
+                    <p style="font-size: 0.8rem; margin-bottom: 15px;">Para agilizar sua aprovação, anexe o comprovante abaixo:</p>
+                    
+                    <input type="file" id="receipt-file" accept="image/*" style="display: none;" onchange="handleReceiptSelected(this)">
+                    <button class="btn btn-outline" style="width: 100%; border-style: dashed; border-color: var(--secondary-orange); color: var(--secondary-orange); margin-bottom: 15px;" onclick="document.getElementById('receipt-file').click()">
+                        <i class="fa-solid fa-camera"></i> <span id="receipt-status">Selecionar Imagem</span>
+                    </button>
+                    
+                    <button id="btn-send-receipt" class="btn btn-primary" style="width: 100%; display: none;" onclick="handleUploadReceipt()">
+                        🚀 Enviar Comprovante para o Admin
+                    </button>
+                </div>
+
                 <p style="font-size: 0.7rem; opacity: 0.6;">Aguarde alguns minutos após o pagamento para que a nossa equipe revise a transação.</p>
             </div>
         `,
@@ -937,10 +952,10 @@
             btn.innerText = "Processando...";
         }
 
-        const { error } = await supabase.from('transactions').insert([tx]);
+        const { data: insertedTxs, error } = await supabase.from('transactions').insert([tx]).select();
         
-        if (error) {
-            alert("Erro ao registrar intenção de depósito: " + error.message);
+        if (error || !insertedTxs || insertedTxs.length === 0) {
+            alert("Erro ao registrar intenção de depósito: " + (error ? error.message : "Erro desconhecido"));
             window.isDepositing = false;
             if (btn) {
                 btn.disabled = false;
@@ -951,10 +966,64 @@
         
         window.isDepositing = false;
 
+        State.currentPix = { 
+            amount: amount, 
+            payload: payload,
+            txId: insertedTxs[0].id // Store the transaction ID
+        };
+
         tx.date = new Date().toLocaleDateString('pt-BR');
         State.transactions.unshift(tx);
         
         Router.navigate('pix_checkout');
+    };
+
+    window.handleReceiptSelected = (input) => {
+        if (input.files && input.files[0]) {
+            document.getElementById('receipt-status').innerText = "Imagem: " + input.files[0].name;
+            document.getElementById('btn-send-receipt').style.display = 'block';
+        }
+    };
+
+    window.handleUploadReceipt = async () => {
+        const fileInput = document.getElementById('receipt-file');
+        const btn = document.getElementById('btn-send-receipt');
+        
+        if (!fileInput.files || !fileInput.files[0]) return;
+        
+        btn.disabled = true;
+        btn.innerText = "Enviando...";
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = async (e) => {
+            const base64Data = e.target.result;
+            
+            // Verificando se temos o ID da transação
+            if (!State.currentPix || !State.currentPix.txId) {
+                alert("Erro: ID da transação não localizado. Tente gerar o PIX novamente.");
+                btn.disabled = false;
+                btn.innerText = "🚀 Enviar Comprovante para o Admin";
+                return;
+            }
+
+            const { error } = await supabase.from('transactions')
+                .update({ receipt: base64Data }) // Storing base64 in a 'receipt' column
+                .eq('id', State.currentPix.txId);
+
+            if (error) {
+                alert("Erro ao enviar comprovante: " + error.message);
+                btn.disabled = false;
+                btn.innerText = "🚀 Enviar Comprovante para o Admin";
+                return;
+            }
+
+            alert("✅ Comprovante enviado com sucesso! O administrador irá conferir seu depósito.");
+            Router.navigate('dashboard');
+        };
+
+        reader.readAsDataURL(file);
     };
 
     window.copyPix = () => {
@@ -1266,6 +1335,16 @@
                 <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 15px;">
                      <p style="font-size: 0.85rem; font-weight: 600;">Depósito PIX: <span style="color: #4CAF50;">R$ ${p.amount.toFixed(2)}</span></p>
                      <p style="font-size: 0.7rem; opacity: 0.6; margin-bottom: 10px;">Cliente: ${p.user_phone} | ID: ${p.id.split('-')[0]}</p>
+                     
+                     ${p.receipt ? `
+                        <div style="margin-bottom: 15px;">
+                            <p style="font-size: 0.7rem; color: var(--secondary-orange); margin-bottom: 5px;"><i class="fa-solid fa-image"></i> Comprovante Anexado:</p>
+                            <img src="${p.receipt}" style="width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; border: 1px solid var(--glass-border); cursor: pointer;" onclick="window.open(this.src)">
+                        </div>
+                     ` : `
+                        <p style="font-size: 0.7rem; opacity: 0.4; margin-bottom: 10px;"><i class="fa-solid fa-circle-info"></i> Sem comprovante anexado</p>
+                     `}
+
                      <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.7rem; flex: 1;" onclick="approvePix('${p.id}', '${p.user_phone}', ${Math.abs(p.amount)})">✔ Aprovar PIX</button>
                         <button class="btn btn-outline" style="padding: 5px 15px; font-size: 0.7rem; color: #FF5252; flex: 1;" onclick="rejectPix('${p.id}')">❌ Recusar</button>

@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
   type text NOT NULL, 
   amount numeric NOT NULL,
   description text NOT NULL,
+  receipt text, 
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
