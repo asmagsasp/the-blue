@@ -1390,11 +1390,16 @@
     };
 
     window.handleAdminApprove = async (txId) => {
+        console.log("Tentando aprovar transação:", txId);
+        
         // Busca tanto na lista de pendências quanto na de relatórios
         const p = (window.lastAdminPendings || []).find(x => x.id === txId) || 
                   (window.lastAdminReportData || []).find(x => x.id === txId);
         
+        console.log("Transação encontrada no cache:", p);
+
         if (!p) {
+            console.error("ERRO: Transação não encontrada em lastAdminPendings ou lastAdminReportData");
             alert("Erro: Transação não localizada no cache local. Recarregue a página.");
             return;
         }
@@ -1434,10 +1439,15 @@
     };
 
     window.handleAdminReject = async (txId) => {
+        console.log("Tentando recusar transação:", txId);
+        
         const p = (window.lastAdminPendings || []).find(x => x.id === txId) || 
                   (window.lastAdminReportData || []).find(x => x.id === txId);
         
+        console.log("Transação encontrada no cache (Reject):", p);
+
         if (!p) {
+            console.error("ERRO (Reject): Transação não localizada.");
             alert("Erro: Transação não localizada.");
             return;
         }
@@ -1629,7 +1639,7 @@
                 }
 
                 htmlSnippet += `
-                    <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; border-left: 4px solid ${color};">
+                    <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; border-left: 4px solid ${color}; position: relative; z-index: 1;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
                                 <p style="font-size: 0.85rem; font-weight: 700; color: white;">${tx.user_phone}</p>
@@ -1643,10 +1653,10 @@
                         
                         ${(tx.type === 'pix_pendente' || tx.type === 'saque_pendente') ? `
                             <div style="display: flex; gap: 8px; margin-top: 5px;">
-                                <button class="btn btn-primary" style="padding: 8px; font-size: 0.75rem; flex: 1; border-radius: 8px; background: linear-gradient(45deg, #4CAF50, #2E7D32);" onclick="window.handleAdminApprove('${tx.id}')">
+                                <button class="btn btn-primary" style="padding: 10px; font-size: 0.75rem; flex: 1; border-radius: 8px; background: linear-gradient(45deg, #4CAF50, #2E7D32); cursor: pointer; pointer-events: auto;" onclick="window.handleAdminApprove('${tx.id}')">
                                     <i class="fa-solid fa-check"></i> Aprovar Pix
                                 </button>
-                                <button class="btn btn-outline" style="padding: 8px; font-size: 0.75rem; flex: 1; border-radius: 8px; color: #FF5252; border-color: #FF525240;" onclick="window.handleAdminReject('${tx.id}')">
+                                <button class="btn btn-outline" style="padding: 10px; font-size: 0.75rem; flex: 1; border-radius: 8px; color: #FF5252; border-color: #FF525240; cursor: pointer; pointer-events: auto;" onclick="window.handleAdminReject('${tx.id}')">
                                     <i class="fa-solid fa-xmark"></i> Rejeitar Pix
                                 </button>
                             </div>
