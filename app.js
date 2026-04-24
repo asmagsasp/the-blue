@@ -1390,8 +1390,14 @@
     };
 
     window.handleAdminApprove = async (txId) => {
-        const p = window.lastAdminPendings.find(x => x.id === txId);
-        if (!p) return;
+        // Busca tanto na lista de pendências quanto na de relatórios
+        const p = (window.lastAdminPendings || []).find(x => x.id === txId) || 
+                  (window.lastAdminReportData || []).find(x => x.id === txId);
+        
+        if (!p) {
+            alert("Erro: Transação não localizada no cache local. Recarregue a página.");
+            return;
+        }
 
         if (p.type === 'pix_pendente') {
             const phone = p.user_phone;
@@ -1419,12 +1425,22 @@
             await supabase.from('transactions').update({ type: 'with', description: 'Saque Aprovado' }).eq('id', txId);
             alert("✅ Saque marcado como efetuado.");
         }
-        loadAdminData();
+        
+        // Refresh inteligente
+        if (window.loadAdminData) window.loadAdminData();
+        if (window.loadAdminReports && document.getElementById('report-results').style.display !== 'none') {
+            window.loadAdminReports();
+        }
     };
 
     window.handleAdminReject = async (txId) => {
-        const p = window.lastAdminPendings.find(x => x.id === txId);
-        if (!p) return;
+        const p = (window.lastAdminPendings || []).find(x => x.id === txId) || 
+                  (window.lastAdminReportData || []).find(x => x.id === txId);
+        
+        if (!p) {
+            alert("Erro: Transação não localizada.");
+            return;
+        }
 
         if (p.type === 'pix_pendente') {
             if(!confirm("Recusar este depósito?")) return;
@@ -1445,7 +1461,12 @@
                 alert("Saque recusado e valor estornado.");
             }
         }
-        loadAdminData();
+        
+        // Refresh inteligente
+        if (window.loadAdminData) window.loadAdminData();
+        if (window.loadAdminReports && document.getElementById('report-results').style.display !== 'none') {
+            window.loadAdminReports();
+        }
     };
 
     window.handleCreatePlan = async () => {
@@ -1608,15 +1629,28 @@
                 }
 
                 htmlSnippet += `
-                    <div style="background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid ${color};">
-                        <div>
-                            <p style="font-size: 0.8rem; font-weight: 600;">${tx.user_phone}</p>
-                            <p style="font-size: 0.65rem; opacity: 0.8;">${readableType} | ${new Date(tx.created_at).toLocaleTimeString('pt-BR')}</p>
+                    <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; border-left: 4px solid ${color};">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="font-size: 0.85rem; font-weight: 700; color: white;">${tx.user_phone}</p>
+                                <p style="font-size: 0.7rem; opacity: 0.7;">${readableType} | ${new Date(tx.created_at).toLocaleTimeString('pt-BR')}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="font-size: 1rem; font-weight: 800; color: ${color};">R$ ${amount.toFixed(2)}</p>
+                                <p style="font-size: 0.65rem; color: ${color}; font-weight: 700; letter-spacing: 0.5px;">${statTxt}</p>
+                            </div>
                         </div>
-                        <div style="text-align: right;">
-                            <p style="font-size: 0.9rem; font-weight: 700; color: ${color};">R$ ${amount.toFixed(2)}</p>
-                            <p style="font-size: 0.6rem; color: ${color}; font-weight: 600;">${statTxt}</p>
-                        </div>
+                        
+                        ${(tx.type === 'pix_pendente' || tx.type === 'saque_pendente') ? `
+                            <div style="display: flex; gap: 8px; margin-top: 5px;">
+                                <button class="btn btn-primary" style="padding: 8px; font-size: 0.75rem; flex: 1; border-radius: 8px; background: linear-gradient(45deg, #4CAF50, #2E7D32);" onclick="window.handleAdminApprove('${tx.id}')">
+                                    <i class="fa-solid fa-check"></i> Aprovar Pix
+                                </button>
+                                <button class="btn btn-outline" style="padding: 8px; font-size: 0.75rem; flex: 1; border-radius: 8px; color: #FF5252; border-color: #FF525240;" onclick="window.handleAdminReject('${tx.id}')">
+                                    <i class="fa-solid fa-xmark"></i> Rejeitar Pix
+                                </button>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             });
