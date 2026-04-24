@@ -1346,8 +1346,8 @@
                      `}
 
                      <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.7rem; flex: 1;" onclick="approvePix('${p.id}', '${p.user_phone}', ${Math.abs(p.amount)})">✔ Aprovar PIX</button>
-                        <button class="btn btn-outline" style="padding: 5px 15px; font-size: 0.7rem; color: #FF5252; flex: 1;" onclick="rejectPix('${p.id}')">❌ Recusar</button>
+                        <button class="btn btn-primary" style="padding: 5px 15px; font-size: 0.7rem; flex: 1;" onclick="window.approvePix('${p.id}', '${p.user_phone}', ${Math.abs(p.amount)})">✔ Aprovar PIX</button>
+                        <button class="btn btn-outline" style="padding: 5px 15px; font-size: 0.7rem; color: #FF5252; flex: 1;" onclick="window.rejectPix('${p.id}')">❌ Recusar</button>
                      </div>
                 </div>
                 `;
@@ -1430,7 +1430,8 @@
     };
 
     window.approvePix = async (txId, phone, amount) => {
-        if(!confirm(`Confirmação de Segurança:\n\nVocê já conferiu a conta bancária e confirma que o PIX de R$ ${amount.toFixed(2)} já está na conta real?\n\nSe sim, clique OK para liberar o saldo na plataforma automaticamente para ${phone}.`)) return;
+        console.log("Iniciando aprovação de PIX:", {txId, phone, amount});
+        if(!confirm(`Confirmação de Segurança:\n\nVocê já conferiu a conta bancária e confirma que o PIX de R$ ${Number(amount).toFixed(2)} já está na conta real?\n\nSe sim, clique OK para liberar o saldo na plataforma automaticamente para ${phone}.`)) return;
 
         const { data: user, error: userError } = await supabase.from('users').select('*').eq('phone', phone).single();
         if (userError || !user) {
@@ -1541,6 +1542,7 @@
     };
 
     window.rejectPix = async (txId) => {
+        console.log("Iniciando recusa de PIX:", txId);
         if(!confirm("Tem certeza que esse depósito é inválido/falso? Ele será marcado como Recusado.")) return;
         
         const { data, error } = await supabase.from('transactions').update({
