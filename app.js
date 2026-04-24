@@ -1390,92 +1390,194 @@
     };
 
     window.handleAdminApprove = async (txId) => {
-        console.log("Tentando aprovar transação:", txId);
+        console.log("🚀 handleAdminApprove iniciado para:", txId);
         
-        // Busca tanto na lista de pendências quanto na de relatórios
-        const p = (window.lastAdminPendings || []).find(x => x.id === txId) || 
-                  (window.lastAdminReportData || []).find(x => x.id === txId);
-        
-        console.log("Transação encontrada no cache:", p);
-
-        if (!p) {
-            console.error("ERRO: Transação não encontrada em lastAdminPendings ou lastAdminReportData");
-            alert("Erro: Transação não localizada no cache local. Recarregue a página.");
-            return;
-        }
-
-        if (p.type === 'pix_pendente') {
-            const phone = p.user_phone;
-            const amount = Math.abs(p.amount);
-            if(!confirm(`Confirmação de Segurança:\n\nVocê já conferiu a conta bancária e confirma que o PIX de R$ ${amount.toFixed(2)} já está na conta real?\n\nSe sim, clique OK para liberar o saldo na plataforma automaticamente para ${phone}.`)) return;
-
-            const { data: user } = await supabase.from('users').select('*').eq('phone', phone).single();
-            if (!user) { alert("Usuário não encontrado."); return; }
-
-            const { error: balanceError } = await supabase.from('users').update({
-                available: Number(user.available) + amount,
-                balance: Number(user.balance) + amount
-            }).eq('phone', phone);
-
-            if (balanceError) { alert("Erro ao atualizar saldo."); return; }
+        try {
+            // Busca tanto na lista de pendências quanto na de relatórios
+            const p = (window.lastAdminPendings || []).find(x => x.id === txId) || 
+                      (window.lastAdminReportData || []).find(x => x.id === txId);
             
-            await supabase.from('transactions').update({ type: 'dep', description: 'Depósito PIX (Aprovado)' }).eq('id', txId);
-            alert(`✅ SUCESSO! R$ ${amount.toFixed(2)} creditados.`);
-        } else {
-            const gross = Math.abs(p.amount);
-            const fee = gross * 0.08;
-            const net = gross - fee;
-            if(!confirm(`Confirmação de Saque:\n\nVocê já realizou a transferência de R$ ${net.toFixed(2)} (Líquido) para ${p.user_phone}?\n\nSe sim, clique OK para efetivar.`)) return;
+            console.log("📦 Transação localizada no cache:", p);
 
-            await supabase.from('transactions').update({ type: 'with', description: 'Saque Aprovado' }).eq('id', txId);
-            alert("✅ Saque marcado como efetuado.");
-        }
-        
-        // Refresh inteligente
-        if (window.loadAdminData) window.loadAdminData();
-        if (window.loadAdminReports && document.getElementById('report-results').style.display !== 'none') {
-            window.loadAdminReports();
+            if (!p) {
+                console.error("❌ ERRO: Transação não encontrada em lastAdminPendings ou lastAdminReportData");
+                alert("Erro: Transação não localizada no cache local. Recarregue a página.");
+                return;
+            }
+
+            if (p.type === 'pix_pendente') {
+                const phone = p.user_phone;
+                const amount = Math.abs(parseFloat(p.amount));
+                console.log(`💰 Processando Depósito PIX: R$ ${amount} para ${phone}`);
+
+                if(!confirm(`Confirmação de Segurança:\n\nVocê já conferiu a conta bancária e confirma que o PIX de R$ ${amount.toFixed(2)} já está na conta real?\n\nSe sim, clique OK para liberar o saldo na plataforma automaticamente para ${phone}.`)) {
+                    console.log("🚫 Aprovação cancelada pelo usuário (confirm).");
+                    return;
+                }
+
+                console.log("🔍 Buscando usuário no banco...");
+                const { data: user, error: userFetchError } = await supabase.from('users').select('*').eq('phone', phone).single();
+                
+                if (userFetchError) {
+                    console.error("❌ Erro ao buscar usuário:", userFetchError);
+                    alert("Erro ao buscar usuário no banco: " + userFetchError.message);
+                    return;
+                }
+                
+                if (!user) { 
+                    console.error("❌ Usuário não encontrado para o telefone:", phone);
+                    alert("Usuário não encontrado."); 
+                    return; 
+                }
+
+                console.log("🆙 Atualizando saldo do usuário...");
+                const { error: balanceError } = await supabase.from('users').update({
+                    available: Number(user.available) + amount,
+                    balance: Number(user.balance) + amount
+                }).eq('phone', phone);
+
+                if (balanceError) { 
+                    console.error("❌ Erro ao atualizar saldo:", balanceError);
+                    alert("Erro ao atualizar saldo: " + balanceError.message); 
+                    return; 
+                }
+                
+                console.log("📝 Atualizando status da transação...");
+                const { error: txUpdateError } = await supabase.from('transactions').update({ 
+                    type: 'dep', 
+                    description: 'Depósito PIX (Aprovado)' 
+                }).eq('id', txId);
+
+                if (txUpdateError) {
+                    console.error("⚠️ Erro ao atualizar transação (porém o saldo foi creditado):", txUpdateError);
+                    alert("Atenção: O saldo foi creditado, mas houve um erro ao atualizar o status da transação.");
+                } else {
+                    console.log("✅ Transação atualizada com sucesso.");
+                    alert(`✅ SUCESSO! R$ ${amount.toFixed(2)} creditados.`);
+                }
+            } else {
+                const gross = Math.abs(parseFloat(p.amount));
+                const fee = gross * 0.08;
+                const net = gross - fee;
+                console.log(`💸 Processando Saque: R$ ${net} (Líquido) para ${p.user_phone}`);
+
+                if(!confirm(`Confirmação de Saque:\n\nVocê já realizou a transferência de R$ ${net.toFixed(2)} (Líquido) para ${p.user_phone}?\n\nSe sim, clique OK para efetivar.`)) {
+                    console.log("🚫 Efetivação de saque cancelada.");
+                    return;
+                }
+
+                console.log("📝 Atualizando status do saque...");
+                const { error: txUpdateError } = await supabase.from('transactions').update({ 
+                    type: 'with', 
+                    description: 'Saque Aprovado' 
+                }).eq('id', txId);
+
+                if (txUpdateError) {
+                    console.error("❌ Erro ao atualizar saque:", txUpdateError);
+                    alert("Erro ao efetivar saque no banco.");
+                } else {
+                    console.log("✅ Saque efetivado com sucesso.");
+                    alert("✅ Saque marcado como efetuado.");
+                }
+            }
+            
+            // Refresh inteligente
+            console.log("🔄 Recarregando dados da interface...");
+            if (window.loadAdminData) window.loadAdminData();
+            if (window.loadAdminReports && document.getElementById('report-results') && document.getElementById('report-results').style.display !== 'none') {
+                window.loadAdminReports();
+            }
+        } catch (err) {
+            console.error("💥 ERRO CRÍTICO em handleAdminApprove:", err);
+            alert("Ocorreu um erro inesperado ao aprovar. Veja o console.");
         }
     };
 
     window.handleAdminReject = async (txId) => {
-        console.log("Tentando recusar transação:", txId);
+        console.log("🚀 handleAdminReject iniciado para:", txId);
         
-        const p = (window.lastAdminPendings || []).find(x => x.id === txId) || 
-                  (window.lastAdminReportData || []).find(x => x.id === txId);
-        
-        console.log("Transação encontrada no cache (Reject):", p);
-
-        if (!p) {
-            console.error("ERRO (Reject): Transação não localizada.");
-            alert("Erro: Transação não localizada.");
-            return;
-        }
-
-        if (p.type === 'pix_pendente') {
-            if(!confirm("Recusar este depósito?")) return;
-            await supabase.from('transactions').update({ type: 'pix_recusado', description: 'Depósito PIX (Recusado)' }).eq('id', txId);
-            alert("Depósito recusado.");
-        } else {
-            const amount = Math.abs(p.amount);
-            if(!confirm(`Recusar saque e estornar R$ ${amount.toFixed(2)}?`)) return;
+        try {
+            const p = (window.lastAdminPendings || []).find(x => x.id === txId) || 
+                      (window.lastAdminReportData || []).find(x => x.id === txId);
             
-            const { data: user } = await supabase.from('users').select('*').eq('phone', p.user_phone).single();
-            if(user) {
-                await supabase.from('users').update({
+            console.log("📦 Transação encontrada no cache (Reject):", p);
+
+            if (!p) {
+                console.error("❌ ERRO (Reject): Transação não localizada.");
+                alert("Erro: Transação não localizada.");
+                return;
+            }
+
+            if (p.type === 'pix_pendente') {
+                if(!confirm("Recusar este depósito?")) {
+                    console.log("🚫 Recusa cancelada.");
+                    return;
+                }
+                console.log("📝 Marcando PIX como recusado...");
+                const { error } = await supabase.from('transactions').update({ 
+                    type: 'pix_recusado', 
+                    description: 'Depósito PIX (Recusado)' 
+                }).eq('id', txId);
+
+                if (error) {
+                    console.error("❌ Erro ao recusar PIX:", error);
+                    alert("Erro ao recusar PIX no banco.");
+                } else {
+                    console.log("✅ Depósito recusado.");
+                    alert("Depósito recusado.");
+                }
+            } else {
+                const amount = Math.abs(parseFloat(p.amount));
+                if(!confirm(`Recusar saque e estornar R$ ${amount.toFixed(2)}?`)) {
+                    console.log("🚫 Recusa de saque cancelada.");
+                    return;
+                }
+                
+                console.log(`🔍 Buscando usuário para estorno: ${p.user_phone}`);
+                const { data: user, error: userError } = await supabase.from('users').select('*').eq('phone', p.user_phone).single();
+                
+                if (userError || !user) {
+                    console.error("❌ Erro ao buscar usuário para estorno:", userError);
+                    alert("Erro ao localizar usuário para estorno.");
+                    return;
+                }
+
+                console.log("🆙 Estornando saldo...");
+                const { error: balanceError } = await supabase.from('users').update({
                     available: Number(user.available) + amount,
                     balance: Number(user.balance) + amount
                 }).eq('phone', p.user_phone);
                 
-                await supabase.from('transactions').update({ type: 'saque_recusado', description: 'Saque Recusado (Estornado)' }).eq('id', txId);
-                alert("Saque recusado e valor estornado.");
+                if (balanceError) {
+                    console.error("❌ Erro ao estornar saldo:", balanceError);
+                    alert("Erro ao estornar saldo ao usuário.");
+                    return;
+                }
+
+                console.log("📝 Marcando saque como recusado...");
+                const { error: txError } = await supabase.from('transactions').update({ 
+                    type: 'saque_recusado', 
+                    description: 'Saque Recusado (Estornado)' 
+                }).eq('id', txId);
+
+                if (txError) {
+                    console.error("⚠️ Erro ao atualizar status da transação (saldo foi estornado):", txError);
+                    alert("Saldo estornado, mas erro ao atualizar status da transação.");
+                } else {
+                    console.log("✅ Saque recusado e valor estornado.");
+                    alert("Saque recusado e valor estornado.");
+                }
             }
-        }
-        
-        // Refresh inteligente
-        if (window.loadAdminData) window.loadAdminData();
-        if (window.loadAdminReports && document.getElementById('report-results').style.display !== 'none') {
-            window.loadAdminReports();
+            
+            // Refresh inteligente
+            console.log("🔄 Recarregando interface...");
+            if (window.loadAdminData) window.loadAdminData();
+            if (window.loadAdminReports && document.getElementById('report-results') && document.getElementById('report-results').style.display !== 'none') {
+                window.loadAdminReports();
+            }
+        } catch (err) {
+            console.error("💥 ERRO CRÍTICO em handleAdminReject:", err);
+            alert("Ocorreu um erro inesperado ao recusar. Veja o console.");
         }
     };
 
