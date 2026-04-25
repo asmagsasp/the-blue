@@ -16,7 +16,7 @@
     // --- Configuração Evolution API (WhatsApp) ---
     const WA_CONFIG = {
         enabled: true,
-        baseUrl: 'https://dimmer-grass-alright.ngrok-free.dev/', // <--- COLE A URL DO NGROK AQUI
+        baseUrl: 'https://dimmer-grass-alright.ngrok-free.dev', // <--- COLE A URL DO NGROK AQUI
         instance: 'MeuBot',
         apiKey: '47b2030633301eea8876d1d08cdb6ef23b49a171770f240b25ec0be1be53d77d',
         adminNumber: '551934585300'
@@ -26,20 +26,28 @@
         if (!WA_CONFIG.enabled || WA_CONFIG.apiKey === 'SUA_API_KEY_AQUI') return;
 
         const cleanNumber = number.replace(/\D/g, '');
-        // Adiciona 55 se não tiver DDI (ajuste conforme necessário)
         const targetNumber = cleanNumber.length <= 11 ? '55' + cleanNumber : cleanNumber;
 
+        // Limpa barra final da URL se existir para evitar erro de // na requisição
+        const base = WA_CONFIG.baseUrl.replace(/\/$/, '');
+
         try {
-            await fetch(`${WA_CONFIG.baseUrl}/message/sendText/${WA_CONFIG.instance}`, {
+            const response = await fetch(`${base}/message/sendText/${WA_CONFIG.instance}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'apikey': WA_CONFIG.apiKey },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': WA_CONFIG.apiKey,
+                    'ngrok-skip-browser-warning': 'true' // Cabeçalho essencial para ngrok gratuito
+                },
                 body: JSON.stringify({
                     number: targetNumber,
                     textMessage: { text: message },
                     options: { delay: 1200, presence: "composing" }
                 })
             });
-            console.log(`📱 WhatsApp enviado para ${targetNumber}`);
+
+            const data = await response.json();
+            console.log(`📱 Resposta Evolution API para ${targetNumber}:`, data);
         } catch (e) {
             console.error("❌ Erro ao enviar WhatsApp:", e);
         }
@@ -1066,7 +1074,7 @@
     window.handlePaymentConfirmed = (isSilent = false) => {
         // Envia o WhatsApp
         sendWhatsApp(State.user.phone, `Seu depósito foi enviado para a plataforma. Aguarde no maximo 24 horas (se a demanda não tiver alta é rápido) para que o seu saldo seja creditado.`);
-        
+
         if (!isSilent) {
             alert("Aviso enviado ao sistema! Aguarde a conferência em até 24h.");
             Router.navigate('dashboard');
