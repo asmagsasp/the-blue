@@ -1,0 +1,13 @@
+{
+  "name": "the-blue-platform",
+  "version": "1.0.0",
+  "description": "Investment Platform - The Blue",
+  "main": "app.js",
+  "scripts": {
+    "start": "npx -y live-server --port=3000 --host=localhost",
+    "dev": "npx -y live-server --port=3000 --host=localhost"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}

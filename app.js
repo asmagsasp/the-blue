@@ -7,11 +7,43 @@
 (() => {
     const supabaseUrl = 'https://kggukwkireimgexsezek.supabase.co';
     const supabaseKey = 'sb_publishable_d9lFOKzv88k2Hv9roRdvZQ_X7K9xKAq';
-
     let supabase = null;
+
     if (window.supabase && supabaseUrl.startsWith('http')) {
         supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
     }
+
+    // --- Configuração Evolution API (WhatsApp) ---
+    const WA_CONFIG = {
+        enabled: true,
+        baseUrl: 'https://dimmer-grass-alright.ngrok-free.dev/', // <--- COLE A URL DO NGROK AQUI
+        instance: 'MeuBot',
+        apiKey: '47b2030633301eea8876d1d08cdb6ef23b49a171770f240b25ec0be1be53d77d',
+        adminNumber: '551934585300'
+    };
+
+    const sendWhatsApp = async (number, message) => {
+        if (!WA_CONFIG.enabled || WA_CONFIG.apiKey === 'SUA_API_KEY_AQUI') return;
+
+        const cleanNumber = number.replace(/\D/g, '');
+        // Adiciona 55 se não tiver DDI (ajuste conforme necessário)
+        const targetNumber = cleanNumber.length <= 11 ? '55' + cleanNumber : cleanNumber;
+
+        try {
+            await fetch(`${WA_CONFIG.baseUrl}/message/sendText/${WA_CONFIG.instance}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'apikey': WA_CONFIG.apiKey },
+                body: JSON.stringify({
+                    number: targetNumber,
+                    textMessage: { text: message },
+                    options: { delay: 1200, presence: "composing" }
+                })
+            });
+            console.log(`📱 WhatsApp enviado para ${targetNumber}`);
+        } catch (e) {
+            console.error("❌ Erro ao enviar WhatsApp:", e);
+        }
+    };
 
     // --- Global Application State ---
     const State = {
@@ -145,21 +177,21 @@
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <div id="checkin-btn-container">
                             ${(() => {
-                                let isLocked = false;
-                                if (State.user && State.user.last_checkin) {
-                                    const last = new Date(State.user.last_checkin);
-                                    const now = new Date();
-                                    isLocked = (now - last < 24 * 60 * 60 * 1000);
-                                }
-                                
-                                return `
+                    let isLocked = false;
+                    if (State.user && State.user.last_checkin) {
+                        const last = new Date(State.user.last_checkin);
+                        const now = new Date();
+                        isLocked = (now - last < 24 * 60 * 60 * 1000);
+                    }
+
+                    return `
                                 <button class="btn ${isLocked ? 'btn-outline' : 'btn-secondary'}" 
                                         style="font-size: 0.73rem; padding: 10px 14px; border-radius: 20px; ${isLocked ? 'opacity: 0.5; cursor: not-allowed;' : 'box-shadow: 0 0 20px var(--secondary-orange)50;'}"
                                         onclick="${isLocked ? "alert('Você já fez o check-in! Volte amanhã.')" : 'handleDailyCheckin()'}">
                                     <i class="fa-solid fa-calendar-check"></i> ${isLocked ? 'Feito' : 'Check-in'}
                                 </button>
                                 `;
-                            })()}
+                })()}
                         </div>
                         <div style="background: var(--glass-bg); padding: 8px; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; position: relative; border: 1px solid var(--glass-border);">
                              <i class="fa-solid fa-user-ninja" style="color: var(--primary-blue); font-size: 1.2rem;"></i>
@@ -261,7 +293,7 @@
                 const totalInvested = State.user.invested || 0;
                 const totalEarned = Math.floor(totalInvested / 1000) * 3;
                 const totalRemaining = totalEarned - (State.user.spins_used || 0);
-                
+
                 if (!State.fortune_session.isActive) {
                     State.fortune_session.spinsLeft = Math.min(totalRemaining, 3);
                     State.fortune_session.accumulated = 0;
@@ -344,27 +376,27 @@
 
                 <div style="display: flex; flex-direction: column; gap: 20px;">
                     ${State.plans.map(p => {
-                        const now = new Date();
-                        const startsAt = p.startsAt ? new Date(p.startsAt) : null;
-                        const expiresAt = p.expiresAt ? new Date(p.expiresAt) : null;
-                        
-                        let state = 'NORMAL';
-                        if (p.isSurprise) {
-                            if (startsAt && now < startsAt) state = 'LOCKED';
-                            else if (expiresAt && now > expiresAt) state = 'EXPIRED';
-                            else state = 'SURPRISE_ACTIVE';
-                        }
+                const now = new Date();
+                const startsAt = p.startsAt ? new Date(p.startsAt) : null;
+                const expiresAt = p.expiresAt ? new Date(p.expiresAt) : null;
 
-                        const n = String(p.name).toLowerCase();
-                        let icon = '🚀'; let color = 'var(--primary-blue)';
-                        if (n.includes('diamante')) { icon = '💎'; color = '#00f2fe'; }
-                        else if (n.includes('esmeralda')) { icon = '❇️'; color = '#00ff88'; }
-                        else if (n.includes('ouro') || n.includes('gold')) { icon = '🥇'; color = '#FFD700'; }
-                        else if (n.includes('prata') || n.includes('silver')) { icon = '🥈'; color = '#C0C0C0'; }
-                        else if (n.includes('bronze')) { icon = '🥉'; color = '#cd7f32'; }
+                let state = 'NORMAL';
+                if (p.isSurprise) {
+                    if (startsAt && now < startsAt) state = 'LOCKED';
+                    else if (expiresAt && now > expiresAt) state = 'EXPIRED';
+                    else state = 'SURPRISE_ACTIVE';
+                }
 
-                        if (state === 'LOCKED') {
-                            return `
+                const n = String(p.name).toLowerCase();
+                let icon = '🚀'; let color = 'var(--primary-blue)';
+                if (n.includes('diamante')) { icon = '💎'; color = '#00f2fe'; }
+                else if (n.includes('esmeralda')) { icon = '❇️'; color = '#00ff88'; }
+                else if (n.includes('ouro') || n.includes('gold')) { icon = '🥇'; color = '#FFD700'; }
+                else if (n.includes('prata') || n.includes('silver')) { icon = '🥈'; color = '#C0C0C0'; }
+                else if (n.includes('bronze')) { icon = '🥉'; color = '#cd7f32'; }
+
+                if (state === 'LOCKED') {
+                    return `
                             <div class="glass-card surprise-card" style="position: relative; overflow: hidden; border: 2px solid #555; background: linear-gradient(135deg, #1a1a1a 0%, #000 100%); min-height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
                                 <div style="position: absolute; top: 10px; left: 15px; font-size: 1.5rem; font-weight: 800; color: #444; opacity: 0.5;">J</div>
                                 <div style="position: absolute; bottom: 10px; right: 15px; font-size: 1.5rem; font-weight: 800; color: #444; opacity: 0.5; transform: rotate(180deg);">J</div>
@@ -382,10 +414,10 @@
                                 </div>
                             </div>
                             `;
-                        }
+                }
 
-                        if (state === 'EXPIRED') {
-                            return `
+                if (state === 'EXPIRED') {
+                    return `
                             <div class="glass-card" style="opacity: 0.5; position: relative;">
                                 <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 2;">
                                     <h2 style="transform: rotate(-15deg); border: 4px solid #FF5252; color: #FF5252; padding: 10px 20px; border-radius: 12px; font-weight: 900;">ESGOTADO</h2>
@@ -396,14 +428,14 @@
                                 </div>
                             </div>
                             `;
-                        }
+                }
 
-                        // SURPRISE_ACTIVE or NORMAL
-                        const isSurpriseActive = state === 'SURPRISE_ACTIVE';
-                        const cardBorder = isSurpriseActive ? '2px solid #FFD700' : `4px solid ${color}`;
-                        const cardBg = isSurpriseActive ? 'linear-gradient(135deg, rgba(20,20,20,0.9) 0%, rgba(0,0,0,1) 100%)' : '';
+                // SURPRISE_ACTIVE or NORMAL
+                const isSurpriseActive = state === 'SURPRISE_ACTIVE';
+                const cardBorder = isSurpriseActive ? '2px solid #FFD700' : `4px solid ${color}`;
+                const cardBg = isSurpriseActive ? 'linear-gradient(135deg, rgba(20,20,20,0.9) 0%, rgba(0,0,0,1) 100%)' : '';
 
-                        return `
+                return `
                         <div class="glass-card ${isSurpriseActive ? 'animate-pulse-gold' : ''}" style="position: relative; overflow: hidden; border-left: ${cardBorder}; background: ${cardBg};">
                             ${isSurpriseActive ? `
                                 <div style="position: absolute; top: -10px; right: -30px; background: #FFD700; color: black; font-weight: 900; font-size: 0.6rem; padding: 20px 40px 5px 40px; transform: rotate(45deg); box-shadow: 0 0 15px #FFD70080;">OFERTA VIP</div>
@@ -454,7 +486,8 @@
                                 ${isSurpriseActive ? 'APROVEITAR AGORA' : 'Investir Agora'}
                             </button>
                         </div>
-                    `;}).join('')}
+                    `;
+            }).join('')}
                 </div>
             </div>
         `,
@@ -556,7 +589,7 @@
             </div>
         `,
 
-        pixCheckout: () => `
+            pixCheckout: () => `
             <div class="app-container animate-fade" style="text-align: center; padding-top: 20px;">
                 <h2 style="color: #4CAF50; margin-bottom: 10px;"><i class="fa-brands fa-pix"></i> PIX Gerado!</h2>
                 <p>Pagamento Digital The Blue</p>
@@ -916,7 +949,7 @@
 
     window.handleDeposit = async () => {
         if (window.isDepositing) return;
-        
+
         const amount = parseFloat(document.getElementById('dep-amount').value);
         if (!amount || amount < 5) {
             alert("O valor mínimo de depósito é R$ 5,00.");
@@ -932,10 +965,10 @@
         const now = new Date();
         const dateStr = now.toLocaleDateString('pt-BR');
         const timeStr = now.toLocaleTimeString('pt-BR');
-        
+
         // Incluindo o telefone como Identificador no PIX (Tag 62)
         const payload = window.generatePixPayload(pixKey, "The Blue Plataforma", "Sao Paulo", amount, State.user.phone);
-        
+
         State.currentPix = { amount: amount, payload: payload };
 
         const tx = {
@@ -953,7 +986,7 @@
         }
 
         const { data: insertedTxs, error } = await supabase.from('transactions').insert([tx]).select();
-        
+
         if (error || !insertedTxs || insertedTxs.length === 0) {
             alert("Erro ao registrar intenção de depósito: " + (error ? error.message : "Erro desconhecido"));
             window.isDepositing = false;
@@ -963,18 +996,18 @@
             }
             return;
         }
-        
+
         window.isDepositing = false;
 
-        State.currentPix = { 
-            amount: amount, 
+        State.currentPix = {
+            amount: amount,
             payload: payload,
             txId: insertedTxs[0].id // Store the transaction ID
         };
 
         tx.date = new Date().toLocaleDateString('pt-BR');
         State.transactions.unshift(tx);
-        
+
         Router.navigate('pix_checkout');
     };
 
@@ -988,18 +1021,18 @@
     window.handleUploadReceipt = async () => {
         const fileInput = document.getElementById('receipt-file');
         const btn = document.getElementById('btn-send-receipt');
-        
+
         if (!fileInput.files || !fileInput.files[0]) return;
-        
+
         btn.disabled = true;
         btn.innerText = "Enviando...";
 
         const file = fileInput.files[0];
         const reader = new FileReader();
-        
+
         reader.onload = async (e) => {
             const base64Data = e.target.result;
-            
+
             // Verificando se temos o ID da transação
             if (!State.currentPix || !State.currentPix.txId) {
                 alert("Erro: ID da transação não localizado. Tente gerar o PIX novamente.");
@@ -1019,7 +1052,11 @@
                 return;
             }
 
+            // Notificação WhatsApp para o Usuário
+            sendWhatsApp(State.user.phone, `Seu depósito foi enviado para a plataforma. Aguarde no maximo 24 horas (se a demanda não tiver alta é rápido) para que o seu saldo seja creditado.`);
+
             alert("✅ Comprovante enviado com sucesso! O administrador irá conferir seu depósito.");
+
             Router.navigate('dashboard');
         };
 
@@ -1046,12 +1083,12 @@
             payloadString += "54" + pad(valStr.length, 2) + valStr;
         }
         payloadString += "5802BR59" + pad(nome.length, 2) + nome + "60" + pad(cidade.length, 2) + cidade;
-        
+
         // Tag 62 - Campo 05: Identificador da transação
         const cleanId = id.replace(/\D/g, '').substring(0, 25); // Limpando para garantir compatibilidade
         let addData = "05" + pad(cleanId.length, 2) + cleanId;
         payloadString += "62" + pad(addData.length, 2) + addData + "6304";
-        
+
         // CRC16 Checksum
         let poly = 0x1021, res = 0xFFFF;
         for (let i = 0; i < payloadString.length; i++) {
@@ -1116,9 +1153,9 @@
         }
 
         // 1. Descontar saldo no banco (com verificação de sucesso)
-        const upd = { 
-            available: Number(State.user.available) - Number(amount), 
-            balance: Number(State.user.balance) - Number(amount) 
+        const upd = {
+            available: Number(State.user.available) - Number(amount),
+            balance: Number(State.user.balance) - Number(amount)
         };
         const { data: updRes, error: balanceError } = await supabase.from('users').update(upd).eq('phone', State.user.phone).select();
 
@@ -1146,6 +1183,13 @@
 
         tx.date = new Date().toLocaleDateString('pt-BR');
         State.transactions.unshift(tx);
+
+        // Notificações WhatsApp
+        // 1. Para o Usuário
+        sendWhatsApp(State.user.phone, `Olá! Seu pedido de saque de R$ ${amount.toFixed(2)} foi recebido e poderá levar até 24 horas para ser processado.`);
+
+        // 2. Para o Admin (Você)
+        sendWhatsApp(WA_CONFIG.adminNumber, `🚨 *NOVO SAQUE SOLICITADO*\n\nCliente: ${State.user.phone}\nValor Bruto: R$ ${amount.toFixed(2)}\nChave: ${pixKey}\n\nAcesse o painel admin para processar.`);
 
         alert("Solicitação de saque enviada com sucesso! Aguarde a aprovação do administrador.");
         document.getElementById('withdraw-amount').value = '';
@@ -1187,7 +1231,7 @@
             return;
         }
 
-        if(!confirm(`Confirma a transferência de R$ ${amount.toFixed(2)} para ${destUser.phone}?`)) return;
+        if (!confirm(`Confirma a transferência de R$ ${amount.toFixed(2)} para ${destUser.phone}?`)) return;
 
         // Alterando balanços via DB Call
         const newSenderAvailable = State.user.available - amount;
@@ -1213,7 +1257,7 @@
         // Sync Local State
         State.user.available = newSenderAvailable;
         State.user.balance = newSenderBalance;
-        
+
         txOut.date = new Date().toLocaleDateString('pt-BR');
         State.transactions.unshift(txOut);
 
@@ -1303,10 +1347,10 @@
     window.loadAdminStats = async () => {
         if (!supabase) return;
         const { count: usersCount } = await supabase.from('users').select('*', { count: 'exact', head: true });
-        
+
         const { count: pendingDepCount } = await supabase.from('transactions').select('*', { count: 'exact', head: true }).eq('type', 'pix_pendente');
         const { count: pendingWithCount } = await supabase.from('transactions').select('*', { count: 'exact', head: true }).eq('type', 'saque_pendente');
-        
+
         const totalPending = (pendingDepCount || 0) + (pendingWithCount || 0);
 
         const uEl = document.getElementById('admin-total-users');
@@ -1391,12 +1435,12 @@
 
     window.handleAdminApprove = async (txId) => {
         console.log("🚀 handleAdminApprove iniciado para:", txId);
-        
+
         try {
             // Busca tanto na lista de pendências quanto na de relatórios
-            const p = (window.lastAdminPendings || []).find(x => x.id === txId) || 
-                      (window.lastAdminReportData || []).find(x => x.id === txId);
-            
+            const p = (window.lastAdminPendings || []).find(x => x.id === txId) ||
+                (window.lastAdminReportData || []).find(x => x.id === txId);
+
             console.log("📦 Transação localizada no cache:", p);
 
             if (!p) {
@@ -1408,13 +1452,13 @@
             if (p.type === 'pix_pendente') {
                 const phone = p.user_phone;
                 const amount = Math.abs(parseFloat(p.amount));
-                
+
                 const msg = `<strong>APROVAR PIX?</strong><br><br>Valor: R$ ${amount.toFixed(2)}<br>Cliente: ${phone}<br><br>Clique em confirmar se o valor já caiu na sua conta.`;
-                
+
                 window.showCustomModal(msg, async () => {
                     console.log("🔍 Buscando usuário no banco...");
                     const { data: user, error: userFetchError } = await supabase.from('users').select('*').eq('phone', phone).single();
-                    
+
                     if (userFetchError || !user) {
                         alert("Erro ao buscar usuário.");
                         return;
@@ -1430,10 +1474,10 @@
                         alert("Erro ao atualizar saldo.");
                         return;
                     }
-                    
+
                     await supabase.from('transactions').update({ type: 'dep', description: 'Depósito PIX (Aprovado)' }).eq('id', txId);
                     alert(`✅ SUCESSO! R$ ${amount.toFixed(2)} creditados.`);
-                    
+
                     if (window.loadAdminData) window.loadAdminData();
                     if (window.loadAdminReports && document.getElementById('report-results') && document.getElementById('report-results').style.display !== 'none') {
                         window.loadAdminReports();
@@ -1443,21 +1487,24 @@
                 const gross = Math.abs(parseFloat(p.amount));
                 const fee = gross * 0.08;
                 const net = gross - fee;
-                
+
                 const msg = `<strong>EFETIVAR SAQUE?</strong><br><br>Valor Líquido: R$ ${net.toFixed(2)}<br>Cliente: ${p.user_phone}<br><br>Confirma que já realizou o PIX para o cliente?`;
 
                 window.showCustomModal(msg, async () => {
-                    const { error: txUpdateError } = await supabase.from('transactions').update({ 
-                        type: 'with', 
-                        description: 'Saque Aprovado' 
+                    const { error: txUpdateError } = await supabase.from('transactions').update({
+                        type: 'with',
+                        description: 'Saque Aprovado'
                     }).eq('id', txId);
 
                     if (txUpdateError) {
                         alert("Erro ao efetivar saque.");
                     } else {
+                        // Notificação WhatsApp para o Usuário
+                        sendWhatsApp(p.user_phone, `✅ Seu saque já foi realizado com sucesso! O valor já deve estar em sua conta.`);
+
                         alert("✅ Saque marcado como efetuado.");
                     }
-                    
+
                     if (window.loadAdminData) window.loadAdminData();
                     if (window.loadAdminReports && document.getElementById('report-results') && document.getElementById('report-results').style.display !== 'none') {
                         window.loadAdminReports();
@@ -1471,10 +1518,10 @@
 
     window.handleAdminReject = async (txId) => {
         console.log("🚀 handleAdminReject iniciado:", txId);
-        
+
         try {
-            const p = (window.lastAdminPendings || []).find(x => x.id === txId) || 
-                      (window.lastAdminReportData || []).find(x => x.id === txId);
+            const p = (window.lastAdminPendings || []).find(x => x.id === txId) ||
+                (window.lastAdminReportData || []).find(x => x.id === txId);
 
             if (!p) return;
 
@@ -1492,7 +1539,7 @@
                             available: Number(user.available) + amount,
                             balance: Number(user.balance) + amount
                         }).eq('phone', p.user_phone);
-                        
+
                         await supabase.from('transactions').update({ type: 'saque_recusado', description: 'Saque Recusado (Estornado)' }).eq('id', txId);
                         alert("Saque recusado e valor estornado.");
                     }
@@ -1512,7 +1559,7 @@
         const dailyReturn = parseFloat(document.getElementById('plan-return').value);
         const minAmount = parseFloat(document.getElementById('plan-min').value);
         const maxAmount = parseFloat(document.getElementById('plan-max').value);
-        
+
         const isSurprise = document.getElementById('plan-is-surprise').checked;
         const rawStart = document.getElementById('plan-starts-at').value;
         const rawEnd = document.getElementById('plan-expires-at').value;
@@ -1586,8 +1633,8 @@
 
     window.rejectPix = async (txId) => {
         console.log("Iniciando recusa de PIX:", txId);
-        if(!confirm("Tem certeza que esse depósito é inválido/falso? Ele será marcado como Recusado.")) return;
-        
+        if (!confirm("Tem certeza que esse depósito é inválido/falso? Ele será marcado como Recusado.")) return;
+
         const { data, error } = await supabase.from('transactions').update({
             type: 'pix_recusado',
             description: 'Depósito PIX (Recusado)'
@@ -1633,7 +1680,7 @@
             reportListDiv.innerHTML = `<p style="text-align:center; color: red;">Erro: ${error.message}</p>`;
             return;
         }
-        
+
         window.lastAdminReportData = data;
 
         let depApproved = 0, depPending = 0;
@@ -1645,7 +1692,7 @@
         } else {
             data.forEach(tx => {
                 const amount = Math.abs(parseFloat(tx.amount));
-                
+
                 let readableType = ''; let color = ''; let statTxt = '';
                 if (tx.type === 'dep') {
                     depApproved += amount;
@@ -1711,12 +1758,12 @@
         }
 
         let csvContent = "Data/Hora;Cliente;Tipo;Status;Valor (R$)\n";
-        
+
         window.lastAdminReportData.forEach(tx => {
             const date = new Date(tx.created_at).toLocaleString('pt-BR');
             const amount = Math.abs(parseFloat(tx.amount)).toFixed(2).replace('.', ',');
             const client = tx.user_phone;
-            
+
             let type = ''; let status = '';
             if (tx.type === 'dep') { type = 'Depósito'; status = 'Aprovado'; }
             else if (tx.type === 'pix_pendente') { type = 'Depósito'; status = 'Pendente'; }
@@ -1747,10 +1794,10 @@
 
     window.handleDailyCheckin = async () => {
         if (!State.user) return;
-        
+
         const last = State.user.last_checkin ? new Date(State.user.last_checkin) : null;
         const now = new Date();
-        
+
         if (last && (now - last < 24 * 60 * 60 * 1000)) {
             alert("Você já fez o check-in hoje! Volte em 24h.");
             return;
@@ -1771,7 +1818,7 @@
 
         State.user.points = newPoints;
         State.user.last_checkin = checkinDate;
-        
+
         alert("💎 +1 Ponto de Fidelidade! Continue assim.");
         Router.render();
     };
@@ -1842,14 +1889,14 @@
 
         State.fortune_session.isSpinning = true;
         State.fortune_session.spinsLeft--;
-        
+
         const wheel = document.getElementById('main-wheel');
         const spinBtn = document.getElementById('spin-btn');
         const claimBtn = document.getElementById('claim-btn');
         const fortuneMsg = document.getElementById('fortune-msg');
-        
+
         spinBtn.disabled = true;
-        if(claimBtn) claimBtn.style.display = 'none';
+        if (claimBtn) claimBtn.style.display = 'none';
         fortuneMsg.innerHTML = "Sorteando prêmio...";
 
         // Logic for landing
@@ -1863,7 +1910,7 @@
         // Index 5 (35, 20): R$ 50 (225-270)
         // Index 6 (55, 15): R$ 100 (270-315)
         // Index 7 (80, 35): R$ 5 (315-360)
-        
+
         const prizes = [
             { label: 'R$ 5', value: 5 },
             { label: 'PERDEU TUDO', value: -1 },
@@ -1879,12 +1926,12 @@
         const extraDegrees = Math.floor(Math.random() * 360);
         const spins = 5 + Math.floor(Math.random() * 5); // 5 to 10 full spins
         currentRotation += (spins * 360) + extraDegrees;
-        
+
         wheel.style.transform = `rotate(${currentRotation}deg)`;
 
         setTimeout(async () => {
             State.fortune_session.isSpinning = false;
-            
+
             // Calculate which segment is at the pointer (top is index 0 in our logic)
             // The pointer is at 0 degrees. The wheel rotated by currentRotation.
             // Normalize currentRotation to 0-359.
@@ -1904,7 +1951,7 @@
             // Sync with UI
             document.getElementById('fortune-accumulated').innerText = `R$ ${State.fortune_session.accumulated.toFixed(2)}`;
             document.getElementById('fortune-spins').innerText = State.fortune_session.spinsLeft;
-            
+
             // Re-enable buttons
             spinBtn.disabled = State.fortune_session.spinsLeft <= 0;
             if (claimBtn) {
@@ -1930,7 +1977,7 @@
         if (State.fortune_session.isSpinning || State.fortune_session.accumulated <= 0) return;
 
         const prize = State.fortune_session.accumulated;
-        
+
         const { error: txError } = await supabase.from('transactions').insert([{
             user_phone: State.user.phone,
             type: 'dep',
@@ -1945,7 +1992,7 @@
 
         const newAvailable = State.user.available + prize;
         const newBalance = State.user.balance + prize;
-        
+
         const { error: userError } = await supabase.from('users').update({
             available: newAvailable,
             balance: newBalance
@@ -2081,42 +2128,42 @@
             }
         }
 
-    // --- Global Timer Updater ---
-    setInterval(() => {
-        document.querySelectorAll('.timer-badge').forEach(el => {
-            const end = new Date(el.getAttribute('data-endtime')).getTime();
-            const now = new Date().getTime();
-            const diff = end - now;
+        // --- Global Timer Updater ---
+        setInterval(() => {
+            document.querySelectorAll('.timer-badge').forEach(el => {
+                const end = new Date(el.getAttribute('data-endtime')).getTime();
+                const now = new Date().getTime();
+                const diff = end - now;
 
-            if (diff <= 0) {
-                el.innerText = "LIBERADO!";
-                // If the view is investments, trigger a re-render to reveal
-                if (State.currentView === 'investments') {
-                    // Logic to avoid infinite re-renders
-                    if (!el.dataset.expired) {
-                        el.dataset.expired = "true";
-                        Router.render();
+                if (diff <= 0) {
+                    el.innerText = "LIBERADO!";
+                    // If the view is investments, trigger a re-render to reveal
+                    if (State.currentView === 'investments') {
+                        // Logic to avoid infinite re-renders
+                        if (!el.dataset.expired) {
+                            el.dataset.expired = "true";
+                            Router.render();
+                        }
                     }
+                    return;
                 }
-                return;
-            }
 
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const mins = Math.floor((diff / 1000 / 60) % 60);
-            const secs = Math.floor((diff / 1000) % 60);
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const mins = Math.floor((diff / 1000 / 60) % 60);
+                const secs = Math.floor((diff / 1000) % 60);
 
-            let str = "";
-            if (days > 0) str += `${days}d `;
-            str += `${String(hours).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-            
-            const prefix = el.innerText.includes('Abre em') ? 'Abre em: ' : '';
-            el.innerText = prefix + str;
-        });
-    }, 1000);
+                let str = "";
+                if (days > 0) str += `${days}d `;
+                str += `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
-    // Setup Navigation Listeners
-    document.querySelectorAll('[data-view]').forEach(link => {
+                const prefix = el.innerText.includes('Abre em') ? 'Abre em: ' : '';
+                el.innerText = prefix + str;
+            });
+        }, 1000);
+
+        // Setup Navigation Listeners
+        document.querySelectorAll('[data-view]').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
                 const view = e.currentTarget.getAttribute('data-view');
