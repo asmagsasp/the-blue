@@ -608,7 +608,7 @@
                     </div>
                 </div>
                 
-                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 25px; padding: 15px;" onclick="Router.navigate('dashboard')">🔄 Já fiz o pagamento</button>
+                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 25px; padding: 15px;" onclick="handlePaymentConfirmed()">🔄 Já fiz o pagamento</button>
                 
                 <div class="glass-card" style="margin-bottom: 20px; border-left: 4px solid var(--secondary-orange); text-align: left;">
                     <h3 style="font-size: 1rem; margin-bottom: 10px;"><i class="fa-solid fa-file-invoice"></i> Enviar Comprovante</h3>
@@ -1052,8 +1052,8 @@
                 return;
             }
 
-            // Notificação WhatsApp para o Usuário
-            sendWhatsApp(State.user.phone, `Seu depósito foi enviado para a plataforma. Aguarde no maximo 24 horas (se a demanda não tiver alta é rápido) para que o seu saldo seja creditado.`);
+            // Notificação WhatsApp (chamando a função centralizada)
+            handlePaymentConfirmed(true);
 
             alert("✅ Comprovante enviado com sucesso! O administrador irá conferir seu depósito.");
 
@@ -1061,6 +1061,16 @@
         };
 
         reader.readAsDataURL(file);
+    };
+
+    window.handlePaymentConfirmed = (isSilent = false) => {
+        // Envia o WhatsApp
+        sendWhatsApp(State.user.phone, `Seu depósito foi enviado para a plataforma. Aguarde no maximo 24 horas (se a demanda não tiver alta é rápido) para que o seu saldo seja creditado.`);
+        
+        if (!isSilent) {
+            alert("Aviso enviado ao sistema! Aguarde a conferência em até 24h.");
+            Router.navigate('dashboard');
+        }
     };
 
     window.copyPix = () => {
