@@ -1236,9 +1236,16 @@
             return;
         }
 
-        // 2. Atualizar estado local
-        State.user.available = upd.available;
-        State.user.balance = upd.balance;
+        // 2. Atualizar estado local com o retorno do banco para garantir sincronia
+        if (updRes && updRes[0]) {
+            State.user = { ...State.user, ...updRes[0] };
+        } else {
+            // Fallback manual se o select não retornar (raro)
+            State.user.available = upd.available;
+            State.user.balance = upd.balance;
+        }
+
+        Router.render(); // Forçar atualização visual imediata
 
         const tx = {
             user_phone: State.user.phone,
@@ -1320,15 +1327,20 @@
             return;
         }
 
+        // --- NOVO: Buscar dados atualizados do remetente para sincronizar a tela ---
+        const { data: updatedSender } = await supabase.from('users').select('*').eq('phone', State.user.phone).single();
+        if (updatedSender) {
+            State.user = updatedSender;
+        }
+
         // Registrando hist de transaçoes entre os dois
         const txOut = { user_phone: State.user.phone, type: 'with', amount: -amount, description: `P2P: Enviado para ${phone}` };
         const txIn = { user_phone: phone, type: 'dep', amount: amount, description: `P2P: Recebido de ${State.user.phone}` };
 
         await supabase.from('transactions').insert([txOut, txIn]);
 
-        // Sync Local State
-        State.user.available = newSenderAvailable;
-        State.user.balance = newSenderBalance;
+        // Sync Local State - (Já feito acima com updatedSender)
+        Router.render(); 
 
         txOut.date = new Date().toLocaleDateString('pt-BR');
         State.transactions.unshift(txOut);
@@ -1338,30 +1350,48 @@
     };
 
     window.handleInvest = async (planId) => {
+        console.log("💰 Tentando investir no plano:", planId);
         const plan = State.plans.find(p => p.id === planId);
+        
         if (!State.user || State.user.available < plan.min) {
             alert("Saldo disponível insuficiente. Faça um depósito!");
             Router.navigate('wallet');
             return;
         }
 
-        // Modal or input prompt for amount
-        const amount = prompt(`Quanto deseja investir no ${plan.name}?\n(Mín: R$${plan.min} | Máx: R$${plan.max})`, plan.min);
+        const amountInput = prompt(`Quanto deseja investir no ${plan.name}?\n(Mín: R$${plan.min} | Máx: R$${plan.max})`, plan.min);
+        const amount = parseFloat(amountInput);
 
         if (amount && amount >= plan.min && amount <= plan.max) {
-            State.user.available -= parseFloat(amount);
-            State.user.invested += parseFloat(amount);
+            console.log("✅ Valor válido:", amount);
+            
+            // 1. Atualizar no Banco
+            const newAvailable = Number(State.user.available) - amount;
+            const newInvested = Number(State.user.invested) + amount;
 
-            await supabase.from('users').update({ available: State.user.available, invested: State.user.invested }).eq('phone', State.user.phone);
+            const { error: updError } = await supabase.from('users')
+                .update({ available: newAvailable, invested: newInvested })
+                .eq('phone', State.user.phone);
 
-            const txInv = { user_phone: State.user.phone, type: 'inv', amount: -parseFloat(amount), description: `Investimento: ${plan.name}` };
+            if (updError) {
+                alert("Erro ao processar investimento no banco: " + updError.message);
+                return;
+            }
+
+            // 2. Registrar Transação
+            const txInv = { user_phone: State.user.phone, type: 'inv', amount: -amount, description: `Investimento: ${plan.name}` };
             await supabase.from('transactions').insert([txInv]);
 
-            txInv.date = new Date().toLocaleDateString('pt-BR');
-            State.transactions.unshift(txInv);
+            // 3. Sincronizar Estado Local (Busca o dado real do banco para a tela)
+            const { data: updatedUser } = await supabase.from('users').select('*').eq('phone', State.user.phone).single();
+            if (updatedUser) {
+                State.user = updatedUser;
+            }
 
-            alert("Investimento registrado no banco com sucesso!");
+            alert("🚀 Investimento realizado com sucesso!");
             Router.navigate('dashboard');
+        } else if (amountInput !== null) {
+            alert("Valor inválido. Respeite os limites mínimo e máximo do plano.");
         }
     };
 
