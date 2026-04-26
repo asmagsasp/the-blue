@@ -274,15 +274,15 @@
                 <!-- Balance Cards Carousel-style -->
                 <div class="glass-card" style="background: linear-gradient(135deg, var(--primary-blue), #003399); border: none; margin-bottom: 20px;">
                     <p style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">Saldo Total Estimado</p>
-                    <h1 style="font-size: 2.8rem; margin: 10px 0; -webkit-text-fill-color: white;">R$ ${State.user.balance.toFixed(2)}</h1>
+                    <h1 style="font-size: 2.8rem; margin: 10px 0; -webkit-text-fill-color: white;">R$ ${Number(State.user.balance || 0).toFixed(2)}</h1>
                     <div style="display: flex; gap: 15px; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
                         <div>
                             <p style="font-size: 0.7rem; color: rgba(255,255,255,0.6);">Disponível</p>
-                            <p style="font-weight: 600;">R$ ${State.user.available.toFixed(2)}</p>
+                            <p style="font-weight: 600;">R$ ${Number(State.user.available || 0).toFixed(2)}</p>
                         </div>
                         <div style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
                             <p style="font-size: 0.7rem; color: rgba(255,255,255,0.6);">Investido</p>
-                            <p style="font-weight: 600;">R$ ${State.user.invested.toFixed(2)}</p>
+                            <p style="font-weight: 600;">R$ ${Number(State.user.invested || 0).toFixed(2)}</p>
                         </div>
                     </div>
                 </div>
@@ -556,7 +556,7 @@
                         </div>
                         <div>
                             <p style="font-size: 0.85rem;">Saldo Disponível para Saque</p>
-                            <h2 style="font-size: 2rem;">R$ ${State.user.available.toFixed(2)}</h2>
+                            <h2 style="font-size: 2rem;">R$ ${Number(State.user.available || 0).toFixed(2)}</h2>
                         </div>
                     </div>
                 </div>
@@ -965,6 +965,11 @@
         State.user = newUser;
         State.transactions = [];
         Router.navigate('dashboard');
+        
+        // Forçar o banner após o login com um pequeno delay
+        setTimeout(() => {
+            if (window.showPromoSplash) window.showPromoSplash();
+        }, 1000);
     };
 
     window.handleLogin = async () => {
@@ -992,6 +997,9 @@
             .order('created_at', { ascending: false });
 
         State.user = user;
+        
+        // Limpa trava do banner para aparecer nos testes
+        sessionStorage.removeItem('promo_shown');
 
         // Mapear datas do banco para formato local visual temporário
         State.transactions = (txs || []).map(t => ({
@@ -1000,6 +1008,11 @@
         }));
 
         Router.navigate('dashboard');
+        
+        // Forçar banner com pequeno delay para garantir que o dashboard carregou
+        setTimeout(() => {
+            if (window.showPromoSplash) window.showPromoSplash();
+        }, 800);
     };
 
     window.currentPayMethod = 'pix';
