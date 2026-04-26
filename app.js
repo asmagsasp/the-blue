@@ -128,11 +128,11 @@
             // Render matching view
             switch (State.currentView) {
                 case 'auth':
-                    app.innerHTML = this.views.auth();
-                    this.initAuthListeners();
+                    app.innerHTML = Router.views.auth();
+                    Router.initAuthListeners();
                     break;
                 case 'dashboard':
-                    app.innerHTML = this.views.dashboard();
+                    app.innerHTML = Router.views.dashboard();
                     
                     // Mostrar Splash Promocional apenas uma vez por sessão
                     if (!sessionStorage.getItem('promo_shown')) {
@@ -145,28 +145,27 @@
                     }
                     break;
                 case 'investments':
-                    app.innerHTML = this.views.investments();
+                    app.innerHTML = Router.views.investments();
                     break;
                 case 'wallet':
-                    app.innerHTML = this.views.wallet();
+                    app.innerHTML = Router.views.wallet();
                     break;
                 case 'referral':
-                    app.innerHTML = this.views.referral();
+                    app.innerHTML = Router.views.referral();
                     break;
                 case 'admin':
-                    app.innerHTML = this.views.admin();
+                    app.innerHTML = Router.views.admin();
                     if (window.loadAdminStats) window.loadAdminStats();
                     if (window.loadAdminData) window.loadAdminData();
                     break;
                 case 'pix_checkout':
-                    app.innerHTML = this.views.pixCheckout();
+                    app.innerHTML = Router.views.pixCheckout();
                     break;
                 case 'fortune_wheel':
-                    app.innerHTML = this.views.fortune_wheel();
-                    // Reset session UI if needed
+                    app.innerHTML = Router.views.fortune_wheel();
                     break;
                 case 'profile':
-                    app.innerHTML = this.views.profile();
+                    app.innerHTML = Router.views.profile();
                     break;
                 default:
                     app.innerHTML = '<h1>404 Not Found</h1>';
@@ -1353,7 +1352,7 @@
         console.log("💰 Tentando investir no plano:", planId);
         const plan = State.plans.find(p => p.id === planId);
         
-        if (!State.user || State.user.available < plan.min) {
+        if (!State.user || Number(State.user.available) < plan.min) {
             alert("Saldo disponível insuficiente. Faça um depósito!");
             Router.navigate('wallet');
             return;
