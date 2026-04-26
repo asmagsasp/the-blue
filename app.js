@@ -1517,45 +1517,79 @@
     };
 
     window.handleCancelInvest = async (txId, amount) => {
-        if (!confirm(`Deseja realmente estornar este investimento de R$ ${Number(amount).toFixed(2)}?\n\nO valor voltará integralmente para seu saldo disponível.`)) return;
+        // Criar o Modal Customizado de Confirmação de Estorno
+        const overlay = document.createElement('div');
+        overlay.className = 'promo-splash-overlay';
+        overlay.style.zIndex = "10001";
+        
+        overlay.innerHTML = `
+            <div class="glass-card animate-pop" style="width: 90%; max-width: 400px; padding: 30px; text-align: center; border: 1px solid #FF5252;">
+                <div style="font-size: 3rem; margin-bottom: 15px;">⚠️</div>
+                <h2 style="color: white; margin-bottom: 10px;">Estornar Investimento?</h2>
+                <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 25px;">
+                    Deseja realmente estornar o valor de <br>
+                    <span style="color: #FF5252; font-weight: 700; font-size: 1.2rem;">R$ ${Number(amount).toFixed(2)}</span>?<br><br>
+                    O valor voltará integralmente para seu saldo disponível.
+                </p>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button id="cancel-no" class="btn btn-outline" style="flex: 1; padding: 15px;">NÃO</button>
+                    <button id="cancel-yes" class="btn btn-primary" style="flex: 1; padding: 15px; background: #FF5252; border-color: #FF5252;">SIM, ESTORNAR</button>
+                </div>
+            </div>
+        `;
 
-        try {
-            // 1. Devolver saldo no Banco
-            const newAvailable = Number(State.user.available) + Number(amount);
-            const newInvested = Number(State.user.invested) - Number(amount);
+        document.body.appendChild(overlay);
 
-            const { error: updError } = await supabase.from('users')
-                .update({ available: newAvailable, invested: newInvested })
-                .eq('phone', State.user.phone);
+        // Ações do Modal
+        document.getElementById('cancel-no').onclick = () => overlay.remove();
+        
+        document.getElementById('cancel-yes').onclick = async () => {
+            const btn = document.getElementById('cancel-yes');
+            btn.disabled = true;
+            btn.innerText = "Processando...";
 
-            if (updError) throw updError;
+            try {
+                // 1. Devolver saldo no Banco
+                const newAvailable = Number(State.user.available) + Number(amount);
+                const newInvested = Number(State.user.invested) - Number(amount);
 
-            // 2. Deletar a transação original para sumir da lista de ativos
-            await supabase.from('transactions').delete().eq('id', txId);
-            
-            // Registrar o estorno para auditoria
-            await supabase.from('transactions').insert([{ 
-                user_phone: State.user.phone, 
-                type: 'dep', 
-                amount: amount, 
-                description: `Estorno de Investimento (Cancelado)` 
-            }]);
+                const { error: updError } = await supabase.from('users')
+                    .update({ available: newAvailable, invested: newInvested })
+                    .eq('phone', State.user.phone);
 
-            // 3. Sincronizar Tudo
-            const { data: updatedUser } = await supabase.from('users').select('*').eq('phone', State.user.phone).single();
-            if (updatedUser) State.user = updatedUser;
+                if (updError) throw updError;
 
-            const { data: txs } = await supabase.from('transactions').select('*').eq('user_phone', State.user.phone).order('created_at', { ascending: false });
-            if (txs) {
-                State.transactions = txs.map(t => ({ ...t, date: new Date(t.created_at).toLocaleDateString('pt-BR') }));
+                // 2. Deletar a transação original para sumir da lista de ativos
+                await supabase.from('transactions').delete().eq('id', txId);
+                
+                // Registrar o estorno para auditoria
+                await supabase.from('transactions').insert([{ 
+                    user_phone: State.user.phone, 
+                    type: 'dep', 
+                    amount: amount, 
+                    description: `Estorno de Investimento (Cancelado)` 
+                }]);
+
+                // 3. Sincronizar Tudo
+                const { data: updatedUser } = await supabase.from('users').select('*').eq('phone', State.user.phone).single();
+                if (updatedUser) State.user = updatedUser;
+
+                const { data: txs } = await supabase.from('transactions').select('*').eq('user_phone', State.user.phone).order('created_at', { ascending: false }).limit(50);
+                if (txs) {
+                    State.transactions = txs.map(t => ({ ...t, date: new Date(t.created_at).toLocaleDateString('pt-BR') }));
+                }
+
+                overlay.remove();
+                alert("✅ Investimento estornado com sucesso!");
+                Router.navigate('dashboard');
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao estornar: " + e.message);
+                btn.disabled = false;
+                btn.innerText = "SIM, ESTORNAR";
             }
-
-            alert("✅ Investimento estornado com sucesso! O saldo voltou para sua conta.");
-            Router.navigate('dashboard');
-        } catch (e) {
-            console.error(e);
-            alert("Erro ao estornar: " + e.message);
-        }
+        };
     };
 
     window.handleAddManualBalance = async () => {
