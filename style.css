@@ -314,3 +314,82 @@ p { color: var(--text-dim); line-height: 1.6; }
 #custom-modal-overlay {
     animation: animate-fade-in 0.3s ease-out;
 }
+
+/* --- Splash Screen Promocional --- */
+.promo-splash-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(15px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.promo-card {
+    background: linear-gradient(135deg, #111 0%, #000 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 40px rgba(0, 209, 255, 0.2);
+    border-radius: 30px;
+    max-width: 450px;
+    width: 100%;
+    padding: 45px 30px;
+    text-align: center;
+    position: relative;
+    animation: animate-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.promo-badge {
+    background: var(--secondary-orange);
+    color: black;
+    font-weight: 900;
+    font-size: 0.7rem;
+    padding: 6px 18px;
+    border-radius: 20px;
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 20px rgba(255, 152, 0, 0.5);
+    letter-spacing: 1px;
+}
+
+.promo-prize {
+    font-size: 3.5rem;
+    font-weight: 900;
+    background: linear-gradient(to bottom, #FF9800, #F44336);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 15px 0;
+    filter: drop-shadow(0 5px 15px rgba(244, 67, 54, 0.4));
+}
+
+.promo-desc {
+    color: white;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin-bottom: 25px;
+    font-weight: 400;
+    opacity: 0.9;
+}
+
+.promo-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 15px;
+    background: var(--primary-blue);
+    color: white;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 10px 20px rgba(0, 209, 255, 0.3);
+}
+
+.promo-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 25px rgba(0, 209, 255, 0.5);
+}

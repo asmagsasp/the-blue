@@ -53,6 +53,36 @@
         }
     };
 
+    window.showPromoSplash = () => {
+        const overlay = document.createElement('div');
+        overlay.className = 'promo-splash-overlay';
+        overlay.id = 'promo-splash';
+
+        overlay.innerHTML = `
+            <div class="promo-card">
+                <div class="promo-badge">PROMOÇÃO DE LANÇAMENTO</div>
+                <h2 style="color: white; margin-bottom: 5px;">SUPER BÔNUS</h2>
+                <div class="promo-prize">R$ 500,00</div>
+                <p class="promo-desc">
+                    Quem permanecer com pelo menos <strong>R$ 2.000,00</strong> investidos por <strong>2 meses consecutivos</strong> vai ganhar um prêmio de <strong>R$ 500,00</strong> direto no saldo!
+                </p>
+                <button class="promo-btn" onclick="document.getElementById('promo-splash').remove()">
+                    VAMOS GANHAR! 🚀
+                </button>
+                <p style="margin-top: 20px; font-size: 0.7rem; opacity: 0.5; color: white;">
+                    Válido para todos os planos ativos.
+                </p>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        
+        // Fechar ao clicar fora do card
+        overlay.onclick = (e) => {
+            if (e.target === overlay) overlay.remove();
+        };
+    };
+
     // --- Global Application State ---
     const State = {
         user: null, // Initially null
@@ -99,6 +129,12 @@
                     break;
                 case 'dashboard':
                     app.innerHTML = this.views.dashboard();
+                    this.initDashboard();
+                    // Mostrar Splash Promocional se for o primeiro acesso da sessão
+                    if (!sessionStorage.getItem('promo_shown')) {
+                        setTimeout(() => window.showPromoSplash(), 800);
+                        sessionStorage.setItem('promo_shown', 'true');
+                    }
                     break;
                 case 'investments':
                     app.innerHTML = this.views.investments();
