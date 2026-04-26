@@ -54,6 +54,11 @@
     };
 
     window.showPromoSplash = () => {
+        console.log("🚀 Executando showPromoSplash...");
+        // Remove se já existir para evitar duplicatas nos testes
+        const existing = document.getElementById('promo-splash');
+        if (existing) existing.remove();
+
         const overlay = document.createElement('div');
         overlay.className = 'promo-splash-overlay';
         overlay.id = 'promo-splash';
@@ -77,7 +82,6 @@
 
         document.body.appendChild(overlay);
         
-        // Fechar ao clicar fora do card
         overlay.onclick = (e) => {
             if (e.target === overlay) overlay.remove();
         };
@@ -129,12 +133,16 @@
                     break;
                 case 'dashboard':
                     app.innerHTML = this.views.dashboard();
-                    this.initDashboard();
-                    // Mostrar Splash Promocional se for o primeiro acesso da sessão
-                    if (!sessionStorage.getItem('promo_shown')) {
-                        setTimeout(() => window.showPromoSplash(), 800);
-                        sessionStorage.setItem('promo_shown', 'true');
-                    }
+                    
+                    // DEBUG: Forçando a exibição para teste (depois voltamos com o sessionStorage)
+                    console.log("🛠️ Tentando exibir splash screen...");
+                    setTimeout(() => {
+                        if (typeof window.showPromoSplash === 'function') {
+                            window.showPromoSplash();
+                        } else {
+                            console.error("❌ Erro: window.showPromoSplash não está definida!");
+                        }
+                    }, 1000);
                     break;
                 case 'investments':
                     app.innerHTML = this.views.investments();
