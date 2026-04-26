@@ -134,15 +134,15 @@
                 case 'dashboard':
                     app.innerHTML = this.views.dashboard();
                     
-                    // DEBUG: Forçando a exibição para teste (depois voltamos com o sessionStorage)
-                    console.log("🛠️ Tentando exibir splash screen...");
-                    setTimeout(() => {
-                        if (typeof window.showPromoSplash === 'function') {
-                            window.showPromoSplash();
-                        } else {
-                            console.error("❌ Erro: window.showPromoSplash não está definida!");
-                        }
-                    }, 1000);
+                    // Mostrar Splash Promocional apenas uma vez por sessão
+                    if (!sessionStorage.getItem('promo_shown')) {
+                        setTimeout(() => {
+                            if (typeof window.showPromoSplash === 'function') {
+                                window.showPromoSplash();
+                                sessionStorage.setItem('promo_shown', 'true');
+                            }
+                        }, 800);
+                    }
                     break;
                 case 'investments':
                     app.innerHTML = this.views.investments();
@@ -734,6 +734,16 @@
                     <div class="glass-card" style="padding: 15px;">
                         <p style="font-size: 0.7rem;">Aprovações Pendentes</p>
                         <h2 id="admin-total-pending" style="color: var(--secondary-orange);">...</h2>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="margin-top: 20px; border-left: 4px solid #FFD700;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="color: #FFD700;"><i class="fa-solid fa-crown"></i> Elegíveis Promoção (2k+)</h3>
+                        <button class="btn btn-outline" style="padding: 5px; border-color: #FFD700; color: #FFD700;" onclick="loadPromoUsers()"><i class="fa-solid fa-rotate-right"></i> Buscar Elegíveis</button>
+                    </div>
+                    <div id="admin-promo-list" style="display: flex; flex-direction: column; gap: 10px;">
+                        <p style="text-align: center; font-size: 0.8rem; opacity: 0.5;">Clique em buscar para listar usuários elegíveis ao prêmio.</p>
                     </div>
                 </div>
 
@@ -2139,6 +2149,75 @@
             await onConfirm();
             document.body.removeChild(overlay);
         };
+    };
+
+    window.loadPromoUsers = async () => {
+        const list = document.getElementById('admin-promo-list');
+        if (!list) return;
+        list.innerHTML = '<p style="text-align: center; font-size: 0.8rem; opacity: 0.5;">Buscando elegíveis...</p>';
+
+        const { data: users, error } = await supabase
+            .from('users')
+            .select('phone, invested')
+            .gte('invested', 2000)
+            .order('invested', { ascending: false });
+
+        if (error) {
+            list.innerHTML = `<p style="color: #FF5252; font-size: 0.8rem;">Erro ao buscar: ${error.message}</p>`;
+            return;
+        }
+
+        if (!users || users.length === 0) {
+            list.innerHTML = '<p style="text-align: center; font-size: 0.8rem; opacity: 0.5;">Nenhum usuário atingiu R$ 2.000,00 ainda.</p>';
+            return;
+        }
+
+        list.innerHTML = users.map(u => `
+            <div style="background: rgba(255,215,0,0.05); padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,215,0,0.2);">
+                <div>
+                    <p style="font-weight: 700; color: white;">${u.phone}</p>
+                    <p style="font-size: 0.75rem; color: #FFD700;">Total Investido: R$ ${parseFloat(u.invested).toFixed(2)}</p>
+                </div>
+                <button class="btn btn-primary" style="padding: 8px 12px; font-size: 0.7rem; background: #FFD700; border-color: #FFD700; color: black;" onclick="handlePayPromoPrize('${u.phone}')">
+                    PAGAR PRÊMIO
+                </button>
+            </div>
+        `).join('');
+    };
+
+    window.handlePayPromoPrize = async (phone) => {
+        if (!confirm(`Confirma o pagamento do prêmio de R$ 500,00 para o usuário ${phone}?`)) return;
+
+        try {
+            // 1. Buscar usuário para garantir saldo atualizado
+            const { data: user } = await supabase.from('users').select('*').eq('phone', phone).single();
+            if (!user) throw new Error("Usuário não encontrado.");
+
+            // 2. Adicionar R$ 500
+            const { error: updError } = await supabase.from('users').update({
+                available: Number(user.available) + 500,
+                balance: Number(user.balance) + 500
+            }).eq('phone', phone);
+
+            if (updError) throw updError;
+
+            // 3. Registrar Transação
+            await supabase.from('transactions').insert([{
+                user_phone: phone,
+                type: 'dep',
+                amount: 500,
+                description: '🎁 PRÊMIO PROMOÇÃO: Investimento 2k+ (2 Meses)'
+            }]);
+
+            // 4. Enviar WhatsApp
+            sendWhatsApp(phone, `🌟 *PARABÉNS!* 🌟\n\nVocê recebeu o prêmio de *R$ 500,00* da nossa promoção por manter investimentos acima de R$ 2.000,00!\n\nO valor já foi creditado no seu saldo disponível. Continue investindo e lucrando com o The Blue! 🚀`);
+
+            alert(`✅ Sucesso! R$ 500,00 pagos ao usuário ${phone}.`);
+            loadPromoUsers(); // Atualiza a lista
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao pagar prêmio: " + e.message);
+        }
     };
 
     // --- Initialization ---
