@@ -1362,49 +1362,93 @@
     };
 
     window.handleInvest = async (planId) => {
-        console.log("💰 Tentando investir no plano:", planId);
         const plan = State.plans.find(p => p.id === planId);
-        
+        if (!plan) return;
+
         if (!State.user || Number(State.user.available) < plan.min) {
             alert("Saldo disponível insuficiente. Faça um depósito!");
             Router.navigate('wallet');
             return;
         }
 
-        const amountInput = prompt(`Quanto deseja investir no ${plan.name}?\n(Mín: R$${plan.min} | Máx: R$${plan.max})`, plan.min);
-        const amount = parseFloat(amountInput);
+        // Criar o Modal Customizado de Investimento
+        const overlay = document.createElement('div');
+        overlay.className = 'promo-splash-overlay';
+        overlay.style.zIndex = "10001";
+        
+        overlay.innerHTML = `
+            <div class="glass-card animate-pop" style="width: 90%; max-width: 400px; padding: 30px; text-align: center; border: 1px solid var(--primary-blue);">
+                <div style="font-size: 3rem; margin-bottom: 15px;">🚀</div>
+                <h2 style="color: white; margin-bottom: 10px;">Investir em ${plan.name}</h2>
+                <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 25px;">
+                    Quanto você deseja investir?<br>
+                    <span style="color: #4CAF50; font-weight: 700;">Mín: R$ ${plan.min} | Máx: R$ ${plan.max}</span>
+                </p>
+                
+                <div style="margin-bottom: 25px;">
+                    <input type="number" id="invest-amount-input" value="${plan.min}" class="input-field" style="width: 100%; text-align: center; font-size: 1.5rem; padding: 15px; background: rgba(0,0,0,0.3); border: 2px solid var(--primary-blue); color: white; border-radius: 12px;">
+                </div>
 
-        if (amount && amount >= plan.min && amount <= plan.max) {
-            console.log("✅ Valor válido:", amount);
-            
-            // 1. Atualizar no Banco
-            const newAvailable = Number(State.user.available) - amount;
-            const newInvested = Number(State.user.invested) + amount;
+                <div style="display: flex; gap: 10px;">
+                    <button id="invest-cancel" class="btn btn-outline" style="flex: 1; padding: 15px;">CANCELAR</button>
+                    <button id="invest-confirm" class="btn btn-primary" style="flex: 1; padding: 15px;">CONFIRMAR</button>
+                </div>
+            </div>
+        `;
 
-            const { error: updError } = await supabase.from('users')
-                .update({ available: newAvailable, invested: newInvested })
-                .eq('phone', State.user.phone);
+        document.body.appendChild(overlay);
 
-            if (updError) {
-                alert("Erro ao processar investimento no banco: " + updError.message);
+        // Ações do Modal
+        document.getElementById('invest-cancel').onclick = () => overlay.remove();
+        
+        document.getElementById('invest-confirm').onclick = async () => {
+            const amountInput = document.getElementById('invest-amount-input').value;
+            const amount = parseFloat(amountInput);
+
+            if (isNaN(amount) || amount < plan.min || amount > plan.max) {
+                alert(`Por favor, insira um valor entre R$ ${plan.min} e R$ ${plan.max}`);
                 return;
             }
 
-            // 2. Registrar Transação
-            const txInv = { user_phone: State.user.phone, type: 'inv', amount: -amount, description: `Investimento: ${plan.name}` };
-            await supabase.from('transactions').insert([txInv]);
+            const btn = document.getElementById('invest-confirm');
+            btn.disabled = true;
+            btn.innerText = "Processando...";
 
-            // 3. Sincronizar Estado Local (Busca o dado real do banco para a tela)
-            const { data: updatedUser } = await supabase.from('users').select('*').eq('phone', State.user.phone).single();
-            if (updatedUser) {
-                State.user = updatedUser;
+            try {
+                // 1. Atualizar no Banco
+                const newAvailable = Number(State.user.available) - amount;
+                const newInvested = Number(State.user.invested) + amount;
+
+                const { error: updError } = await supabase.from('users')
+                    .update({ available: newAvailable, invested: newInvested })
+                    .eq('phone', State.user.phone);
+
+                if (updError) throw updError;
+
+                // 2. Registrar Transação
+                await supabase.from('transactions').insert([{ 
+                    user_phone: State.user.phone, 
+                    type: 'inv', 
+                    amount: -amount, 
+                    description: `Investimento: ${plan.name}` 
+                }]);
+
+                // 3. Sincronizar Estado Local
+                const { data: updatedUser } = await supabase.from('users').select('*').eq('phone', State.user.phone).single();
+                if (updatedUser) {
+                    State.user = updatedUser;
+                }
+
+                overlay.remove();
+                alert("🚀 Investimento realizado com sucesso!");
+                Router.navigate('dashboard');
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao processar: " + e.message);
+                btn.disabled = false;
+                btn.innerText = "CONFIRMAR";
             }
-
-            alert("🚀 Investimento realizado com sucesso!");
-            Router.navigate('dashboard');
-        } else if (amountInput !== null) {
-            alert("Valor inválido. Respeite os limites mínimo e máximo do plano.");
-        }
+        };
     };
 
     window.handleAddManualBalance = async () => {
