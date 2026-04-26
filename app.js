@@ -308,13 +308,61 @@
                 </div>
 
                 <!-- Earning Stats -->
-                <div class="glass-card" style="margin-bottom: 30px;">
+                <div class="glass-card" style="margin-bottom: 20px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3>Ganhos de Hoje</h3>
-                        <span style="color: #4CAF50; font-weight: 600;">+ R$ ${(State.user.invested * 0.02).toFixed(2)}</span>
+                        <div>
+                            <h3 style="font-size: 1rem;">Rendimento Estimado</h3>
+                            <p style="font-size: 0.7rem; opacity: 0.6;">Lucro diário com base nos seus planos</p>
+                        </div>
+                        <span style="color: #4CAF50; font-weight: 800; font-size: 1.1rem;">+ R$ ${(Number(State.user.invested || 0) * 0.02).toFixed(2)}</span>
                     </div>
-                    <div style="height: 60px; display: flex; align-items: flex-end; gap: 8px;">
-                        ${[20, 60, 40, 80, 50, 100, 90].map(h => `<div style="flex: 1; background: var(--primary-blue); height: ${h}%; border-radius: 4px 4px 0 0; opacity: ${h / 100};"></div>`).join('')}
+                    <div style="height: 40px; display: flex; align-items: flex-end; gap: 5px;">
+                        ${[20, 60, 40, 80, 50, 100, 90, 70, 110, 80, 120].map(h => `<div style="flex: 1; background: var(--primary-blue); height: ${h}%; border-radius: 3px; opacity: ${h / 150};"></div>`).join('')}
+                    </div>
+                </div>
+
+                <!-- Active Investments Section -->
+                <div style="margin-bottom: 30px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="font-size: 1.1rem;">Meus Investimentos</h3>
+                        <span style="font-size: 0.7rem; background: rgba(0,209,255,0.1); color: var(--accent-blue); padding: 4px 10px; border-radius: 12px; font-weight: 700;">ATIVOS</span>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        ${(() => {
+                            const invs = State.transactions.filter(t => t.type === 'inv');
+                            if (invs.length === 0) {
+                                return `
+                                    <div class="glass-card" style="text-align: center; padding: 30px; border: 1px dashed rgba(255,255,255,0.1);">
+                                        <p style="font-size: 0.8rem; opacity: 0.5;">Você ainda não tem investimentos ativos.</p>
+                                        <button class="btn btn-outline" style="margin-top: 15px; font-size: 0.75rem;" onclick="Router.navigate('investments')">VER PLANOS DISPONÍVEIS</button>
+                                    </div>
+                                `;
+                            }
+                            return invs.map(inv => `
+                                <div class="glass-card" style="display: flex; align-items: center; gap: 15px; padding: 15px; border-left: 3px solid #4CAF50; background: linear-gradient(90deg, rgba(76,175,80,0.05), transparent);">
+                                    <div style="background: rgba(76,175,80,0.1); width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fa-solid fa-bolt" style="color: #4CAF50;"></i>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <p style="font-size: 0.9rem; font-weight: 700; color: white;">${inv.description.replace('Investimento: ', '')}</p>
+                                        <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px;">
+                                            <span style="font-size: 0.7rem; color: #4CAF50; font-weight: 600;">R$ ${Math.abs(inv.amount).toFixed(2)}</span>
+                                            <span style="width: 3px; height: 3px; background: rgba(255,255,255,0.2); border-radius: 50%;"></span>
+                                            <span style="font-size: 0.65rem; opacity: 0.5;">Iniciado em ${inv.date}</span>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="width: 40px; height: 40px;">
+                                            <svg viewBox="0 0 36 36" style="transform: rotate(-90deg);">
+                                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3" />
+                                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#4CAF50" stroke-width="3" stroke-dasharray="35, 100" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('');
+                        })()}
                     </div>
                 </div>
 
