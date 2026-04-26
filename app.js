@@ -1034,18 +1034,20 @@
 
         if (!supabase) { alert("Banco de dados ausente."); return; }
 
-        const { data: user, error } = await supabase.from('users').select('*').eq('phone', phone).single();
+        // Inicia as buscas em paralelo para ganhar velocidade
+        const [userResponse, txsResponse] = await Promise.all([
+            supabase.from('users').select('*').eq('phone', phone).single(),
+            supabase.from('transactions').select('*').eq('user_phone', phone).order('created_at', { ascending: false }).limit(50)
+        ]);
+
+        const user = userResponse.data;
+        const error = userResponse.error;
+        const txs = txsResponse.data;
 
         if (error || !user || user.password !== pass) {
             alert("Credenciais inválidas ou conta não encontrada.");
             return;
         }
-
-        // Carregar transações do histórico real
-        const { data: txs } = await supabase.from('transactions')
-            .select('*')
-            .eq('user_phone', phone)
-            .order('created_at', { ascending: false });
 
         State.user = user;
         
