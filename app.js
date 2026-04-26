@@ -352,13 +352,16 @@
                                             <span style="font-size: 0.65rem; opacity: 0.5;">Iniciado em ${inv.date}</span>
                                         </div>
                                     </div>
-                                    <div style="text-align: right;">
-                                        <div style="width: 40px; height: 40px;">
+                                    <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                                        <div style="width: 30px; height: 30px;">
                                             <svg viewBox="0 0 36 36" style="transform: rotate(-90deg);">
                                                 <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3" />
                                                 <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#4CAF50" stroke-width="3" stroke-dasharray="35, 100" />
                                             </svg>
                                         </div>
+                                        <button class="btn btn-outline" style="padding: 4px 8px; font-size: 0.6rem; border-color: #FF5252; color: #FF5252;" onclick="handleCancelInvest('${inv.id}', ${Math.abs(inv.amount)})">
+                                            ESTORNAR
+                                        </button>
                                     </div>
                                 </div>
                             `).join('');
@@ -1494,6 +1497,13 @@
 
                 overlay.remove();
                 alert("🚀 Investimento realizado com sucesso!");
+
+                // Recarregar transações para atualizar a lista do dashboard imediatamente
+                const { data: txs } = await supabase.from('transactions').select('*').eq('user_phone', State.user.phone).order('created_at', { ascending: false });
+                if (txs) {
+                    State.transactions = txs.map(t => ({ ...t, date: new Date(t.created_at).toLocaleDateString('pt-BR') }));
+                }
+
                 Router.navigate('dashboard');
             } catch (e) {
                 console.error(e);
@@ -1502,6 +1512,48 @@
                 btn.innerText = "CONFIRMAR";
             }
         };
+    };
+
+    window.handleCancelInvest = async (txId, amount) => {
+        if (!confirm(`Deseja realmente estornar este investimento de R$ ${Number(amount).toFixed(2)}?\n\nO valor voltará integralmente para seu saldo disponível.`)) return;
+
+        try {
+            // 1. Devolver saldo no Banco
+            const newAvailable = Number(State.user.available) + Number(amount);
+            const newInvested = Number(State.user.invested) - Number(amount);
+
+            const { error: updError } = await supabase.from('users')
+                .update({ available: newAvailable, invested: newInvested })
+                .eq('phone', State.user.phone);
+
+            if (updError) throw updError;
+
+            // 2. Deletar a transação original para sumir da lista de ativos
+            await supabase.from('transactions').delete().eq('id', txId);
+            
+            // Registrar o estorno para auditoria
+            await supabase.from('transactions').insert([{ 
+                user_phone: State.user.phone, 
+                type: 'dep', 
+                amount: amount, 
+                description: `Estorno de Investimento (Cancelado)` 
+            }]);
+
+            // 3. Sincronizar Tudo
+            const { data: updatedUser } = await supabase.from('users').select('*').eq('phone', State.user.phone).single();
+            if (updatedUser) State.user = updatedUser;
+
+            const { data: txs } = await supabase.from('transactions').select('*').eq('user_phone', State.user.phone).order('created_at', { ascending: false });
+            if (txs) {
+                State.transactions = txs.map(t => ({ ...t, date: new Date(t.created_at).toLocaleDateString('pt-BR') }));
+            }
+
+            alert("✅ Investimento estornado com sucesso! O saldo voltou para sua conta.");
+            Router.navigate('dashboard');
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao estornar: " + e.message);
+        }
     };
 
     window.handleAddManualBalance = async () => {
