@@ -1458,6 +1458,11 @@
                 return;
             }
 
+            if (amount > Number(State.user.available)) {
+                alert(`Saldo insuficiente! Você possui R$ ${Number(State.user.available).toFixed(2)} disponíveis, mas tentou investir R$ ${amount.toFixed(2)}.`);
+                return;
+            }
+
             const btn = document.getElementById('invest-confirm');
             btn.disabled = true;
             btn.innerText = "Processando...";
