@@ -4,8 +4,9 @@
   "description": "Investment Platform - The Blue",
   "main": "app.js",
   "scripts": {
-    "start": "npx -y live-server --port=3000 --host=localhost",
-    "dev": "npx -y live-server --port=3000 --host=localhost"
+    "start": "npx -y live-server --port=3010 --host=localhost",
+    "dev": "npx -y live-server --port=3010 --host=localhost",
+    "build": "echo 'Static site, no build step needed'"
   },
   "devDependencies": {
     "live-server": "^1.2.2"

@@ -13,79 +13,10 @@
         supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
     }
 
-    // --- Configuração Evolution API (WhatsApp) ---
-    const WA_CONFIG = {
-        enabled: true,
-        baseUrl: 'https://dimmer-grass-alright.ngrok-free.dev', // <--- COLE A URL DO NGROK AQUI
-        instance: 'MeuBot',
-        apiKey: '47b2030633301eea8876d1d08cdb6ef23b49a171770f240b25ec0be1be53d77d',
-        adminNumber: '551934585300'
-    };
+    // --- Integração com o WhatsApp removida ---
 
-    const sendWhatsApp = async (number, message) => {
-        if (!WA_CONFIG.enabled || WA_CONFIG.apiKey === 'SUA_API_KEY_AQUI') return;
 
-        const cleanNumber = number.replace(/\D/g, '');
-        const targetNumber = cleanNumber.length <= 11 ? '55' + cleanNumber : cleanNumber;
 
-        // Limpa barra final da URL se existir para evitar erro de // na requisição
-        const base = WA_CONFIG.baseUrl.replace(/\/$/, '');
-
-        try {
-            const response = await fetch(`${base}/message/sendText/${WA_CONFIG.instance}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': WA_CONFIG.apiKey,
-                    'ngrok-skip-browser-warning': 'true' // Cabeçalho essencial para ngrok gratuito
-                },
-                body: JSON.stringify({
-                    number: targetNumber,
-                    textMessage: { text: message },
-                    options: { delay: 1200, presence: "composing" }
-                })
-            });
-
-            const data = await response.json();
-            console.log(`📱 Resposta Evolution API para ${targetNumber}:`, data);
-        } catch (e) {
-            console.error("❌ Erro ao enviar WhatsApp:", e);
-        }
-    };
-
-    window.showPromoSplash = () => {
-        console.log("🚀 Executando showPromoSplash...");
-        // Remove se já existir para evitar duplicatas nos testes
-        const existing = document.getElementById('promo-splash');
-        if (existing) existing.remove();
-
-        const overlay = document.createElement('div');
-        overlay.className = 'promo-splash-overlay';
-        overlay.id = 'promo-splash';
-
-        overlay.innerHTML = `
-            <div class="promo-card">
-                <div class="promo-badge">PROMOÇÃO DE LANÇAMENTO</div>
-                <h2 style="color: white; margin-bottom: 5px;">SUPER BÔNUS</h2>
-                <div class="promo-prize">R$ 500,00</div>
-                <p class="promo-desc">
-                    Quem permanecer com pelo menos <strong>R$ 2.000,00</strong> investidos por <strong>2 meses consecutivos</strong> vai ganhar um prêmio de <strong>R$ 500,00</strong> direto no saldo!
-                </p>
-                <button class="promo-btn" onclick="document.getElementById('promo-splash').remove()">
-                    VAMOS GANHAR! 🚀
-                </button>
-                <p style="margin-top: 20px; font-size: 0.7rem; opacity: 0.5; color: white;">
-                    Válido para todos os planos ativos.
-                </p>
-            </div>
-        `;
-
-        document.body.appendChild(overlay);
-        
-        overlay.onclick = (e) => {
-            if (e.target === overlay) overlay.remove();
-        };
-    };
 
     // --- Global Application State ---
     const State = {
@@ -133,16 +64,7 @@
                     break;
                 case 'dashboard':
                     app.innerHTML = Router.views.dashboard();
-                    
-                    // Mostrar Splash Promocional apenas uma vez por sessão
-                    if (!sessionStorage.getItem('promo_shown')) {
-                        setTimeout(() => {
-                            if (typeof window.showPromoSplash === 'function') {
-                                window.showPromoSplash();
-                                sessionStorage.setItem('promo_shown', 'true');
-                            }
-                        }, 800);
-                    }
+
                     break;
                 case 'investments':
                     app.innerHTML = Router.views.investments();
@@ -271,20 +193,10 @@
                     `}
                 </div>
 
-                <!-- Balance Cards Carousel-style -->
+                <!-- Balance Cards -->
                 <div class="glass-card" style="background: linear-gradient(135deg, var(--primary-blue), #003399); border: none; margin-bottom: 20px;">
-                    <p style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">Saldo Total Estimado</p>
-                    <h1 style="font-size: 2.8rem; margin: 10px 0; -webkit-text-fill-color: white;">R$ ${Number(State.user.balance || 0).toFixed(2)}</h1>
-                    <div style="display: flex; gap: 15px; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-                        <div>
-                            <p style="font-size: 0.7rem; color: rgba(255,255,255,0.6);">Disponível</p>
-                            <p style="font-weight: 600;">R$ ${Number(State.user.available || 0).toFixed(2)}</p>
-                        </div>
-                        <div style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
-                            <p style="font-size: 0.7rem; color: rgba(255,255,255,0.6);">Investido</p>
-                            <p style="font-weight: 600;">R$ ${Number(State.user.invested || 0).toFixed(2)}</p>
-                        </div>
-                    </div>
+                    <p style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">Saldo Disponível</p>
+                    <h1 style="font-size: 2.8rem; margin: 10px 0; -webkit-text-fill-color: white;">R$ ${Number(State.user.available || 0).toFixed(2)}</h1>
                 </div>
 
                 <!-- Quick Actions -->
@@ -359,9 +271,6 @@
                                                 <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#4CAF50" stroke-width="3" stroke-dasharray="35, 100" />
                                             </svg>
                                         </div>
-                                        <button class="btn btn-outline" style="padding: 4px 8px; font-size: 0.6rem; border-color: #FF5252; color: #FF5252;" onclick="handleCancelInvest('${inv.id}', ${Math.abs(inv.amount)})">
-                                            ESTORNAR
-                                        </button>
                                     </div>
                                 </div>
                             `).join('');
@@ -645,7 +554,7 @@
                     </div>
                     
                     <label style="display: block; margin-bottom: 8px;">Valor do Depósito</label>
-                    <input type="number" id="dep-amount" placeholder="Mínimo R$ 5,00" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
+                    <input type="number" id="dep-amount" placeholder="Mínimo R$ 5,00" class="input-field" autocomplete="off" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
                     
                     <button class="btn btn-secondary" style="width: 100%;" onclick="handleDeposit()">Gerar Pagamento</button>
                 </div>
@@ -1016,11 +925,7 @@
         State.user = newUser;
         State.transactions = [];
         Router.navigate('dashboard');
-        
-        // Forçar o banner após o login com um pequeno delay
-        setTimeout(() => {
-            if (window.showPromoSplash) window.showPromoSplash();
-        }, 1000);
+
     };
 
     window.handleLogin = async () => {
@@ -1051,9 +956,6 @@
 
         State.user = user;
         
-        // Limpa trava do banner para aparecer nos testes
-        sessionStorage.removeItem('promo_shown');
-
         // Mapear datas do banco para formato local visual temporário
         State.transactions = (txs || []).map(t => ({
             ...t,
@@ -1061,11 +963,6 @@
         }));
 
         Router.navigate('dashboard');
-        
-        // Forçar banner com pequeno delay para garantir que o dashboard carregou
-        setTimeout(() => {
-            if (window.showPromoSplash) window.showPromoSplash();
-        }, 800);
     };
 
     window.currentPayMethod = 'pix';
@@ -1191,9 +1088,6 @@
     };
 
     window.handlePaymentConfirmed = (isSilent = false) => {
-        // Envia o WhatsApp
-        sendWhatsApp(State.user.phone, `Seu depósito foi enviado para a plataforma. Aguarde no maximo 24 horas (se a demanda não tiver alta é rápido) para que o seu saldo seja creditado.`);
-
         if (!isSilent) {
             alert("Aviso enviado ao sistema! Aguarde a conferência em até 24h.");
             Router.navigate('dashboard');
@@ -1254,6 +1148,11 @@
         btnDep.style.background = tab === 'dep' ? 'var(--glass-bg)' : 'transparent';
         btnWith.style.background = tab === 'with' ? 'var(--glass-bg)' : 'transparent';
         btnTrans.style.background = tab === 'trans' ? 'var(--glass-bg)' : 'transparent';
+
+        if (tab === 'dep') {
+            const depInput = document.getElementById('dep-amount');
+            if (depInput) depInput.value = '';
+        }
     };
 
     window.handleWithdraw = async () => {
@@ -1328,12 +1227,7 @@
         tx.date = new Date().toLocaleDateString('pt-BR');
         State.transactions.unshift(tx);
 
-        // Notificações WhatsApp
-        // 1. Para o Usuário
-        sendWhatsApp(State.user.phone, `Olá! Seu pedido de saque de R$ ${amount.toFixed(2)} foi recebido e poderá levar até 24 horas para ser processado.`);
 
-        // 2. Para o Admin (Você)
-        sendWhatsApp(WA_CONFIG.adminNumber, `🚨 *NOVO SAQUE SOLICITADO*\n\nCliente: ${State.user.phone}\nValor Bruto: R$ ${amount.toFixed(2)}\nChave: ${pixKey}\n\nAcesse o painel admin para processar.`);
 
         alert("Solicitação de saque enviada com sucesso! Aguarde a aprovação do administrador.");
         document.getElementById('withdraw-amount').value = '';
@@ -1798,8 +1692,7 @@
                     if (txUpdateError) {
                         alert("Erro ao efetivar saque.");
                     } else {
-                        // Notificação WhatsApp para o Usuário
-                        sendWhatsApp(p.user_phone, `✅ Seu saque já foi realizado com sucesso! O valor já deve estar em sua conta.`);
+
 
                         alert("✅ Saque marcado como efetuado.");
                     }
@@ -2436,8 +2329,7 @@
                 description: '🎁 PRÊMIO PROMOÇÃO: Investimento 2k+ (2 Meses)'
             }]);
 
-            // 4. Enviar WhatsApp
-            sendWhatsApp(phone, `🌟 *PARABÉNS!* 🌟\n\nVocê recebeu o prêmio de *R$ 500,00* da nossa promoção por manter investimentos acima de R$ 2.000,00!\n\nO valor já foi creditado no seu saldo disponível. Continue investindo e lucrando com o The Blue! 🚀`);
+
 
             alert(`✅ Sucesso! R$ 500,00 pagos ao usuário ${phone}.`);
             loadPromoUsers(); // Atualiza a lista

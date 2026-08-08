@@ -10,7 +10,7 @@ echo ========================================
 echo   THE BLUE - SERVIDOR LOCAL ATIVO
 echo ========================================
 echo.
-echo Acesse: http://localhost:3000
+echo Acesse: http://localhost:3010
 echo.
 npm start
 pause
