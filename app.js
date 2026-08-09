@@ -286,7 +286,7 @@
                         ${State.transactions.slice(0, 3).map(tr => `
                             <div class="glass-card" style="display: flex; align-items: center; gap: 15px; padding: 12px;">
                                 <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
-                                    <i class="fa-solid ${tr.type === 'dep' || tr.type === 'pix_pendente' ? 'fa-arrow-down' : 'fa-arrow-up'}" style="color: ${tr.type === 'dep' ? '#4CAF50' : tr.type === 'pix_pendente' ? '#FF9800' : '#FF5252'};"></i>
+                                    <i class="fa-solid ${tr.type === 'dep' || tr.type === 'pix_pendente' ? 'fa-arrow-down' : tr.type === 'comissao' ? 'fa-trophy' : 'fa-arrow-up'}" style="color: ${tr.type === 'dep' ? '#4CAF50' : tr.type === 'pix_pendente' ? '#FF9800' : tr.type === 'comissao' ? '#FFD700' : '#FF5252'};"></i>
                                 </div>
                                 <div style="flex: 1;">
                                     <p style="font-size: 0.85rem; font-weight: 600;">${tr.description || tr.desc}</p>
@@ -655,12 +655,12 @@
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 30px;">
                     <div class="glass-card" style="text-align: center; padding: 15px 10px;">
                         <h4 style="color: var(--primary-blue);">Nível 1</h4>
-                        <p style="font-weight: 800; font-size: 1.2rem; margin: 5px 0;">5%</p>
+                        <p style="font-weight: 800; font-size: 1.2rem; margin: 5px 0;">15%</p>
                         <p style="font-size: 0.6rem; opacity: 0.6;">0 usuários</p>
                     </div>
                     <div class="glass-card" style="text-align: center; padding: 15px 10px;">
                         <h4 style="color: var(--secondary-orange);">Nível 2</h4>
-                        <p style="font-weight: 800; font-size: 1.2rem; margin: 5px 0;">3%</p>
+                        <p style="font-weight: 800; font-size: 1.2rem; margin: 5px 0;">5%</p>
                         <p style="font-size: 0.6rem; opacity: 0.6;">0 usuários</p>
                     </div>
                     <div class="glass-card" style="text-align: center; padding: 15px 10px;">
@@ -1669,7 +1669,66 @@
                     }
 
                     await supabase.from('transactions').update({ type: 'dep', description: 'Depósito PIX (Aprovado)' }).eq('id', txId);
-                    alert(`✅ SUCESSO! R$ ${amount.toFixed(2)} creditados.`);
+
+                    // --- Cálculo Automático de Comissões Multinível ---
+                    console.log("💰 Iniciando cálculo de comissões multinível...");
+                    const COMMISSION_RATES = [0.15, 0.05, 0.02]; // Nível 1: 15%, Nível 2: 5%, Nível 3: 2%
+                    const LEVEL_LABELS = ['1º Nível (15%)', '2º Nível (5%)', '3º Nível (2%)'];
+
+                    let currentSponsorPhone = user.sponsor;
+                    let commissionsGranted = 0;
+
+                    for (let nivel = 0; nivel < 3; nivel++) {
+                        if (!currentSponsorPhone) break; // Sem mais patrocinadores na cadeia
+
+                        const rate = COMMISSION_RATES[nivel];
+                        const commissionAmount = parseFloat((amount * rate).toFixed(2));
+
+                        if (commissionAmount <= 0) break;
+
+                        console.log(`🔗 Buscando patrocinador nível ${nivel + 1}: ${currentSponsorPhone}`);
+                        const { data: sponsor, error: sponsorError } = await supabase
+                            .from('users')
+                            .select('*')
+                            .eq('phone', currentSponsorPhone)
+                            .single();
+
+                        if (sponsorError || !sponsor) {
+                            console.warn(`⚠️ Patrocinador nível ${nivel + 1} não encontrado:`, currentSponsorPhone);
+                            break;
+                        }
+
+                        // Creditar comissão no saldo do patrocinador
+                        const { error: commError } = await supabase.from('users').update({
+                            available: Number(sponsor.available) + commissionAmount,
+                            balance: Number(sponsor.balance) + commissionAmount
+                        }).eq('phone', sponsor.phone);
+
+                        if (commError) {
+                            console.error(`❌ Erro ao creditar comissão nível ${nivel + 1}:`, commError.message);
+                        } else {
+                            // Registrar transação de comissão para rastreamento
+                            await supabase.from('transactions').insert([{
+                                user_phone: sponsor.phone,
+                                type: 'comissao',
+                                amount: commissionAmount,
+                                description: `Comissão ${LEVEL_LABELS[nivel]} — Indicado: ${phone} depositou R$ ${amount.toFixed(2)}`
+                            }]);
+
+                            commissionsGranted++;
+                            console.log(`✅ Comissão nível ${nivel + 1} creditada: R$ ${commissionAmount.toFixed(2)} para ${sponsor.phone}`);
+                        }
+
+                        // Subir um nível na cadeia de indicação
+                        currentSponsorPhone = sponsor.sponsor || null;
+                    }
+
+                    if (commissionsGranted > 0) {
+                        console.log(`🎉 ${commissionsGranted} comissão(ões) de indicação creditada(s) automaticamente.`);
+                    }
+                    // --- Fim das Comissões ---
+
+                    alert(`✅ SUCESSO! R$ ${amount.toFixed(2)} creditados.${commissionsGranted > 0 ? `\n💰 ${commissionsGranted} comissão(ões) de indicação distribuída(s)!` : ''}`);
 
                     if (window.loadAdminData) window.loadAdminData();
                     if (window.loadAdminReports && document.getElementById('report-results') && document.getElementById('report-results').style.display !== 'none') {
