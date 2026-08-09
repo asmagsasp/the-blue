@@ -95,60 +95,123 @@
         },
 
         views: {
-            auth: () => `
+        auth: () => {
+            const savedPhone = localStorage.getItem('theblue_session_phone') || '';
+            const isRemembered = localStorage.getItem('theblue_remember') === '1';
+            
+            // Ativa aba Cadastrar por padrão se houver indicação na URL e o usuário ainda não tiver sessão salva
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasRef = !!urlParams.get('ref') || window.location.pathname.startsWith('/ref/');
+            const showRegisterDefault = hasRef && !savedPhone;
+
+            return `
             <div class="app-container animate-fade">
-                <div class="auth-header" style="text-align: center; padding: 0 0 10px 0;">
+                <div class="auth-header" style="text-align: center; padding: 10px 0 20px 0;">
                     <div class="mascot-container">
                         <div class="mascot-shape"></div>
                     </div>
                     <h1 style="color: var(--primary-blue); font-size: 2.5rem; margin-top: 5px;">The Blue</h1>
-                    <p style="font-size: 0.85rem;">O Azul que transforma seu futuro.</p>
+                    <p style="font-size: 0.85rem; color: var(--text-dim);">O Azul que transforma seu futuro.</p>
                 </div>
-                
-                <div id="auth-form" class="glass-card">
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                        <button class="btn btn-outline" style="flex: 1; border-color: var(--primary-blue);" onclick="toggleAuth(true)">Cadastrar</button>
-                        <button class="btn btn-outline" style="flex: 1;" onclick="toggleAuth(false)">Entrar</button>
+
+                <div id="auth-form" class="glass-card" style="padding: 25px 20px;">
+
+                    <!-- Tabs de navegação -->
+                    <div style="display: flex; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 4px; margin-bottom: 25px; border: 1px solid var(--glass-border);">
+                        <button type="button" id="tab-login" onclick="toggleAuth(false)" 
+                                style="flex: 1; padding: 12px; border: none; border-radius: 9px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.3s; ${!showRegisterDefault ? 'background: var(--primary-blue); color: white; box-shadow: 0 4px 12px rgba(0,102,255,0.4);' : 'background: transparent; color: var(--text-dim);'}">
+                            <i class="fa-solid fa-right-to-bracket" style="margin-right: 6px;"></i> Entrar
+                        </button>
+                        <button type="button" id="tab-register" onclick="toggleAuth(true)" 
+                                style="flex: 1; padding: 12px; border: none; border-radius: 9px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.3s; ${showRegisterDefault ? 'background: var(--secondary-orange); color: white; box-shadow: 0 4px 12px rgba(255,130,0,0.4);' : 'background: transparent; color: var(--text-dim);'}">
+                            <i class="fa-solid fa-user-plus" style="margin-right: 6px;"></i> Cadastrar
+                        </button>
                     </div>
 
-                    <div id="register-fields">
-                        <label style="display: block; margin-bottom: 2px; font-size: 0.8rem; color: var(--text-dim);">Código de Convite (Opcional)</label>
-                        <input type="text" placeholder="Código de Convite" class="input-field" id="sponsor" value="${localStorage.getItem('theblue_ref') || ''}" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 10px;">
+                    <!-- Aba 1: ENTRAR -->
+                    <form id="login-fields" onsubmit="event.preventDefault(); handleLogin();" style="display: ${showRegisterDefault ? 'none' : 'block'};">
+                        <div style="margin-bottom: 18px;">
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-dim);">Telefone</label>
+                            <div style="position: relative;">
+                                <i class="fa-solid fa-phone" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary-blue); font-size: 0.9rem;"></i>
+                                <input type="tel" name="username" id="login-phone" value="${savedPhone}" autocomplete="username" placeholder="(00) 00000-0000" class="input-field" style="width: 100%; padding: 12px 12px 12px 42px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; color: white; font-size: 0.95rem;">
+                            </div>
+                        </div>
 
-                        <label style="display: block; margin-bottom: 2px; font-size: 0.8rem; color: var(--text-dim);">Telefone</label>
-                        <input type="text" placeholder="(00) 00000-0000" class="input-field" id="phone" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 10px;">
-                        
-                        <label style="display: block; margin-bottom: 2px; font-size: 0.8rem; color: var(--text-dim);">Senha de Acesso</label>
-                        <input type="password" placeholder="••••••••" class="input-field" id="password" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 10px;">
-                        
-                        <label style="display: block; margin-bottom: 2px; font-size: 0.8rem; color: var(--text-dim);">Senha de Saque</label>
-                        <input type="password" placeholder="••••••••" class="input-field" id="withdraw_password" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
-                        
-                        <button class="btn btn-primary" style="width: 100%; padding: 14px;" onclick="handleRegister()">Criar Conta Grátis</button>
-                    </div>
+                        <div style="margin-bottom: 18px;">
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-dim);">Senha</label>
+                            <div style="position: relative;">
+                                <i class="fa-solid fa-lock" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary-blue); font-size: 0.9rem;"></i>
+                                <input type="password" name="password" id="login-password" autocomplete="current-password" placeholder="••••••••" class="input-field" style="width: 100%; padding: 12px 12px 12px 42px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; color: white; font-size: 0.95rem;">
+                            </div>
+                        </div>
 
-                    <div id="login-fields" style="display: none;">
-                        <label style="display: block; margin-bottom: 2px; font-size: 0.8rem; color: var(--text-dim);">Telefone</label>
-                        <input type="text" placeholder="(00) 00000-0000" class="input-field" id="login-phone" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
-                        
-                        <label style="display: block; margin-bottom: 2px; font-size: 0.8rem; color: var(--text-dim);">Senha</label>
-                        <input type="password" placeholder="••••••••" class="input-field" id="login-password" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
-
-                        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; cursor: pointer; user-select: none;">
+                        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 22px; cursor: pointer; user-select: none;">
                             <div style="position: relative; width: 42px; height: 24px; flex-shrink: 0;">
-                                <input type="checkbox" id="remember-me" style="opacity: 0; width: 0; height: 0; position: absolute;" ${localStorage.getItem('theblue_remember') === '1' ? 'checked' : ''}>
-                                <span id="remember-toggle" onclick="toggleRememberMe()" style="position: absolute; inset: 0; background: ${localStorage.getItem('theblue_remember') === '1' ? 'var(--primary-blue)' : 'rgba(255,255,255,0.1)'}; border-radius: 24px; transition: background 0.3s; border: 1px solid var(--glass-border); cursor: pointer;">
-                                    <span style="position: absolute; left: ${localStorage.getItem('theblue_remember') === '1' ? '20px' : '3px'}; top: 3px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: left 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.4);"></span>
+                                <input type="checkbox" id="remember-me" style="opacity: 0; width: 0; height: 0; position: absolute;" ${isRemembered ? 'checked' : ''}>
+                                <span id="remember-toggle" onclick="toggleRememberMe()" style="position: absolute; inset: 0; background: ${isRemembered ? 'var(--primary-blue)' : 'rgba(255,255,255,0.1)'}; border-radius: 24px; transition: background 0.3s; border: 1px solid var(--glass-border); cursor: pointer;">
+                                    <span style="position: absolute; left: ${isRemembered ? '20px' : '3px'}; top: 3px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: left 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.4);"></span>
                                 </span>
                             </div>
                             <span style="font-size: 0.85rem; color: var(--text-dim);">Lembrar de mim</span>
                         </label>
 
-                        <button class="btn btn-secondary" style="width: 100%; padding: 14px;" onclick="handleLogin()">Acessar Plataforma</button>
-                    </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 1rem; border-radius: 10px; font-weight: 700; box-shadow: 0 4px 15px rgba(0,102,255,0.3);">
+                            <i class="fa-solid fa-right-to-bracket"></i> Acessar Plataforma
+                        </button>
+
+                        <p style="text-align: center; margin-top: 18px; font-size: 0.82rem; color: var(--text-dim);">
+                            Ainda não tem conta? <span onclick="toggleAuth(true)" style="color: var(--primary-blue); cursor: pointer; font-weight: 700; text-decoration: underline;">Cadastre-se grátis</span>
+                        </p>
+                    </form>
+
+                    <!-- Aba 2: CADASTRAR -->
+                    <form id="register-fields" onsubmit="event.preventDefault(); handleRegister();" style="display: ${showRegisterDefault ? 'block' : 'none'};">
+                        <div style="margin-bottom: 14px;">
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-dim);">Código de Convite <span style="opacity:0.6; font-weight:400;">(Opcional)</span></label>
+                            <div style="position: relative;">
+                                <i class="fa-solid fa-ticket" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--secondary-orange); font-size: 0.9rem;"></i>
+                                <input type="text" name="sponsor-code" id="sponsor" value="${localStorage.getItem('theblue_ref') || ''}" autocomplete="off" placeholder="Código de Convite" class="input-field" style="width: 100%; padding: 12px 12px 12px 42px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; color: white; font-size: 0.95rem;">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 14px;">
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-dim);">Seu Telefone</label>
+                            <div style="position: relative;">
+                                <i class="fa-solid fa-phone" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--secondary-orange); font-size: 0.9rem;"></i>
+                                <input type="tel" name="reg-phone" id="phone" autocomplete="off" placeholder="(00) 00000-0000" class="input-field" style="width: 100%; padding: 12px 12px 12px 42px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; color: white; font-size: 0.95rem;">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 14px;">
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-dim);">Criar Senha de Acesso</label>
+                            <div style="position: relative;">
+                                <i class="fa-solid fa-lock" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--secondary-orange); font-size: 0.9rem;"></i>
+                                <input type="password" name="new-password" id="password" autocomplete="new-password" placeholder="••••••••" class="input-field" style="width: 100%; padding: 12px 12px 12px 42px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; color: white; font-size: 0.95rem;">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 22px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 0.8rem; font-weight: 600; color: var(--text-dim);">Senha Financeira (para saques)</label>
+                            <div style="position: relative;">
+                                <i class="fa-solid fa-key" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--secondary-orange); font-size: 0.9rem;"></i>
+                                <input type="password" name="withdraw-password" id="withdraw_password" autocomplete="off" placeholder="••••••••" class="input-field" style="width: 100%; padding: 12px 12px 12px 42px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; color: white; font-size: 0.95rem;">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-secondary" style="width: 100%; padding: 14px; font-size: 1rem; border-radius: 10px; font-weight: 700; box-shadow: 0 4px 15px rgba(255,130,0,0.3);">
+                            <i class="fa-solid fa-user-plus"></i> Criar Conta Grátis
+                        </button>
+
+                        <p style="text-align: center; margin-top: 18px; font-size: 0.82rem; color: var(--text-dim);">
+                            Já tem uma conta? <span onclick="toggleAuth(false)" style="color: var(--secondary-orange); cursor: pointer; font-weight: 700; text-decoration: underline;">Entrar agora</span>
+                        </p>
+                    </form>
+
                 </div>
             </div>
-        `,
+            `;
+        },
 
             dashboard: () => `
             <div class="app-container animate-fade">
@@ -892,8 +955,32 @@
     // --- Global Handlers (Exposed to HTML) ---
 
     window.toggleAuth = (showRegister) => {
-        document.getElementById('register-fields').style.display = showRegister ? 'block' : 'none';
-        document.getElementById('login-fields').style.display = showRegister ? 'none' : 'block';
+        const tabLogin = document.getElementById('tab-login');
+        const tabRegister = document.getElementById('tab-register');
+        const loginFields = document.getElementById('login-fields');
+        const registerFields = document.getElementById('register-fields');
+
+        if (showRegister) {
+            // Ativar aba Cadastrar
+            registerFields.style.display = 'block';
+            loginFields.style.display = 'none';
+            tabRegister.style.background = 'var(--secondary-orange)';
+            tabRegister.style.color = 'white';
+            tabRegister.style.boxShadow = '0 2px 8px rgba(255,130,0,0.4)';
+            tabLogin.style.background = 'transparent';
+            tabLogin.style.color = 'var(--text-dim)';
+            tabLogin.style.boxShadow = 'none';
+        } else {
+            // Ativar aba Entrar
+            loginFields.style.display = 'block';
+            registerFields.style.display = 'none';
+            tabLogin.style.background = 'var(--primary-blue)';
+            tabLogin.style.color = 'white';
+            tabLogin.style.boxShadow = '0 2px 8px rgba(0,120,255,0.4)';
+            tabRegister.style.background = 'transparent';
+            tabRegister.style.color = 'var(--text-dim)';
+            tabRegister.style.boxShadow = 'none';
+        }
     };
 
     window.handleRegister = async () => {
@@ -931,6 +1018,10 @@
 
         const { error } = await supabase.from('users').insert([newUser]);
         if (error) { alert("Erro ao criar conta no banco!"); return; }
+
+        // Salvar dados de sessão para que logins futuros ou auto-logins reconheçam a conta criada
+        localStorage.setItem('theblue_remember', '1');
+        localStorage.setItem('theblue_session_phone', phone);
 
         State.user = newUser;
         State.transactions = [];
