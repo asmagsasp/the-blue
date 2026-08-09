@@ -52,6 +52,14 @@
             // Logic to show/hide navigation
             if (State.user && State.currentView !== 'auth') {
                 nav.style.display = 'flex';
+                // Sincronizar aba ativa do rodapé com a view atual
+                document.querySelectorAll('.tab-item').forEach(tab => {
+                    if (tab.getAttribute('data-view') === State.currentView) {
+                        tab.classList.add('active');
+                    } else {
+                        tab.classList.remove('active');
+                    }
+                });
             } else {
                 nav.style.display = 'none';
             }
@@ -2564,8 +2572,7 @@
                         ...t,
                         date: new Date(t.created_at).toLocaleDateString('pt-BR')
                     }));
-                    Router.navigate('dashboard');
-                    return; // Pula o render padrão abaixo
+                    State.currentView = 'dashboard';
                 } else {
                     // Se usuário não foi encontrado, limpa a sessão salva
                     localStorage.removeItem('theblue_session_phone');
@@ -2639,18 +2646,16 @@
             });
         }, 1000);
 
-        // Setup Navigation Listeners
-        document.querySelectorAll('[data-view]').forEach(link => {
-            link.addEventListener('click', (e) => {
+        // Delegação global de eventos para navegação [data-view]
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('[data-view]');
+            if (link) {
                 e.preventDefault();
-                const view = e.currentTarget.getAttribute('data-view');
-
-                // Mark active tab
-                document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-                e.currentTarget.classList.add('active');
-
-                Router.navigate(view);
-            });
+                const view = link.getAttribute('data-view');
+                if (view) {
+                    Router.navigate(view);
+                }
+            }
         });
 
         // Start App
