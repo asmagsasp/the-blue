@@ -132,8 +132,18 @@
                         <input type="text" placeholder="(00) 00000-0000" class="input-field" id="login-phone" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
                         
                         <label style="display: block; margin-bottom: 2px; font-size: 0.8rem; color: var(--text-dim);">Senha</label>
-                        <input type="password" placeholder="••••••••" class="input-field" id="login-password" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
-                        
+                        <input type="password" placeholder="••••••••" class="input-field" id="login-password" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+
+                        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; cursor: pointer; user-select: none;">
+                            <div style="position: relative; width: 42px; height: 24px; flex-shrink: 0;">
+                                <input type="checkbox" id="remember-me" style="opacity: 0; width: 0; height: 0; position: absolute;" ${localStorage.getItem('theblue_remember') === '1' ? 'checked' : ''}>
+                                <span id="remember-toggle" onclick="toggleRememberMe()" style="position: absolute; inset: 0; background: ${localStorage.getItem('theblue_remember') === '1' ? 'var(--primary-blue)' : 'rgba(255,255,255,0.1)'}; border-radius: 24px; transition: background 0.3s; border: 1px solid var(--glass-border); cursor: pointer;">
+                                    <span style="position: absolute; left: ${localStorage.getItem('theblue_remember') === '1' ? '20px' : '3px'}; top: 3px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: left 0.3s; box-shadow: 0 1px 4px rgba(0,0,0,0.4);"></span>
+                                </span>
+                            </div>
+                            <span style="font-size: 0.85rem; color: var(--text-dim);">Lembrar de mim</span>
+                        </label>
+
                         <button class="btn btn-secondary" style="width: 100%; padding: 14px;" onclick="handleLogin()">Acessar Plataforma</button>
                     </div>
                 </div>
@@ -928,9 +938,20 @@
 
     };
 
+    window.toggleRememberMe = () => {
+        const cb = document.getElementById('remember-me');
+        cb.checked = !cb.checked;
+        const toggle = document.getElementById('remember-toggle');
+        if (toggle) {
+            toggle.style.background = cb.checked ? 'var(--primary-blue)' : 'rgba(255,255,255,0.1)';
+            toggle.querySelector('span').style.left = cb.checked ? '20px' : '3px';
+        }
+    };
+
     window.handleLogin = async () => {
         const phone = document.getElementById('login-phone').value;
         const pass = document.getElementById('login-password').value;
+        const rememberMe = document.getElementById('remember-me') && document.getElementById('remember-me').checked;
 
         if (!phone || !pass) {
             alert("Por favor, preencha os campos.");
@@ -954,8 +975,17 @@
             return;
         }
 
+        // Salvar sessão se "Lembrar de mim" estiver marcado
+        if (rememberMe) {
+            localStorage.setItem('theblue_remember', '1');
+            localStorage.setItem('theblue_session_phone', phone);
+        } else {
+            localStorage.removeItem('theblue_remember');
+            localStorage.removeItem('theblue_session_phone');
+        }
+
         State.user = user;
-        
+
         // Mapear datas do banco para formato local visual temporário
         State.transactions = (txs || []).map(t => ({
             ...t,
@@ -2282,6 +2312,9 @@
 
     window.handleLogout = () => {
         State.user = null;
+        // Limpar sessão salva ao fazer logout manualmente
+        localStorage.removeItem('theblue_session_phone');
+        localStorage.removeItem('theblue_remember');
         document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
         document.querySelector('.tab-item[data-view="dashboard"]').classList.add('active'); // Reset tab state
         Router.navigate('auth');
@@ -2418,6 +2451,35 @@
                 }));
             }
         }
+
+        // --- Auto-login: Restaurar sessão salva ("Lembrar de mim") ---
+        const savedPhone = localStorage.getItem('theblue_session_phone');
+        const remembered = localStorage.getItem('theblue_remember') === '1';
+        if (savedPhone && remembered && supabase) {
+            console.log('🔐 Sessão salva detectada. Restaurando login para:', savedPhone);
+            try {
+                const [userResponse, txsResponse] = await Promise.all([
+                    supabase.from('users').select('*').eq('phone', savedPhone).single(),
+                    supabase.from('transactions').select('*').eq('user_phone', savedPhone).order('created_at', { ascending: false }).limit(50)
+                ]);
+                if (userResponse.data) {
+                    State.user = userResponse.data;
+                    State.transactions = (txsResponse.data || []).map(t => ({
+                        ...t,
+                        date: new Date(t.created_at).toLocaleDateString('pt-BR')
+                    }));
+                    Router.navigate('dashboard');
+                    return; // Pula o render padrão abaixo
+                } else {
+                    // Se usuário não foi encontrado, limpa a sessão salva
+                    localStorage.removeItem('theblue_session_phone');
+                    localStorage.removeItem('theblue_remember');
+                }
+            } catch (e) {
+                console.warn('⚠️ Falha ao restaurar sessão:', e);
+            }
+        }
+        // --- Fim do Auto-login ---
 
         // Check if there's a referral code in the URL
         // Referral Link Handler (?ref=PHONE)
