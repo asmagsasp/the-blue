@@ -184,10 +184,10 @@
                         </div>
 
                         <div style="margin-bottom: 14px;">
-                            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-dim);">Criar Senha de Acesso</label>
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-dim);">Criar Senha de Acesso <span style="opacity:0.6; font-weight:400;">(Mínimo 6 dígitos)</span></label>
                             <div style="position: relative;">
                                 <i class="fa-solid fa-lock" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--secondary-orange); font-size: 0.9rem;"></i>
-                                <input type="password" name="new-password" id="password" autocomplete="new-password" placeholder="••••••••" class="input-field" style="width: 100%; padding: 12px 12px 12px 42px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; color: white; font-size: 0.95rem;">
+                                <input type="password" name="new-password" id="password" minlength="6" autocomplete="new-password" placeholder="Mínimo 6 dígitos" class="input-field" style="width: 100%; padding: 12px 12px 12px 42px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; color: white; font-size: 0.95rem;">
                             </div>
                         </div>
 
@@ -991,6 +991,11 @@
 
         if (!phone || !pass || !withdrawPass) {
             alert("Por favor, preencha todos os campos obrigatórios.");
+            return;
+        }
+
+        if (pass.length < 6) {
+            alert("🔒 A senha de acesso deve conter no mínimo 6 dígitos.");
             return;
         }
 
