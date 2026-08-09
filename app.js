@@ -936,21 +936,63 @@
                 <h1>Meu Perfil</h1>
                 <p>Gerencie sua conta e configurações.</p>
                 
-                <div class="glass-card" style="margin-top: 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <div style="background: rgba(255,255,255,0.1); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
-                        <i class="fa-solid fa-user-ninja" style="color: var(--primary-blue); font-size: 2rem;"></i>
+                <div class="glass-card" style="margin-top: 20px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                    <div style="background: rgba(0, 102, 255, 0.15); border: 2px solid var(--primary-blue); width: 85px; height: 85px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; box-shadow: 0 0 20px rgba(0,102,255,0.3);">
+                        <i class="fa-solid fa-user-shield" style="color: var(--accent-blue); font-size: 2.2rem;"></i>
                     </div>
-                    <h3>${State.user ? State.user.phone : ''}</h3>
-                    <p style="font-size: 0.8rem; opacity: 0.6; margin-bottom: 20px;">Membro Especial "The Blue"</p>
+                    <h3 style="font-size: 1.3rem;">${State.user ? State.user.phone : ''}</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 25px;">Membro "The Blue"</p>
                     
-                    ${['19999995149', '1934585300'].includes(State.user && State.user.phone ? State.user.phone.replace(/\D/g, '') : '') ? `
-                        <button class="btn btn-outline" style="width: 100%; border-color: #00d1ff; color: #00d1ff; margin-bottom: 10px;" onclick="Router.navigate('admin')"><i class="fa-solid fa-shield-halved"></i> Acessar Painel Admin</button>
-                    ` : ''}
+                    <!-- Lista de Opções do Perfil -->
+                    <div style="width: 100%; display: flex; flex-direction: column; gap: 12px; text-align: left;">
+                        
+                        <!-- Botão: Contactar Suporte -->
+                        <button class="btn btn-outline" style="width: 100%; padding: 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);" onclick="handleContactSupport()">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="background: rgba(37, 211, 102, 0.15); width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fa-solid fa-headset" style="color: #25D366; font-size: 1.1rem;"></i>
+                                </div>
+                                <div>
+                                    <p style="font-weight: 700; color: white; font-size: 0.9rem; margin: 0;">Contactar Suporte</p>
+                                    <p style="font-size: 0.72rem; color: var(--text-dim); margin: 0;">Falar com atendimento via WhatsApp</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right" style="color: var(--text-dim); font-size: 0.8rem;"></i>
+                        </button>
 
-                    <button class="btn btn-outline" style="width: 100%; border-color: #FF5252; color: #FF5252;" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Sair da Conta</button>
+                        <!-- Botão: Alterar Senha -->
+                        <button class="btn btn-outline" style="width: 100%; padding: 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);" onclick="handleOpenChangePasswordModal()">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="background: rgba(0, 209, 255, 0.15); width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fa-solid fa-key" style="color: var(--accent-blue); font-size: 1.1rem;"></i>
+                                </div>
+                                <div>
+                                    <p style="font-weight: 700; color: white; font-size: 0.9rem; margin: 0;">Alterar Senha</p>
+                                    <p style="font-size: 0.72rem; color: var(--text-dim); margin: 0;">Atualizar senha de acesso ou saque</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right" style="color: var(--text-dim); font-size: 0.8rem;"></i>
+                        </button>
+
+                        ${['19999995149', '1934585300'].includes(State.user && State.user.phone ? State.user.phone.replace(/\D/g, '') : '') ? `
+                            <button class="btn btn-outline" style="width: 100%; padding: 14px; border-radius: 12px; border-color: #00d1ff; color: #00d1ff; display: flex; align-items: center; justify-content: space-between;" onclick="Router.navigate('admin')">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <i class="fa-solid fa-shield-halved" style="font-size: 1.1rem;"></i>
+                                    <span style="font-weight: 700; font-size: 0.9rem;">Painel Administrativo</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-right" style="font-size: 0.8rem;"></i>
+                            </button>
+                        ` : ''}
+
+                        <!-- Botão: Sair da Conta -->
+                        <button class="btn btn-outline" style="width: 100%; padding: 14px; border-radius: 12px; border-color: rgba(255,82,82,0.4); color: #FF5252; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 10px;" onclick="handleLogout()">
+                            <i class="fa-solid fa-right-from-bracket"></i> Sair da Conta
+                        </button>
+
+                    </div>
                 </div>
             </div>
-        `
+            `
         },
 
         initAuthListeners() {
@@ -2413,6 +2455,161 @@
         await supabase.from('users').update({ spins_used: newSpinsUsed }).eq('phone', State.user.phone);
         State.user.spins_used = newSpinsUsed;
     }
+
+    // --- Suporte e Alteração de Senha ---
+    window.handleContactSupport = () => {
+        const userPhone = State.user ? State.user.phone : '';
+        const textMsg = encodeURIComponent(`Olá! Sou o cliente (${userPhone}) e preciso de suporte na plataforma The Blue.`);
+        const waUrl = `https://wa.me/551934585300?text=${textMsg}`;
+
+        const content = `
+            <div style="text-align: center;">
+                <div style="background: rgba(37,211,102,0.15); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto;">
+                    <i class="fa-solid fa-headset" style="color: #25D366; font-size: 1.8rem;"></i>
+                </div>
+                <h3 style="color: white; margin-bottom: 8px;">Atendimento ao Cliente</h3>
+                <p style="font-size: 0.82rem; color: var(--text-dim); margin-bottom: 20px;">Nossa equipe de suporte está pronta para te atender de Segunda a Sábado das 08h às 22h.</p>
+                
+                <a href="${waUrl}" target="_blank" class="btn" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: #25D366; color: white; width: 100%; padding: 14px; border-radius: 10px; text-decoration: none; font-weight: 700; margin-bottom: 12px; box-shadow: 0 4px 15px rgba(37,211,102,0.3);">
+                    <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> Falar no WhatsApp Suporte
+                </a>
+                
+                <a href="mailto:theblueplataforma@gmail.com?subject=Suporte%20The%20Blue%20-${userPhone}" class="btn btn-outline" style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 12px; border-radius: 10px; text-decoration: none; font-size: 0.85rem; color: white;">
+                    <i class="fa-solid fa-envelope"></i> Enviar E-mail para Suporte
+                </a>
+            </div>
+        `;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'support-modal-overlay';
+        overlay.style = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center;
+            z-index: 10000; backdrop-filter: blur(5px); padding: 20px;
+        `;
+
+        const modal = document.createElement('div');
+        modal.style = `
+            background: #151515; border: 1px solid #333; border-radius: 16px;
+            width: 100%; max-width: 400px; padding: 25px; text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); animation: animate-pop 0.3s ease-out;
+        `;
+
+        modal.innerHTML = content + `
+            <button id="support-modal-close" class="btn btn-outline" style="width: 100%; margin-top: 15px; padding: 10px; border-color: var(--glass-border);">FECHAR</button>
+        `;
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        document.getElementById('support-modal-close').onclick = () => {
+            document.body.removeChild(overlay);
+        };
+    };
+
+    window.handleOpenChangePasswordModal = () => {
+        const overlay = document.createElement('div');
+        overlay.id = 'change-pass-overlay';
+        overlay.style = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center;
+            z-index: 10000; backdrop-filter: blur(5px); padding: 20px;
+        `;
+
+        const modal = document.createElement('div');
+        modal.style = `
+            background: #151515; border: 1px solid #333; border-radius: 16px;
+            width: 100%; max-width: 420px; padding: 25px; text-align: left;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); animation: animate-pop 0.3s ease-out;
+        `;
+
+        modal.innerHTML = `
+            <h3 style="color: white; margin-bottom: 5px; text-align: center;"><i class="fa-solid fa-key" style="color: var(--accent-blue);"></i> Alterar Senha</h3>
+            <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 20px; text-align: center;">Atualize sua senha de acesso ou senha financeira de saque.</p>
+
+            <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Qual senha deseja alterar?</label>
+            <select id="change-pass-type" class="input-field" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+                <option value="access" style="background:#111;">Senha de Acesso ao App</option>
+                <option value="withdraw" style="background:#111;">Senha Financeira (de Saque)</option>
+            </select>
+
+            <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Senha Atual</label>
+            <input type="password" id="change-pass-current" placeholder="••••••••" class="input-field" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+
+            <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Nova Senha</label>
+            <input type="password" id="change-pass-new" placeholder="Mínimo 6 dígitos" class="input-field" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+
+            <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Confirmar Nova Senha</label>
+            <input type="password" id="change-pass-confirm" placeholder="Confirme a nova senha" class="input-field" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
+
+            <div style="display: flex; gap: 10px;">
+                <button id="change-pass-cancel" class="btn btn-outline" style="flex: 1; padding: 12px; font-weight: 700;">CANCELAR</button>
+                <button id="change-pass-submit" class="btn btn-primary" style="flex: 1; padding: 12px; font-weight: 700;">SALVAR</button>
+            </div>
+        `;
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        document.getElementById('change-pass-cancel').onclick = () => {
+            document.body.removeChild(overlay);
+        };
+
+        document.getElementById('change-pass-submit').onclick = async () => {
+            const passType = document.getElementById('change-pass-type').value;
+            const currentPass = document.getElementById('change-pass-current').value;
+            const newPass = document.getElementById('change-pass-new').value;
+            const confirmPass = document.getElementById('change-pass-confirm').value;
+
+            if (!currentPass || !newPass || !confirmPass) {
+                alert("Por favor, preencha todos os campos.");
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                alert("A nova senha e a confirmação não conferem!");
+                return;
+            }
+
+            if (passType === 'access') {
+                if (currentPass !== State.user.password) {
+                    alert("A senha de acesso atual está incorreta.");
+                    return;
+                }
+                if (newPass.length < 6) {
+                    alert("A nova senha de acesso deve ter no mínimo 6 dígitos.");
+                    return;
+                }
+
+                const { error } = await supabase.from('users').update({ password: newPass }).eq('phone', State.user.phone);
+                if (error) {
+                    alert("Erro ao alterar senha: " + error.message);
+                    return;
+                }
+                State.user.password = newPass;
+                alert("✅ Senha de acesso alterada com sucesso!");
+            } else {
+                if (currentPass !== State.user.withdraw_pass) {
+                    alert("A senha financeira atual está incorreta.");
+                    return;
+                }
+                if (newPass.length < 4) {
+                    alert("A nova senha financeira deve ter no mínimo 4 dígitos.");
+                    return;
+                }
+
+                const { error } = await supabase.from('users').update({ withdraw_pass: newPass }).eq('phone', State.user.phone);
+                if (error) {
+                    alert("Erro ao alterar senha financeira: " + error.message);
+                    return;
+                }
+                State.user.withdraw_pass = newPass;
+                alert("✅ Senha financeira alterada com sucesso!");
+            }
+
+            document.body.removeChild(overlay);
+        };
+    };
 
     window.handleLogout = () => {
         State.user = null;
