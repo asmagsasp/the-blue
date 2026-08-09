@@ -416,15 +416,15 @@
                                 <path d="M50 50 L50 0 A50 50 0 0 1 85.3 14.7 Z" fill="#FFD700" />
                                 <path d="M50 50 L85.3 14.7 A50 50 0 0 1 100 50 Z" fill="#4CAF50" />
                                 
-                                <g font-size="4" font-weight="900" fill="white" style="pointer-events: none; text-anchor: middle;">
-                                    <text x="82" y="55" transform="rotate(22.5, 82, 55)">R$ 5</text>
-                                    <text x="65" y="80" transform="rotate(67.5, 65, 80)" font-size="3">PERDEU TUDO</text>
-                                    <text x="45" y="85" transform="rotate(112.5, 45, 85)">R$ 20</text>
-                                    <text x="18" y="70" transform="rotate(157.5, 18, 70)">R$ 10</text>
-                                    <text x="15" y="45" transform="rotate(202.5, 15, 45)" font-size="3">PERDEU TUDO</text>
-                                    <text x="35" y="20" transform="rotate(247.5, 35, 20)">R$ 50</text>
-                                    <text x="55" y="15" transform="rotate(292.5, 55, 15)">R$ 100</text>
-                                    <text x="80" y="35" transform="rotate(337.5, 80, 35)">R$ 5</text>
+                                <g font-size="3.6" font-weight="900" fill="white" style="pointer-events: none; text-anchor: middle; dominant-baseline: central;">
+                                    <text x="81.4" y="63.0" transform="rotate(22.5, 81.4, 63.0)">R$ 5</text>
+                                    <text x="63.0" y="81.4" transform="rotate(67.5, 63.0, 81.4)" font-size="2.5">PERDEU TUDO</text>
+                                    <text x="37.0" y="81.4" transform="rotate(112.5, 37.0, 81.4)">R$ 20</text>
+                                    <text x="18.6" y="63.0" transform="rotate(157.5, 18.6, 63.0)">R$ 10</text>
+                                    <text x="18.6" y="37.0" transform="rotate(202.5, 18.6, 37.0)" font-size="2.5">PERDEU TUDO</text>
+                                    <text x="37.0" y="18.6" transform="rotate(247.5, 37.0, 18.6)">R$ 50</text>
+                                    <text x="63.0" y="18.6" transform="rotate(292.5, 63.0, 18.6)">R$ 100</text>
+                                    <text x="81.4" y="37.0" transform="rotate(337.5, 81.4, 37.0)">R$ 5</text>
                                 </g>
                             </svg>
                         </div>
