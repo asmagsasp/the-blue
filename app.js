@@ -698,23 +698,21 @@
                     </div>
                 </div>
                 
-                <button class="btn btn-secondary" style="width: 100%; margin-bottom: 25px; padding: 15px;" onclick="handlePaymentConfirmed()">🔄 Já fiz o pagamento</button>
-                
                 <div class="glass-card" style="margin-bottom: 20px; border-left: 4px solid var(--secondary-orange); text-align: left;">
-                    <h3 style="font-size: 1rem; margin-bottom: 10px;"><i class="fa-solid fa-file-invoice"></i> Enviar Comprovante</h3>
-                    <p style="font-size: 0.8rem; margin-bottom: 15px;">Para agilizar sua aprovação, anexe o comprovante abaixo:</p>
+                    <h3 style="font-size: 1rem; margin-bottom: 10px; color: var(--secondary-orange);"><i class="fa-solid fa-file-invoice"></i> Anexar Comprovante (Obrigatório)</h3>
+                    <p style="font-size: 0.8rem; margin-bottom: 15px; opacity: 0.9;">Para validação do seu depósito, é <strong>obrigatório</strong> anexar a imagem do comprovante PIX:</p>
                     
                     <input type="file" id="receipt-file" accept="image/*" style="display: none;" onchange="handleReceiptSelected(this)">
-                    <button class="btn btn-outline" style="width: 100%; border-style: dashed; border-color: var(--secondary-orange); color: var(--secondary-orange); margin-bottom: 15px;" onclick="document.getElementById('receipt-file').click()">
-                        <i class="fa-solid fa-camera"></i> <span id="receipt-status">Selecionar Imagem</span>
+                    <button class="btn btn-outline" id="btn-select-receipt" style="width: 100%; border-style: dashed; border-color: var(--secondary-orange); color: var(--secondary-orange); margin-bottom: 15px; padding: 14px;" onclick="document.getElementById('receipt-file').click()">
+                        <i class="fa-solid fa-camera" style="margin-right: 8px;"></i> <span id="receipt-status">Clique para Selecionar o Comprovante</span>
                     </button>
-                    
-                    <button id="btn-send-receipt" class="btn btn-primary" style="width: 100%; display: none;" onclick="handleUploadReceipt()">
-                        🚀 Enviar Comprovante para o Admin
+
+                    <button id="btn-send-receipt" class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 1rem; font-weight: 700; box-shadow: 0 4px 15px rgba(0,102,255,0.4);" onclick="handleUploadReceipt()">
+                        🚀 Confirmar e Enviar Comprovante
                     </button>
                 </div>
 
-                <p style="font-size: 0.7rem; opacity: 0.6;">Aguarde alguns minutos após o pagamento para que a nossa equipe revise a transação.</p>
+                <p style="font-size: 0.75rem; opacity: 0.6;">Aguarde a validação da nossa equipe após o envio do comprovante.</p>
             </div>
         `,
 
@@ -1225,8 +1223,13 @@
 
     window.handleReceiptSelected = (input) => {
         if (input.files && input.files[0]) {
-            document.getElementById('receipt-status').innerText = "Imagem: " + input.files[0].name;
-            document.getElementById('btn-send-receipt').style.display = 'block';
+            const btnSelect = document.getElementById('btn-select-receipt');
+            const statusSpan = document.getElementById('receipt-status');
+            if (statusSpan) statusSpan.innerText = "✓ Comprovante: " + input.files[0].name;
+            if (btnSelect) {
+                btnSelect.style.borderColor = "#4CAF50";
+                btnSelect.style.color = "#4CAF50";
+            }
         }
     };
 
@@ -1234,52 +1237,66 @@
         const fileInput = document.getElementById('receipt-file');
         const btn = document.getElementById('btn-send-receipt');
 
-        if (!fileInput.files || !fileInput.files[0]) return;
+        if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+            alert("⚠️ É obrigatório anexar a imagem do comprovante PIX antes de confirmar o depósito.");
+            if (fileInput) fileInput.click();
+            return;
+        }
 
-        btn.disabled = true;
-        btn.innerText = "Enviando...";
+        if (window.isUploadingReceipt) return;
+        window.isUploadingReceipt = true;
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "⏳ Enviando comprovante...";
+        }
 
         const file = fileInput.files[0];
         const reader = new FileReader();
 
         reader.onload = async (e) => {
-            const base64Data = e.target.result;
+            try {
+                const base64Data = e.target.result;
 
-            // Verificando se temos o ID da transação
-            if (!State.currentPix || !State.currentPix.txId) {
-                alert("Erro: ID da transação não localizado. Tente gerar o PIX novamente.");
-                btn.disabled = false;
-                btn.innerText = "🚀 Enviar Comprovante para o Admin";
-                return;
+                if (!State.currentPix || !State.currentPix.txId) {
+                    alert("Erro: ID da transação não localizado. Tente gerar o PIX novamente.");
+                    window.isUploadingReceipt = false;
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerText = "🚀 Confirmar e Enviar Comprovante";
+                    }
+                    return;
+                }
+
+                const { error } = await supabase.from('transactions')
+                    .update({ receipt: base64Data })
+                    .eq('id', State.currentPix.txId);
+
+                if (error) {
+                    alert("Erro ao enviar comprovante: " + error.message);
+                    window.isUploadingReceipt = false;
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerText = "🚀 Confirmar e Enviar Comprovante";
+                    }
+                    return;
+                }
+
+                window.isUploadingReceipt = false;
+                alert("✅ Comprovante enviado com sucesso! Seu depósito será analisado em até 24h.");
+                Router.navigate('dashboard');
+            } catch (err) {
+                console.error("Erro ao enviar comprovante:", err);
+                alert("Erro inesperado ao enviar o comprovante. Tente novamente.");
+                window.isUploadingReceipt = false;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = "🚀 Confirmar e Enviar Comprovante";
+                }
             }
-
-            const { error } = await supabase.from('transactions')
-                .update({ receipt: base64Data }) // Storing base64 in a 'receipt' column
-                .eq('id', State.currentPix.txId);
-
-            if (error) {
-                alert("Erro ao enviar comprovante: " + error.message);
-                btn.disabled = false;
-                btn.innerText = "🚀 Enviar Comprovante para o Admin";
-                return;
-            }
-
-            // Notificação WhatsApp (chamando a função centralizada)
-            handlePaymentConfirmed(true);
-
-            alert("✅ Comprovante enviado com sucesso! O administrador irá conferir seu depósito.");
-
-            Router.navigate('dashboard');
         };
 
         reader.readAsDataURL(file);
-    };
-
-    window.handlePaymentConfirmed = (isSilent = false) => {
-        if (!isSilent) {
-            alert("Aviso enviado ao sistema! Aguarde a conferência em até 24h.");
-            Router.navigate('dashboard');
-        }
     };
 
     window.copyPix = () => {
