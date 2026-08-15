@@ -309,8 +309,12 @@
                         </div>
                         <span style="color: #4CAF50; font-weight: 800; font-size: 1.1rem;">+ R$ ${(Number(State.user.invested || 0) * 0.02).toFixed(2)}</span>
                     </div>
-                    <div style="height: 40px; display: flex; align-items: flex-end; gap: 5px;">
+                    <div style="height: 40px; display: flex; align-items: flex-end; gap: 5px; margin-bottom: 12px;">
                         ${[20, 60, 40, 80, 50, 100, 90, 70, 110, 80, 120].map(h => `<div style="flex: 1; background: var(--primary-blue); height: ${h}%; border-radius: 3px; opacity: ${h / 150};"></div>`).join('')}
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.72rem; color: #00d1ff;">
+                        <span><i class="fa-solid fa-moon"></i> Próximo Crédito (00:00):</span>
+                        <span class="midnight-timer" style="font-weight: 700; background: rgba(0,209,255,0.15); padding: 3px 8px; border-radius: 6px;">Calculando...</span>
                     </div>
                 </div>
 
@@ -617,21 +621,15 @@
 
                 <!-- Deposit Section -->
                 <div id="deposit-section" class="glass-card animate-fade">
-                    <h3 style="margin-bottom: 20px;">Formas de Pagamento</h3>
+                    <h3 style="margin-bottom: 20px;">Forma de Pagamento</h3>
                     <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-                        <button class="glass-card" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-color: var(--primary-blue);" onclick="selectPayMethod('pix')">
+                        <div class="glass-card" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-color: var(--primary-blue);">
                             <div style="display: flex; align-items: center; gap: 15px;">
                                 <i class="fa-brands fa-pix" style="color: #32BCAD; font-size: 1.4rem;"></i>
                                 <span>PIX Instantâneo</span>
                             </div>
                             <i class="fa-solid fa-circle-check" style="color: var(--primary-blue);"></i>
-                        </button>
-                        <button class="glass-card" style="display: flex; justify-content: space-between; align-items: center; padding: 15px;" onclick="selectPayMethod('usdt')">
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <i class="fa-solid fa-coins" style="color: #26A17B; font-size: 1.4rem;"></i>
-                                <span>USDT (TRC-20)</span>
-                            </div>
-                        </button>
+                        </div>
                     </div>
                     
                     <label style="display: block; margin-bottom: 8px;">Valor do Depósito</label>
@@ -810,6 +808,15 @@
                     <input type="number" id="admin-add-amount" placeholder="50.00" class="input-field" style="width: 100%; padding: 10px; margin-bottom: 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
 
                     <button class="btn btn-primary" style="width: 100%;" onclick="handleAddManualBalance()"><i class="fa-solid fa-plus-circle"></i> Confirmar Crédito</button>
+                </div>
+
+                <!-- Painel de Rendimentos 00:00 -->
+                <div class="glass-card" style="margin-top: 20px; border-left: 4px solid #00d1ff;">
+                    <h3 style="margin-bottom: 15px;"><i class="fa-solid fa-clock-rotate-left" style="color: #00d1ff;"></i> Rendimentos das 00:00 (Meia-Noite)</h3>
+                    <p style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 15px;">Dispare manualmente os rendimentos diários das zero horas para todos os investidores da plataforma.</p>
+                    <button class="btn btn-primary" style="width: 100%; background: linear-gradient(45deg, #007bff, #00d1ff); border: none;" onclick="handleProcessAllYieldsAdmin()">
+                        <i class="fa-solid fa-bolt"></i> Processar Rendimentos 00:00 Agora
+                    </button>
                 </div>
 
                 <div class="glass-card" style="margin-top: 20px;">
@@ -1139,6 +1146,11 @@
         }));
 
         Router.navigate('dashboard');
+
+        // Checar e creditar rendimentos das 00:00
+        if (window.checkAndProcessMidnightYields) {
+            window.checkAndProcessMidnightYields(user.phone);
+        }
     };
 
     window.currentPayMethod = 'pix';
@@ -2732,6 +2744,148 @@
         }
     };
 
+    // --- Processamento de Rendimentos das 00:00 (Meia-Noite) ---
+    window.checkAndProcessMidnightYields = async (targetPhone = null, isManualAdmin = false) => {
+        const phone = targetPhone || (State.user ? State.user.phone : null);
+        if (!phone || !supabase) return 0;
+
+        try {
+            const [userRes, txsRes] = await Promise.all([
+                supabase.from('users').select('*').eq('phone', phone).single(),
+                supabase.from('transactions').select('*').eq('user_phone', phone).order('created_at', { ascending: true })
+            ]);
+
+            if (!userRes.data) return 0;
+            const currentUser = userRes.data;
+            const allTxs = txsRes.data || [];
+
+            const invTxs = allTxs.filter(t => t.type === 'inv');
+            if (invTxs.length === 0) {
+                if (isManualAdmin) alert("Nenhum investimento ativo encontrado para este usuário.");
+                return 0;
+            }
+
+            const existingYieldTxs = allTxs.filter(t => t.type === 'rendimento');
+            let totalCreditedInRun = 0;
+            const newYieldTxsToInsert = [];
+            const now = new Date();
+
+            for (const inv of invTxs) {
+                const invDate = new Date(inv.created_at);
+                const invAmount = Math.abs(parseFloat(inv.amount));
+
+                const planName = inv.description.replace('Investimento: ', '').trim();
+                const matchedPlan = State.plans.find(p => p.name === planName);
+                const dailyReturnPercent = matchedPlan ? (matchedPlan.dailyReturn * 100) : 2.0;
+
+                const singleYieldAmount = Math.round((invAmount * (dailyReturnPercent / 100)) * 100) / 100;
+                if (singleYieldAmount <= 0) continue;
+
+                let checkDate = new Date(invDate);
+                checkDate.setHours(0, 0, 0, 0);
+                checkDate.setDate(checkDate.getDate() + 1);
+
+                while (checkDate <= now) {
+                    const dateStr = checkDate.toLocaleDateString('pt-BR');
+
+                    const alreadyCredited = existingYieldTxs.some(yt => 
+                        yt.description.includes(dateStr) && (yt.description.includes(planName) || invTxs.length === 1)
+                    );
+
+                    if (!alreadyCredited) {
+                        totalCreditedInRun += singleYieldAmount;
+                        existingYieldTxs.push({
+                            type: 'rendimento',
+                            description: `Rendimento Diário (${planName}) - 00:00 (${dateStr})`
+                        });
+
+                        newYieldTxsToInsert.push({
+                            user_phone: phone,
+                            type: 'rendimento',
+                            amount: singleYieldAmount,
+                            description: `Rendimento Diário (${planName}) - 00:00 (${dateStr})`,
+                            created_at: checkDate.toISOString()
+                        });
+                    }
+
+                    checkDate.setDate(checkDate.getDate() + 1);
+                }
+            }
+
+            if (totalCreditedInRun > 0 && newYieldTxsToInsert.length > 0) {
+                const newAvailable = Number(currentUser.available) + totalCreditedInRun;
+                const newBalance = Number(currentUser.balance) + totalCreditedInRun;
+
+                const { error: updErr } = await supabase.from('users')
+                    .update({ available: newAvailable, balance: newBalance })
+                    .eq('phone', phone);
+
+                if (updErr) throw updErr;
+
+                await supabase.from('transactions').insert(newYieldTxsToInsert);
+
+                if (State.user && State.user.phone === phone) {
+                    State.user.available = newAvailable;
+                    State.user.balance = newBalance;
+
+                    const { data: updatedTxs } = await supabase.from('transactions')
+                        .select('*').eq('user_phone', phone).order('created_at', { ascending: false }).limit(50);
+                    if (updatedTxs) {
+                        State.transactions = updatedTxs.map(t => ({ ...t, date: new Date(t.created_at).toLocaleDateString('pt-BR') }));
+                    }
+
+                    Router.render();
+
+                    alert(`🎉 Rendimento Diário das 00:00!\nFoi creditado + R$ ${totalCreditedInRun.toFixed(2)} referente aos seus investimentos ativos.`);
+                    if (window.confetti) {
+                        window.confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+                    }
+                }
+            } else if (isManualAdmin) {
+                alert(`ℹ️ Todos os rendimentos das 00:00 para ${phone} já estão em dia!`);
+            }
+
+            return totalCreditedInRun;
+        } catch (err) {
+            console.error("Erro ao processar rendimentos de 00:00:", err);
+            if (isManualAdmin) alert("Erro ao processar rendimentos: " + err.message);
+            return 0;
+        }
+    };
+
+    window.handleProcessAllYieldsAdmin = async () => {
+        if (!confirm("Deseja executar o processamento de rendimentos das 00:00 para TODOS os usuários com investimentos ativos?")) return;
+        try {
+            if (!supabase) throw new Error("Supabase não conectado.");
+            
+            const { error: rpcErr } = await supabase.rpc('process_daily_yields');
+            if (!rpcErr) {
+                alert("✅ Rendimentos das 00:00 processados com sucesso para toda a plataforma via Supabase!");
+                if (State.user && State.user.phone) {
+                    window.checkAndProcessMidnightYields(State.user.phone);
+                }
+                return;
+            }
+
+            const { data: invUsers } = await supabase.from('users').select('phone').gt('invested', 0);
+            if (!invUsers || invUsers.length === 0) {
+                alert("Nenhum usuário com investimentos ativos no momento.");
+                return;
+            }
+
+            let count = 0;
+            for (const u of invUsers) {
+                const credited = await window.checkAndProcessMidnightYields(u.phone, false);
+                if (credited > 0) count++;
+            }
+
+            alert(`✅ Processamento concluído! Rendimentos das 00:00 creditados para ${count} usuário(s).`);
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao executar processamento de rendimentos: " + e.message);
+        }
+    };
+
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', async () => {
         // Fetch Plans from Supabase
@@ -2770,6 +2924,11 @@
                         date: new Date(t.created_at).toLocaleDateString('pt-BR')
                     }));
                     State.currentView = 'dashboard';
+                    
+                    // Checar rendimentos de meia-noite no auto-login
+                    if (window.checkAndProcessMidnightYields) {
+                        window.checkAndProcessMidnightYields(userResponse.data.phone);
+                    }
                 } else {
                     // Se usuário não foi encontrado, limpa a sessão salva
                     localStorage.removeItem('theblue_session_phone');
@@ -2809,8 +2968,9 @@
             }
         }
 
-        // --- Global Timer Updater ---
+        // --- Global Timer Updater & 00:00 Midnight Scheduler ---
         setInterval(() => {
+            // 1. Atualizar badges de ofertas por tempo
             document.querySelectorAll('.timer-badge').forEach(el => {
                 const end = new Date(el.getAttribute('data-endtime')).getTime();
                 const now = new Date().getTime();
@@ -2818,9 +2978,7 @@
 
                 if (diff <= 0) {
                     el.innerText = "LIBERADO!";
-                    // If the view is investments, trigger a re-render to reveal
                     if (State.currentView === 'investments') {
-                        // Logic to avoid infinite re-renders
                         if (!el.dataset.expired) {
                             el.dataset.expired = "true";
                             Router.render();
@@ -2840,6 +2998,27 @@
 
                 const prefix = el.innerText.includes('Abre em') ? 'Abre em: ' : '';
                 el.innerText = prefix + str;
+            });
+
+            // 2. Atualizar temporizador regressivo de meia-noite (00:00)
+            const now = new Date();
+            const midnight = new Date(now);
+            midnight.setHours(24, 0, 0, 0);
+            const diffMidnight = midnight - now;
+
+            if (diffMidnight <= 1000 && diffMidnight >= 0) {
+                if (State.user && State.user.phone && window.checkAndProcessMidnightYields) {
+                    window.checkAndProcessMidnightYields(State.user.phone);
+                }
+            }
+
+            const mHours = Math.floor(diffMidnight / (1000 * 60 * 60));
+            const mMins = Math.floor((diffMidnight / (1000 * 60)) % 60);
+            const mSecs = Math.floor((diffMidnight / 1000) % 60);
+            const midnightStr = `${String(mHours).padStart(2, '0')}h ${String(mMins).padStart(2, '0')}m ${String(mSecs).padStart(2, '0')}s`;
+
+            document.querySelectorAll('.midnight-timer').forEach(el => {
+                el.innerText = midnightStr;
             });
         }, 1000);
 
