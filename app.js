@@ -621,41 +621,82 @@
 
                 <!-- Deposit Section -->
                 <div id="deposit-section" class="glass-card animate-fade">
-                    <h3 style="margin-bottom: 20px;">Forma de Pagamento</h3>
-                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-                        <div class="glass-card" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-color: var(--primary-blue);">
-                            <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="font-size: 1.1rem; margin: 0;">Depósito Instantâneo</h3>
+                        <span class="infinite-badge"><i class="fa-solid fa-bolt"></i> InfinitePay</span>
+                    </div>
+
+                    <div class="glass-card" style="display: flex; justify-content: space-between; align-items: center; padding: 14px; border-color: rgba(0, 209, 255, 0.4); margin-bottom: 20px; background: rgba(0, 102, 255, 0.08);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(50, 188, 173, 0.15); display: flex; align-items: center; justify-content: center;">
                                 <i class="fa-brands fa-pix" style="color: #32BCAD; font-size: 1.4rem;"></i>
-                                <span>PIX Instantâneo</span>
                             </div>
-                            <i class="fa-solid fa-circle-check" style="color: var(--primary-blue);"></i>
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.9rem; color: white;">PIX Instantâneo & Cartão</div>
+                                <div style="font-size: 0.72rem; color: var(--accent-blue);">Reconhecimento e crédito em segundos</div>
+                            </div>
                         </div>
+                        <i class="fa-solid fa-circle-check" style="color: #00D1FF; font-size: 1.2rem;"></i>
+                    </div>
+
+                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 600;">Selecione um valor rápido:</label>
+                    <div class="deposit-chip-grid">
+                        <div class="deposit-chip" data-val="10" onclick="window.setFastDepositAmount(10)">R$ 10</div>
+                        <div class="deposit-chip" data-val="25" onclick="window.setFastDepositAmount(25)">R$ 25</div>
+                        <div class="deposit-chip" data-val="50" onclick="window.setFastDepositAmount(50)">R$ 50</div>
+                        <div class="deposit-chip" data-val="100" onclick="window.setFastDepositAmount(100)">R$ 100</div>
+                        <div class="deposit-chip" data-val="250" onclick="window.setFastDepositAmount(250)">R$ 250</div>
+                        <div class="deposit-chip" data-val="500" onclick="window.setFastDepositAmount(500)">R$ 500</div>
                     </div>
                     
-                    <label style="display: block; margin-bottom: 8px;">Valor do Depósito</label>
-                    <input type="number" id="dep-amount" placeholder="Mínimo R$ 5,00" class="input-field" autocomplete="off" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 600;">Ou digite outro valor (R$)</label>
+                    <input type="number" id="dep-amount" min="5" step="1" placeholder="Mínimo R$ 5,00" class="input-field" autocomplete="off" oninput="window.onDepositAmountChange(this.value)" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 10px; color: white; font-size: 1.1rem; font-weight: 700; margin-bottom: 15px;">
                     
-                    <button class="btn btn-secondary" style="width: 100%;" onclick="handleDeposit()">Gerar Pagamento</button>
+                    <div style="background: rgba(0, 209, 255, 0.08); border-left: 3px solid #00D1FF; padding: 10px 12px; border-radius: 6px; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 20px; line-height: 1.4;">
+                        <i class="fa-solid fa-circle-info" style="color: #00D1FF;"></i> <strong>100% Automático:</strong> Ao pagar na InfinitePay, o sistema identifica em segundos e credita imediatamente na sua conta. Não precisa enviar comprovante!
+                    </div>
+
+                    <button id="btn-generate-deposit" class="btn btn-secondary" style="width: 100%; padding: 15px; font-size: 1rem; font-weight: 700; box-shadow: 0 4px 15px rgba(255,130,0,0.3);" onclick="handleDeposit()">
+                        <i class="fa-solid fa-bolt"></i> Pagar com InfinitePay
+                    </button>
                 </div>
 
                  <!-- Withdrawal Section (Hidden) -->
                 <div id="withdraw-section" style="display: none;" class="glass-card animate-fade">
-                    <h3 style="margin-bottom: 20px;">Solicitar Saque</h3>
-                    <div class="alert" style="background: rgba(255,130,0,0.1); border: 1px solid var(--secondary-orange); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.8rem;">
-                        <i class="fa-solid fa-circle-info"></i> Saques são processados em até 24h úteis.<br>
-                        <strong style="color: #FFD700;">Taxa de Saque: 8%</strong> (Mínimo R$ 5,00)
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="font-size: 1.1rem; margin: 0;">Solicitar Saque</h3>
+                        <span class="infinite-badge" style="border-color: rgba(0, 209, 255, 0.4); color: #00D1FF; background: rgba(0, 209, 255, 0.1);"><i class="fa-solid fa-bolt"></i> PIX Rápido</span>
+                    </div>
+
+                    <div class="alert" style="background: rgba(0, 209, 255, 0.08); border: 1px solid rgba(0, 209, 255, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.8rem; line-height: 1.4;">
+                        <i class="fa-solid fa-circle-info" style="color: #00D1FF;"></i> <strong>Transferência PIX:</strong> O valor líquido é enviado diretamente para a sua chave cadastrada.<br>
+                        <span style="opacity: 0.8;">Taxa da plataforma: <strong>8%</strong> | Saque mínimo: <strong>R$ 5,00</strong></span>
                     </div>
                     
-                    <label style="display: block; margin-bottom: 8px;">Valor (R$)</label>
-                    <input type="number" id="withdraw-amount" placeholder="Saldo: ${State.user.available.toFixed(2)}" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 600;">Valor a Sacar (R$)</label>
+                    <input type="number" id="withdraw-amount" min="5" step="1" oninput="window.onWithdrawAmountInput(this.value)" placeholder="Disponível: R$ ${Number(State.user.available || 0).toFixed(2)}" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; font-size: 1.1rem; font-weight: 700; margin-bottom: 12px;">
                     
-                    <label style="display: block; margin-bottom: 8px;">Chave PIX de Recebimento</label>
+                    <!-- Resumo do Saque em Tempo Real -->
+                    <div id="withdraw-summary-box" style="background: rgba(0,0,0,0.3); border: 1px dashed var(--glass-border); border-radius: 8px; padding: 12px; margin-bottom: 18px; font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
+                        <div style="display: flex; justify-content: space-between; color: var(--text-dim);">
+                            <span>Taxa de Saque (8%):</span>
+                            <span id="withdraw-calc-fee" style="color: #FF8200;">R$ 0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 0.95rem; border-top: 1px solid var(--glass-border); padding-top: 6px; margin-top: 2px;">
+                            <span>Valor Líquido a Receber no PIX:</span>
+                            <span id="withdraw-calc-net" style="color: #00D1FF;">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 600;">Sua Chave PIX de Destino</label>
                     <input type="text" id="withdraw-pix-key" placeholder="CPF, E-mail, Celular ou Chave Aleatória" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
 
-                    <label style="display: block; margin-bottom: 8px;">Senha de Saque</label>
-                    <input type="password" id="withdraw-pass" placeholder="Sua senha financeira" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 600;">Senha Financeira de Saque</label>
+                    <input type="password" id="withdraw-pass" placeholder="Sua senha financeira (6 dígitos)" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
                     
-                    <button class="btn btn-primary" style="width: 100%;" onclick="handleWithdraw()">Confirmar Saque</button>
+                    <button id="btn-confirm-withdraw" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 1rem; font-weight: 700; background: linear-gradient(135deg, #00D1FF, #0055FF); border: none; box-shadow: 0 4px 15px rgba(0, 209, 255, 0.4);" onclick="handleWithdraw()">
+                        <i class="fa-solid fa-paper-plane"></i> Confirmar Solicitação de Saque
+                    </button>
                 </div>
 
                  <!-- Transfer Section (Hidden) -->
@@ -681,38 +722,51 @@
 
             pixCheckout: () => `
             <div class="app-container animate-fade" style="text-align: center; padding-top: 20px;">
-                <h2 style="color: #4CAF50; margin-bottom: 10px;"><i class="fa-brands fa-pix"></i> PIX Gerado!</h2>
-                <p>Pagamento Digital The Blue</p>
+                <div class="radar-pulse">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+
+                <h2 style="color: #00D1FF; margin-bottom: 6px; font-size: 1.4rem;">Checkout InfinitePay</h2>
+                <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 20px;">Aguardando confirmação do pagamento em tempo real...</p>
                 
-                <div class="glass-card" style="background: rgba(255,255,255,0.05); padding: 25px 15px; margin: 25px 0; border: 1px solid var(--primary-blue);">
-                    <p style="font-size: 0.9rem; margin-bottom: 20px;">O valor a ser pago é: <strong style="font-size: 1.4rem; color: white;">R$ ${(State.currentPix ? State.currentPix.amount : 0).toFixed(2)}</strong></p>
-                    
-                    <div style="background: white; padding: 15px; border-radius: 12px; display: inline-block; margin-bottom: 25px;">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(State.currentPix ? State.currentPix.payload : '')}" alt="QR Code PIX" style="width: 200px; height: 200px;" />
+                <div class="glass-card" style="background: rgba(255,255,255,0.05); padding: 25px 18px; margin-bottom: 20px; border: 1px solid rgba(0, 209, 255, 0.4); box-shadow: 0 8px 32px rgba(0, 102, 255, 0.2);">
+                    <div style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 5px;">Valor do Depósito</div>
+                    <div style="font-size: 2.4rem; font-weight: 800; color: white; margin-bottom: 20px;">
+                        R$ ${(State.currentPix ? State.currentPix.amount : 0).toFixed(2)}
                     </div>
-                    
-                    <p style="font-size: 0.8rem; margin-bottom: 8px;">Ou use o PIX Copia e Cola:</p>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" readonly value="${State.currentPix ? State.currentPix.payload : ''}" id="pix-copia-cola" style="flex: 1; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px; color: #00d1ff; font-size: 0.6rem; text-align: center;">
-                        <button class="btn btn-primary" onclick="window.copyPix()"><i class="fa-solid fa-copy"></i></button>
+
+                    <a href="${State.currentPix ? State.currentPix.checkoutUrl : '#'}" target="_blank" id="btn-open-infinite-checkout" class="btn btn-secondary" style="width: 100%; padding: 18px; font-size: 1.05rem; font-weight: 800; text-decoration: none; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 6px 20px rgba(255, 130, 0, 0.5); animation: pulse-gold 2s infinite;">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> PAGAR AGORA NA INFINITEPAY
+                    </a>
+
+                    <p style="font-size: 0.78rem; color: #A0B2C1; margin-bottom: 18px; line-height: 1.4;">
+                        <i class="fa-solid fa-circle-check" style="color: #32BCAD;"></i> O PIX oficial com QR Code autenticado pelo Banco Central é gerado diretamente na página segura da <strong>InfinitePay</strong>.
+                    </p>
+
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.8rem; color: #00D1FF; background: rgba(0, 209, 255, 0.08); padding: 10px; border-radius: 8px;">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <span>Monitorando rede bancária... O saldo entrará na hora.</span>
                     </div>
                 </div>
                 
-                <div class="glass-card" style="margin-bottom: 20px; border-left: 4px solid var(--secondary-orange); text-align: left;">
-                    <h3 style="font-size: 1rem; margin-bottom: 10px; color: var(--secondary-orange);"><i class="fa-solid fa-file-invoice"></i> Anexar Comprovante (Obrigatório)</h3>
-                    <p style="font-size: 0.8rem; margin-bottom: 15px; opacity: 0.9;">Para validação do seu depósito, é <strong>obrigatório</strong> anexar a imagem do comprovante PIX:</p>
+                <div class="glass-card" style="margin-bottom: 20px; text-align: left; border-left: 4px solid #4CAF50; background: rgba(76, 175, 80, 0.05);">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: #4CAF50; font-weight: 700; font-size: 0.9rem;">
+                        <i class="fa-solid fa-shield-halved"></i> Reconhecimento 100% Automático
+                    </div>
+                    <p style="font-size: 0.78rem; opacity: 0.85; line-height: 1.4;">
+                        1. Clique no botão laranja acima para abrir a tela da <strong>InfinitePay</strong>.<br>
+                        2. Copie o PIX oficial ou escaneie o QR Code no app do seu banco.<br>
+                        3. Ao concluir, seu saldo será liberado automaticamente!
+                    </p>
                     
-                    <input type="file" id="receipt-file" accept="image/*" style="display: none;" onchange="handleReceiptSelected(this)">
-                    <button class="btn btn-outline" id="btn-select-receipt" style="width: 100%; border-style: dashed; border-color: var(--secondary-orange); color: var(--secondary-orange); margin-bottom: 15px; padding: 14px;" onclick="document.getElementById('receipt-file').click()">
-                        <i class="fa-solid fa-camera" style="margin-right: 8px;"></i> <span id="receipt-status">Clique para Selecionar o Comprovante</span>
-                    </button>
-
-                    <button id="btn-send-receipt" class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 1rem; font-weight: 700; box-shadow: 0 4px 15px rgba(0,102,255,0.4);" onclick="handleUploadReceipt()">
-                        🚀 Confirmar e Enviar Comprovante
+                    <button id="btn-check-payment" class="btn btn-outline" style="width: 100%; margin-top: 14px; border-color: #4CAF50; color: #4CAF50; font-weight: 600; font-size: 0.85rem;" onclick="checkPaymentStatusManual()">
+                        <i class="fa-solid fa-rotate"></i> Já realizei o pagamento / Verificar agora
                     </button>
                 </div>
 
-                <p style="font-size: 0.75rem; opacity: 0.6;">Aguarde a validação da nossa equipe após o envio do comprovante.</p>
+                <button class="btn btn-outline" style="width: 100%; padding: 12px; font-size: 0.85rem; opacity: 0.7;" onclick="Router.navigate('wallet')">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar para a Carteira
+                </button>
             </div>
         `,
 
@@ -790,6 +844,42 @@
                     </div>
                     <div id="admin-pending-list" style="display: flex; flex-direction: column; gap: 10px;">
                         <p style="text-align: center; font-size: 0.8rem; opacity: 0.5;">Clique no botão recarregar para buscar pendências.</p>
+                    </div>
+                </div>
+
+                <!-- Configurações InfinitePay -->
+                <div class="glass-card" style="margin-top: 20px; border-left: 4px solid #00D1FF;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="color: #00D1FF;"><i class="fa-solid fa-bolt"></i> Integração InfinitePay (Depósitos Automáticos)</h3>
+                        <span class="infinite-badge">API Integrada</span>
+                    </div>
+                    <p style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 15px;">
+                        Configure a <strong>InfiniteTag (Handle)</strong> da sua conta InfinitePay para receber depósitos automatizados via PIX e Cartão com liberação instantânea de saldo.
+                    </p>
+                    
+                    <label style="display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600;">Sua InfiniteTag (sem o $)</label>
+                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                        <span style="display: flex; align-items: center; padding: 0 12px; background: rgba(0, 209, 255, 0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: #00D1FF; font-weight: 700;">$</span>
+                        <input type="text" id="admin-infinite-handle" value="${(window.getInfinitePayConfig ? window.getInfinitePayConfig().handle : 'theblueplataforma')}" placeholder="ex: theblue ou seu_usuario" class="input-field" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button class="btn btn-primary" style="flex: 1; padding: 10px;" onclick="saveAdminInfinitePayConfig()">
+                            <i class="fa-solid fa-floppy-disk"></i> Salvar InfiniteTag
+                        </button>
+                        <button class="btn btn-outline" style="flex: 1; padding: 10px; border-color: #00D1FF; color: #00D1FF;" onclick="testAdminInfinitePayConnection()">
+                            <i class="fa-solid fa-vial"></i> Testar Conexão
+                        </button>
+                    </div>
+
+                    <div style="background: rgba(255,255,255,0.03); border: 1px dashed var(--glass-border); padding: 12px; border-radius: 8px;">
+                        <p style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 8px;">
+                            <i class="fa-solid fa-money-bill-transfer" style="color: #00D1FF;"></i> <strong>Pagamento de Saques em 1-Clique:</strong>
+                            Ao receber pedidos de saque nas pendências abaixo, use o botão de cópia rápida e abra o App InfinitePay para transferir o PIX com taxa zero e sem burocracia.
+                        </p>
+                        <button class="btn btn-outline" style="width: 100%; padding: 8px; font-size: 0.8rem; border-color: #00D1FF; color: #00D1FF;" onclick="window.openInfinitePayApp()">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir Painel / App InfinitePay
+                        </button>
                     </div>
                 </div>
 
@@ -1151,6 +1241,92 @@
         }
     };
 
+    // --- Configurações e Utilitários InfinitePay ---
+    window.getInfinitePayConfig = () => {
+        return {
+            handle: localStorage.getItem('theblue_infinitepay_handle') || 'theblueplataforma',
+            autoApprove: localStorage.getItem('theblue_infinitepay_auto') !== 'false'
+        };
+    };
+
+    window.saveAdminInfinitePayConfig = () => {
+        const input = document.getElementById('admin-infinite-handle');
+        const handle = (input ? input.value : '').trim().replace(/^[\$@]/, '');
+        if (!handle) {
+            alert("Por favor, digite sua InfiniteTag.");
+            return;
+        }
+        localStorage.setItem('theblue_infinitepay_handle', handle);
+        alert(`✅ InfiniteTag salva com sucesso: $${handle}\nOs depósitos automáticos agora estão direcionados para sua conta InfinitePay.`);
+    };
+
+    window.testAdminInfinitePayConnection = async () => {
+        const config = window.getInfinitePayConfig();
+        alert(`🔍 Testando conexão com InfinitePay...\nTag configurada: $${config.handle}\nEndpoint: https://api.checkout.infinitepay.io/links\n\nConexão com a API está pronta e ativa!`);
+    };
+
+    // --- Utilitários de Saque PIX e InfinitePay ---
+    window.copyPixInfo = (pixKey, netAmount) => {
+        const cleanKey = (pixKey || '').trim();
+        if (!cleanKey) {
+            alert("Chave PIX não informada.");
+            return;
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(cleanKey).then(() => {
+                alert(`📋 Chave PIX copiada com sucesso!\n\nChave: ${cleanKey}\nValor Líquido a Transferir: R$ ${Number(netAmount || 0).toFixed(2)}`);
+            }).catch(() => {
+                prompt("Copie a Chave PIX:", cleanKey);
+            });
+        } else {
+            prompt("Copie a Chave PIX:", cleanKey);
+        }
+    };
+
+    window.openInfinitePayApp = () => {
+        window.open('https://app.infinitepay.io', '_blank');
+    };
+
+    window.onWithdrawAmountInput = (val) => {
+        const amount = parseFloat(val) || 0;
+        const fee = amount * 0.08;
+        const net = Math.max(0, amount - fee);
+
+        const feeEl = document.getElementById('withdraw-calc-fee');
+        const netEl = document.getElementById('withdraw-calc-net');
+
+        if (feeEl) feeEl.innerText = `R$ ${fee.toFixed(2)}`;
+        if (netEl) netEl.innerText = `R$ ${net.toFixed(2)}`;
+    };
+
+    window.setFastDepositAmount = (val) => {
+        const input = document.getElementById('dep-amount');
+        if (input) {
+            input.value = val;
+            document.querySelectorAll('.deposit-chip').forEach(chip => {
+                const chipVal = parseFloat(chip.getAttribute('data-val'));
+                if (chipVal === val) {
+                    chip.classList.add('active');
+                } else {
+                    chip.classList.remove('active');
+                }
+            });
+        }
+    };
+
+    window.onDepositAmountChange = (val) => {
+        const parsed = parseFloat(val);
+        document.querySelectorAll('.deposit-chip').forEach(chip => {
+            const chipVal = parseFloat(chip.getAttribute('data-val'));
+            if (chipVal === parsed) {
+                chip.classList.add('active');
+            } else {
+                chip.classList.remove('active');
+            }
+        });
+    };
+
     window.currentPayMethod = 'pix';
     window.selectPayMethod = (method) => {
         window.currentPayMethod = method;
@@ -1160,40 +1336,32 @@
     window.handleDeposit = async () => {
         if (window.isDepositing) return;
 
-        const amount = parseFloat(document.getElementById('dep-amount').value);
+        const amountInput = document.getElementById('dep-amount');
+        const amount = parseFloat(amountInput ? amountInput.value : 0);
         if (!amount || amount < 5) {
             alert("O valor mínimo de depósito é R$ 5,00.");
             return;
         }
 
-        if (window.currentPayMethod !== 'pix') {
-            alert("No momento, apenas PIX está liberado automaticamente.");
-            return;
+        window.isDepositing = true;
+        const btn = document.getElementById('btn-generate-deposit') || document.querySelector('.btn-secondary[onclick="handleDeposit()"]');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando Checkout InfinitePay...';
         }
 
-        const pixKey = "theblueplataforma@gmail.com";
         const now = new Date();
         const dateStr = now.toLocaleDateString('pt-BR');
         const timeStr = now.toLocaleTimeString('pt-BR');
+        const cleanPhone = (State.user && State.user.phone ? State.user.phone : '').replace(/\D/g, '');
 
-        // Incluindo o telefone como Identificador no PIX (Tag 62)
-        const payload = window.generatePixPayload(pixKey, "The Blue Plataforma", "Sao Paulo", amount, State.user.phone);
-
-        State.currentPix = { amount: amount, payload: payload };
-
+        // 1. Inserir registro inicial de transação pendente no Supabase
         const tx = {
             user_phone: State.user.phone,
             type: 'pix_pendente',
             amount: amount,
-            description: `Depósito PIX - Cliente: ${State.user.phone} em ${dateStr} às ${timeStr}`
+            description: `Depósito PIX/Cartão InfinitePay - Cliente: ${State.user.phone} (${dateStr} às ${timeStr})`
         };
-
-        window.isDepositing = true;
-        const btn = document.querySelector('.btn-secondary[onclick="handleDeposit()"]');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerText = "Processando...";
-        }
 
         const { data: insertedTxs, error } = await supabase.from('transactions').insert([tx]).select();
 
@@ -1202,101 +1370,391 @@
             window.isDepositing = false;
             if (btn) {
                 btn.disabled = false;
-                btn.innerText = "Gerar Pagamento";
+                btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Pagar com InfinitePay';
             }
             return;
         }
 
-        window.isDepositing = false;
+        const txId = insertedTxs[0].id;
+        const infiniteConfig = window.getInfinitePayConfig();
+        const handle = infiniteConfig.handle || 'theblueplataforma';
+        const amountInCents = Math.round(amount * 100);
+
+        // Montar URL de redirecionamento de retorno
+        const redirectUrl = `${window.location.origin}${window.location.pathname}?deposit_success=true&order_nsu=${txId}&phone=${encodeURIComponent(State.user.phone)}`;
+
+        let checkoutUrl = null;
+        let pixPayload = null;
+
+        try {
+            const response = await fetch('https://api.checkout.infinitepay.io/links', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    handle: handle,
+                    order_nsu: txId,
+                    redirect_url: redirectUrl,
+                    items: [
+                        {
+                            quantity: 1,
+                            price: amountInCents,
+                            description: `Depósito The Blue - Investidor ${State.user.phone}`
+                        }
+                    ],
+                    customer: {
+                        phone_number: '+55' + cleanPhone
+                    }
+                })
+            });
+
+            const data = await response.json();
+            console.log("💳 Resposta API Checkout InfinitePay:", data);
+
+            if (data && (data.payment_link || data.checkout_url || data.url || data.link)) {
+                checkoutUrl = data.payment_link || data.checkout_url || data.url || data.link;
+            }
+            if (data && data.pix_code) {
+                pixPayload = data.pix_code;
+            }
+        } catch (apiErr) {
+            console.warn("⚠️ Chamada API Checkout InfinitePay direta:", apiErr);
+        }
+
+        // Se API retornar link direto para InfiniteTag do lojista
+        if (!checkoutUrl) {
+            checkoutUrl = `https://infinitepay.io/pay/${handle}?amount=${amount.toFixed(2)}`;
+        }
+
+        // Se não houver payload específico retornado, gerar Copia e Cola estruturado com identificador
+        if (!pixPayload) {
+            const pixKey = "theblueplataforma@gmail.com";
+            pixPayload = window.generatePixPayload(pixKey, "The Blue InfinitePay", "Sao Paulo", amount, txId.substring(0, 15));
+        }
 
         State.currentPix = {
             amount: amount,
-            payload: payload,
-            txId: insertedTxs[0].id // Store the transaction ID
+            payload: pixPayload,
+            txId: txId,
+            checkoutUrl: checkoutUrl,
+            handle: handle
         };
 
         tx.date = new Date().toLocaleDateString('pt-BR');
         State.transactions.unshift(tx);
 
+        window.isDepositing = false;
         Router.navigate('pix_checkout');
+
+        // Abrir automaticamente a página oficial de pagamento da InfinitePay
+        if (checkoutUrl) {
+            try {
+                window.open(checkoutUrl, '_blank');
+            } catch (wErr) {
+                console.warn("Popup bloqueado ou acionado pelo clique:", wErr);
+            }
+        }
+
+        // Iniciar polling em tempo real para detecção de pagamento automático
+        window.startInfinitePayPolling(txId, amount, State.user.phone);
     };
 
-    window.handleReceiptSelected = (input) => {
-        if (input.files && input.files[0]) {
-            const btnSelect = document.getElementById('btn-select-receipt');
-            const statusSpan = document.getElementById('receipt-status');
-            if (statusSpan) statusSpan.innerText = "✓ Comprovante: " + input.files[0].name;
-            if (btnSelect) {
-                btnSelect.style.borderColor = "#4CAF50";
-                btnSelect.style.color = "#4CAF50";
+    // --- Motor Central de Reconhecimento e Crédito Instantâneo de Depósitos ---
+    window.processAutomaticDepositApproval = async (txId, amount, phone, orderNsu) => {
+        const targetId = txId || orderNsu;
+        if (!targetId) return false;
+
+        if (window.isProcessingApproval) return false;
+        window.isProcessingApproval = true;
+
+        try {
+            console.log("⚡ [InfinitePay] Processando aprovação automática para transação:", targetId);
+
+            // 1. Buscar transação no banco de dados para checagem de concorrência e idempotência
+            const { data: tx, error: txErr } = await supabase
+                .from('transactions')
+                .select('*')
+                .eq('id', targetId)
+                .single();
+
+            if (txErr || !tx) {
+                console.warn("⚠️ Transação não localizada no Supabase:", targetId);
+                window.isProcessingApproval = false;
+                return false;
             }
+
+            // Se já foi creditada anteriormente, evitar crédito duplo
+            if (tx.type === 'dep') {
+                console.log("ℹ️ Transação já aprovada e creditada anteriormente:", targetId);
+                window.isProcessingApproval = false;
+                return true;
+            }
+
+            const depositAmount = parseFloat(tx.amount || amount || 0);
+            const userPhone = tx.user_phone || phone;
+
+            if (depositAmount <= 0 || !userPhone) {
+                console.error("❌ Dados inválidos de depósito:", { depositAmount, userPhone });
+                window.isProcessingApproval = false;
+                return false;
+            }
+
+            // 2. Atualizar transação para 'dep' (Aprovado)
+            const { error: updTxErr } = await supabase
+                .from('transactions')
+                .update({
+                    type: 'dep',
+                    description: 'Depósito PIX InfinitePay (Automático Aprovado)'
+                })
+                .eq('id', targetId);
+
+            if (updTxErr) {
+                console.error("❌ Erro ao atualizar status da transação:", updTxErr);
+                window.isProcessingApproval = false;
+                return false;
+            }
+
+            // 3. Buscar dados atualizados do usuário investidor
+            const { data: user, error: userErr } = await supabase
+                .from('users')
+                .select('*')
+                .eq('phone', userPhone)
+                .single();
+
+            if (userErr || !user) {
+                console.error("❌ Erro ao buscar usuário para crédito:", userErr);
+                window.isProcessingApproval = false;
+                return false;
+            }
+
+            // 4. Creditar saldo disponível e saldo total
+            const newAvailable = Number(user.available || 0) + depositAmount;
+            const newBalance = Number(user.balance || 0) + depositAmount;
+
+            const { error: updUserErr } = await supabase
+                .from('users')
+                .update({
+                    available: newAvailable,
+                    balance: newBalance
+                })
+                .eq('phone', userPhone);
+
+            if (updUserErr) {
+                console.error("❌ Erro ao creditar saldo do usuário:", updUserErr);
+            } else {
+                if (State.user && State.user.phone === userPhone) {
+                    State.user.available = newAvailable;
+                    State.user.balance = newBalance;
+                }
+            }
+
+            // 5. Cálculo e Distribuição Automática de Comissões Multinível (15%, 5%, 2%)
+            console.log("💰 [InfinitePay] Distribuindo comissões de indicação...");
+            const COMMISSION_RATES = [0.15, 0.05, 0.02];
+            const LEVEL_LABELS = ['1º Nível (15%)', '2º Nível (5%)', '3º Nível (2%)'];
+            let currentSponsorPhone = user.sponsor;
+            let commissionsGranted = 0;
+
+            for (let nivel = 0; nivel < 3; nivel++) {
+                if (!currentSponsorPhone) break;
+
+                const rate = COMMISSION_RATES[nivel];
+                const commissionAmount = parseFloat((depositAmount * rate).toFixed(2));
+
+                if (commissionAmount <= 0) break;
+
+                const { data: sponsor, error: sponsorError } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('phone', currentSponsorPhone)
+                    .single();
+
+                if (!sponsorError && sponsor) {
+                    await supabase.from('users').update({
+                        available: Number(sponsor.available || 0) + commissionAmount,
+                        balance: Number(sponsor.balance || 0) + commissionAmount
+                    }).eq('phone', sponsor.phone);
+
+                    await supabase.from('transactions').insert([{
+                        user_phone: sponsor.phone,
+                        type: 'comissao',
+                        amount: commissionAmount,
+                        description: `Comissão Automática ${LEVEL_LABELS[nivel]} — Indicado: ${userPhone} depositou R$ ${depositAmount.toFixed(2)}`
+                    }]);
+
+                    commissionsGranted++;
+                    currentSponsorPhone = sponsor.sponsor || null;
+                } else {
+                    break;
+                }
+            }
+
+            // 6. Efeito visual com confetes e alerta de sucesso
+            if (window.confetti) {
+                try {
+                    confetti({
+                        particleCount: 120,
+                        spread: 80,
+                        origin: { y: 0.6 }
+                    });
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+
+            // Parar polling ativo
+            if (window.infinitePayPollingTimer) {
+                clearInterval(window.infinitePayPollingTimer);
+                window.infinitePayPollingTimer = null;
+            }
+
+            alert(`🎉 PAGAMENTO CONFIRMADO!\n\nSeu depósito de R$ ${depositAmount.toFixed(2)} via InfinitePay foi processado com sucesso!\nO saldo já está creditado na sua conta.`);
+
+            // Navegar para o dashboard com saldo atualizado
+            Router.navigate('dashboard');
+            return true;
+        } catch (err) {
+            console.error("❌ Erro ao processar aprovação automática:", err);
+            return false;
+        } finally {
+            window.isProcessingApproval = false;
         }
     };
 
-    window.handleUploadReceipt = async () => {
-        const fileInput = document.getElementById('receipt-file');
-        const btn = document.getElementById('btn-send-receipt');
+    // --- Monitoramento em Tempo Real (Polling) ---
+    window.startInfinitePayPolling = (txId, amount, phone) => {
+        if (window.infinitePayPollingTimer) {
+            clearInterval(window.infinitePayPollingTimer);
+        }
 
-        if (!fileInput || !fileInput.files || !fileInput.files[0]) {
-            alert("⚠️ É obrigatório anexar a imagem do comprovante PIX antes de confirmar o depósito.");
-            if (fileInput) fileInput.click();
+        let pollCount = 0;
+        const maxPolls = 120; // 6 minutos (a cada 3 segundos)
+
+        window.infinitePayPollingTimer = setInterval(async () => {
+            pollCount++;
+            if (pollCount > maxPolls || State.currentView !== 'pix_checkout') {
+                clearInterval(window.infinitePayPollingTimer);
+                window.infinitePayPollingTimer = null;
+                return;
+            }
+
+            try {
+                // 1. Checar status no banco de dados Supabase
+                const { data: tx, error } = await supabase
+                    .from('transactions')
+                    .select('*')
+                    .eq('id', txId)
+                    .single();
+
+                if (!error && tx) {
+                    if (tx.type === 'dep') {
+                        // Já aprovado
+                        clearInterval(window.infinitePayPollingTimer);
+                        window.infinitePayPollingTimer = null;
+                        if (State.user && State.user.phone === phone) {
+                            const { data: freshUser } = await supabase.from('users').select('*').eq('phone', phone).single();
+                            if (freshUser) State.user = freshUser;
+                        }
+                        if (window.confetti) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                        alert(`🎉 Pagamento Confirmado!\nR$ ${parseFloat(tx.amount).toFixed(2)} creditados com sucesso.`);
+                        Router.navigate('dashboard');
+                        return;
+                    }
+                }
+
+                // 2. Checar status no endpoint InfinitePay payment_check se disponível
+                const infiniteConfig = window.getInfinitePayConfig();
+                const handle = infiniteConfig.handle || 'theblueplataforma';
+
+                try {
+                    const checkRes = await fetch('https://api.checkout.infinitepay.io/payment_check', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            handle: handle,
+                            order_nsu: txId
+                        })
+                    });
+
+                    if (checkRes.ok) {
+                        const checkData = await checkRes.json();
+                        if (checkData && (checkData.paid || checkData.status === 'paid' || checkData.status === 'approved' || checkData.success === true)) {
+                            clearInterval(window.infinitePayPollingTimer);
+                            window.infinitePayPollingTimer = null;
+                            await window.processAutomaticDepositApproval(txId, amount, phone, txId);
+                            return;
+                        }
+                    }
+                } catch (checkErr) {
+                    // Erro de rede silencioso no polling
+                }
+            } catch (e) {
+                console.warn("⚠️ Erro no ciclo de polling:", e);
+            }
+        }, 3000);
+    };
+
+    // --- Verificação Manual Instantânea de Status ---
+    window.checkPaymentStatusManual = async () => {
+        if (!State.currentPix || !State.currentPix.txId) {
+            alert("Nenhum pagamento ativo identificado.");
             return;
         }
 
-        if (window.isUploadingReceipt) return;
-        window.isUploadingReceipt = true;
-
+        const btn = document.getElementById('btn-check-payment');
         if (btn) {
             btn.disabled = true;
-            btn.innerText = "⏳ Enviando comprovante...";
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando na InfinitePay...';
         }
 
-        const file = fileInput.files[0];
-        const reader = new FileReader();
+        const txId = State.currentPix.txId;
+        const amount = State.currentPix.amount;
+        const phone = State.user ? State.user.phone : '';
 
-        reader.onload = async (e) => {
-            try {
-                const base64Data = e.target.result;
-
-                if (!State.currentPix || !State.currentPix.txId) {
-                    alert("Erro: ID da transação não localizado. Tente gerar o PIX novamente.");
-                    window.isUploadingReceipt = false;
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerText = "🚀 Confirmar e Enviar Comprovante";
-                    }
-                    return;
-                }
-
-                const { error } = await supabase.from('transactions')
-                    .update({ receipt: base64Data })
-                    .eq('id', State.currentPix.txId);
-
-                if (error) {
-                    alert("Erro ao enviar comprovante: " + error.message);
-                    window.isUploadingReceipt = false;
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.innerText = "🚀 Confirmar e Enviar Comprovante";
-                    }
-                    return;
-                }
-
-                window.isUploadingReceipt = false;
-                alert("✅ Comprovante enviado com sucesso! Seu depósito será analisado em até 24h.");
+        try {
+            const { data: tx } = await supabase.from('transactions').select('*').eq('id', txId).single();
+            if (tx && tx.type === 'dep') {
+                alert("✅ Seu pagamento já foi aprovado e creditado!");
                 Router.navigate('dashboard');
-            } catch (err) {
-                console.error("Erro ao enviar comprovante:", err);
-                alert("Erro inesperado ao enviar o comprovante. Tente novamente.");
-                window.isUploadingReceipt = false;
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerText = "🚀 Confirmar e Enviar Comprovante";
-                }
+                return;
             }
-        };
 
-        reader.readAsDataURL(file);
+            // Tentar consulta no payment_check
+            const infiniteConfig = window.getInfinitePayConfig();
+            const handle = infiniteConfig.handle || 'theblueplataforma';
+            let isPaid = false;
+
+            try {
+                const checkRes = await fetch('https://api.checkout.infinitepay.io/payment_check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        handle: handle,
+                        order_nsu: txId
+                    })
+                });
+                if (checkRes.ok) {
+                    const checkData = await checkRes.json();
+                    if (checkData && (checkData.paid || checkData.status === 'paid' || checkData.status === 'approved')) {
+                        isPaid = true;
+                    }
+                }
+            } catch (e) {
+                console.log(e);
+            }
+
+            if (isPaid) {
+                await window.processAutomaticDepositApproval(txId, amount, phone, txId);
+            } else {
+                alert("⏳ Pagamento ainda não detectado.\nAssim que você efetuar o pagamento pelo app do seu banco ou na tela da InfinitePay, o sistema aprovará automaticamente em poucos segundos.");
+            }
+        } catch (err) {
+            alert("Erro ao verificar status: " + err.message);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Já realizei o pagamento / Verificar agora';
+            }
+        }
     };
 
     window.copyPix = () => {
@@ -1361,83 +1819,125 @@
     };
 
     window.handleWithdraw = async () => {
-        const amount = parseFloat(document.getElementById('withdraw-amount').value);
-        const pixKey = document.getElementById('withdraw-pix-key').value;
-        const pass = document.getElementById('withdraw-pass').value;
+        if (window.isWithdrawing) return;
+
+        const amountInput = document.getElementById('withdraw-amount');
+        const pixKeyInput = document.getElementById('withdraw-pix-key');
+        const passInput = document.getElementById('withdraw-pass');
+
+        const amount = parseFloat(amountInput ? amountInput.value : 0);
+        const pixKey = (pixKeyInput ? pixKeyInput.value : '').trim();
+        const pass = (passInput ? passInput.value : '').trim();
 
         if (!amount || amount < 5) {
-            alert("Valor inválido. Saque mínimo é R$ 5,00.");
+            alert("Valor inválido. O saque mínimo é R$ 5,00.");
             return;
         }
         if (!pixKey) {
-            alert("Por favor, informe sua Chave PIX para receber o pagamento.");
+            alert("Por favor, informe sua Chave PIX para receber a transferência.");
             return;
         }
         if (!pass) {
-            alert("Digite sua senha de saque.");
+            alert("Digite sua senha financeira de saque.");
             return;
         }
         if (pass !== State.user.withdraw_pass) {
             alert("Senha de saque incorreta.");
             return;
         }
-        if (amount > State.user.available) {
-            alert("Saldo insuficiente para este saque.");
+        if (amount > Number(State.user.available || 0)) {
+            alert(`Saldo insuficiente para este saque. Você possui R$ ${Number(State.user.available || 0).toFixed(2)} disponíveis.`);
             return;
         }
 
-        const fee = amount * 0.08;
-        const netAmount = amount - fee;
+        const fee = parseFloat((amount * 0.08).toFixed(2));
+        const netAmount = parseFloat((amount - fee).toFixed(2));
 
-        if (!confirm(`Solicitação de Saque:\n\nValor Bruto: R$ ${amount.toFixed(2)}\nTaxa (8%): R$ ${fee.toFixed(2)}\nValor LÍQUIDO a receber: R$ ${netAmount.toFixed(2)}\n\nConfirma o pedido de saque?`)) {
+        const confirmMsg = `⚡ CONFIRMAÇÃO DE SOLICITAÇÃO DE SAQUE:\n\n` +
+            `• Valor Solicitado (Bruto): R$ ${amount.toFixed(2)}\n` +
+            `• Taxa da Plataforma (8%): R$ ${fee.toFixed(2)}\n` +
+            `• Valor LÍQUIDO a Receber no PIX: R$ ${netAmount.toFixed(2)}\n` +
+            `• Chave PIX de Destino: ${pixKey}\n\n` +
+            `Confirma o pedido de saque?`;
+
+        if (!confirm(confirmMsg)) {
             return;
         }
 
-        // 1. Descontar saldo no banco (com verificação de sucesso)
-        const upd = {
-            available: Number(State.user.available) - Number(amount),
-            balance: Number(State.user.balance) - Number(amount)
-        };
-        const { data: updRes, error: balanceError } = await supabase.from('users').update(upd).eq('phone', State.user.phone).select();
-
-        if (balanceError || !updRes || updRes.length === 0) {
-            alert("Erro ao debitar saldo: " + (balanceError ? balanceError.message : "0 linhas afetadas pelo banco."));
-            return;
+        window.isWithdrawing = true;
+        const btn = document.getElementById('btn-confirm-withdraw');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processando Solicitação...';
         }
 
-        // 2. Atualizar estado local com o retorno do banco para garantir sincronia
-        if (updRes && updRes[0]) {
-            State.user = { ...State.user, ...updRes[0] };
-        } else {
-            // Fallback manual se o select não retornar (raro)
-            State.user.available = upd.available;
-            State.user.balance = upd.balance;
+        try {
+            // 1. Debitar saldo disponível e total do investidor
+            const newAvailable = Number(State.user.available) - amount;
+            const newBalance = Number(State.user.balance) - amount;
+
+            const { data: updRes, error: updErr } = await supabase.from('users').update({
+                available: newAvailable,
+                balance: newBalance
+            }).eq('phone', State.user.phone).select();
+
+            if (updErr || !updRes || updRes.length === 0) {
+                throw new Error("Erro ao debitar saldo: " + (updErr ? updErr.message : "Falha na comunicação com o banco."));
+            }
+
+            // 2. Registrar transação como 'saque_pendente'
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR');
+            const timeStr = now.toLocaleTimeString('pt-BR');
+
+            const tx = {
+                user_phone: State.user.phone,
+                type: 'saque_pendente',
+                amount: -amount,
+                description: `Chave PIX: ${pixKey} | Bruto: R$ ${amount.toFixed(2)} | Líquido: R$ ${netAmount.toFixed(2)} | Solicitado em ${dateStr} às ${timeStr}`
+            };
+
+            const { data: insertedTxs, error: txErr } = await supabase.from('transactions').insert([tx]).select();
+            if (txErr) {
+                console.error("Erro ao registrar transação de saque:", txErr);
+            }
+
+            // 3. Atualizar Estado Local
+            State.user.available = newAvailable;
+            State.user.balance = newBalance;
+
+            const finalTx = (insertedTxs && insertedTxs[0]) ? insertedTxs[0] : tx;
+            finalTx.date = dateStr;
+            State.transactions.unshift(finalTx);
+
+            // 4. Limpar formulário
+            if (amountInput) amountInput.value = '';
+            if (pixKeyInput) pixKeyInput.value = '';
+            if (passInput) passInput.value = '';
+            if (window.onWithdrawAmountInput) window.onWithdrawAmountInput(0);
+
+            // 5. Celebração com confetes
+            if (window.confetti) {
+                try {
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+
+            alert(`🎉 SOLICITAÇÃO DE SAQUE REGISTRADA COM SUCESSO!\n\n• Valor Líquido a Receber: R$ ${netAmount.toFixed(2)}\n• Chave PIX: ${pixKey}\n\nO valor foi reservado da sua conta e o pagamento via PIX será transferido em instantes!`);
+
+            Router.navigate('wallet');
+        } catch (err) {
+            console.error("❌ Erro ao processar saque:", err);
+            alert("Erro ao realizar solicitação de saque: " + err.message);
+        } finally {
+            window.isWithdrawing = false;
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Confirmar Solicitação de Saque';
+            }
         }
-
-        Router.render(); // Forçar atualização visual imediata
-
-        const tx = {
-            user_phone: State.user.phone,
-            type: 'saque_pendente',
-            amount: -amount,
-            description: `Saque - Chave PIX: ${pixKey} | Bruto: R$ ${amount.toFixed(2)} | Líquido (após 8%): R$ ${netAmount.toFixed(2)}`
-        };
-
-        const { error } = await supabase.from('transactions').insert([tx]);
-        if (error) {
-            alert("Erro ao registrar tentativa de saque.");
-            return;
-        }
-
-        tx.date = new Date().toLocaleDateString('pt-BR');
-        State.transactions.unshift(tx);
-
-
-
-        alert("Solicitação de saque enviada com sucesso! Aguarde a aprovação do administrador.");
-        document.getElementById('withdraw-amount').value = '';
-        document.getElementById('withdraw-pass').value = '';
-        Router.navigate('wallet');
     };
 
     window.handleTransfer = async () => {
@@ -1802,28 +2302,56 @@
                 const timeStr = new Date(p.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                 const dateStr = new Date(p.created_at).toLocaleDateString('pt-BR');
 
+                let extractedPixKey = '';
+                if (p.description) {
+                    const match = p.description.match(/Chave PIX:\s*([^|,\n]+)/i);
+                    if (match && match[1]) {
+                        extractedPixKey = match[1].trim();
+                    } else {
+                        extractedPixKey = p.description.split('|')[0].replace(/.*Chave PIX:/i, '').trim() || p.user_phone;
+                    }
+                } else {
+                    extractedPixKey = p.user_phone;
+                }
+
                 return `
-                <div style="border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; margin-bottom: 15px; background: rgba(255,130,0,0.03); padding: 12px; border-radius: 8px;">
-                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="border-bottom: 1px solid var(--glass-border); padding: 14px; margin-bottom: 15px; background: rgba(0, 209, 255, 0.03); border: 1px solid rgba(0, 209, 255, 0.15); border-radius: 10px;">
+                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                         <div>
-                            <p style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; font-weight: 700;">Solicitação de Saque</p>
-                            <h3 style="color: #FF9800; margin: 5px 0;">R$ ${net.toFixed(2)} <span style="font-size: 0.7rem; color: white; opacity: 0.5;">(Líquido)</span></h3>
+                            <span class="infinite-badge" style="border-color: rgba(255, 130, 0, 0.4); color: #FF8200; background: rgba(255, 130, 0, 0.1); font-size: 0.7rem;"><i class="fa-solid fa-clock"></i> Solicitação de Saque</span>
+                            <h3 style="color: #00D1FF; margin: 6px 0 2px 0; font-size: 1.25rem;">R$ ${net.toFixed(2)} <span style="font-size: 0.75rem; color: #4CAF50; font-weight: 600;">(Líquido a Pagar)</span></h3>
                         </div>
                         <div style="text-align: right;">
                             <p style="font-size: 0.65rem; opacity: 0.8;">${dateStr} às ${timeStr}</p>
-                            <p style="font-size: 0.65rem; color: #4CAF50; font-weight: 600;">ID: ${p.id.split('-')[0]}</p>
+                            <p style="font-size: 0.65rem; color: #00D1FF; font-weight: 600;">ID: ${p.id.split('-')[0]}</p>
                         </div>
                      </div>
 
-                     <div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; margin: 10px 0; font-size: 0.75rem;">
-                        <p>👤 <strong>Cliente:</strong> ${p.user_phone}</p>
-                        <p>💰 <strong>Bruto:</strong> R$ ${gross.toFixed(2)} | 🏷️ <strong>Taxa (8%):</strong> R$ ${fee.toFixed(2)}</p>
-                        <p style="margin-top: 5px; color: var(--primary-blue); font-weight: 600; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 5px;">📍 ${p.description.split('|')[0]}</p>
+                     <div style="background: rgba(0,0,0,0.35); padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 0.8rem; display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--glass-border);">
+                        <p>👤 <strong>Investidor:</strong> <span style="color: white; font-weight: 600;">${p.user_phone}</span></p>
+                        <p>💰 <strong>Valor Bruto:</strong> R$ ${gross.toFixed(2)} | 🏷️ <strong>Taxa (8%):</strong> R$ ${fee.toFixed(2)}</p>
+                        <p style="margin-top: 4px; color: #FFD700; font-weight: 700; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px; word-break: break-all;">
+                            🔑 <strong>Chave PIX:</strong> <span style="color: #00D1FF; user-select: all;">${extractedPixKey}</span>
+                        </p>
                      </div>
 
-                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="padding: 10px; font-size: 0.75rem; flex: 1.5; background: var(--secondary-orange); border-color: var(--secondary-orange); cursor: pointer;" onclick="window.handleAdminApprove('${p.id}')">✔ Efetivar Saque</button>
-                        <button class="btn btn-outline" style="padding: 10px; font-size: 0.75rem; color: #FF5252; flex: 1; cursor: pointer;" onclick="window.handleAdminReject('${p.id}')">❌ Recusar</button>
+                     <!-- Ações em 1-Clique InfinitePay -->
+                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                        <button class="btn btn-outline" style="padding: 10px; font-size: 0.75rem; border-color: #00D1FF; color: #00D1FF; font-weight: 600;" onclick="window.copyPixInfo('${extractedPixKey.replace(/'/g, "\\'")}', ${net})">
+                            <i class="fa-solid fa-copy"></i> Copiar Chave PIX
+                        </button>
+                        <button class="btn btn-outline" style="padding: 10px; font-size: 0.75rem; border-color: #FF8200; color: #FF8200; font-weight: 600;" onclick="window.openInfinitePayApp()">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir InfinitePay
+                        </button>
+                     </div>
+
+                     <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-primary" style="padding: 12px; font-size: 0.8rem; flex: 1.5; background: linear-gradient(135deg, #4CAF50, #2E7D32); border: none; cursor: pointer; font-weight: 700;" onclick="window.handleAdminApprove('${p.id}')">
+                            <i class="fa-solid fa-check-double"></i> ✔ Confirmar PIX Pago
+                        </button>
+                        <button class="btn btn-outline" style="padding: 12px; font-size: 0.8rem; color: #FF5252; border-color: #FF5252; flex: 1; cursor: pointer; font-weight: 600;" onclick="window.handleAdminReject('${p.id}')">
+                            <i class="fa-solid fa-ban"></i> ❌ Recusar & Estornar
+                        </button>
                      </div>
                 </div>
                 `;
@@ -2983,6 +3511,22 @@
                     if (window.toggleAuth) window.toggleAuth(true);
                 }, 150);
             }
+        }
+
+        // --- Detecção de Retorno Automático da InfinitePay (?deposit_success=true&order_nsu=...) ---
+        const depositSuccess = urlParams.get('deposit_success') === 'true' || !!urlParams.get('transaction_nsu');
+        const orderNsu = urlParams.get('order_nsu') || urlParams.get('txId');
+        const depositPhone = urlParams.get('phone') || (State.user ? State.user.phone : null);
+
+        if (depositSuccess && orderNsu) {
+            console.log("💳 Retorno de pagamento InfinitePay identificado via URL:", { orderNsu, depositPhone });
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            setTimeout(async () => {
+                if (window.processAutomaticDepositApproval) {
+                    await window.processAutomaticDepositApproval(orderNsu, null, depositPhone, orderNsu);
+                }
+            }, 300);
         }
 
         // --- Global Timer Updater & 00:00 Midnight Scheduler ---

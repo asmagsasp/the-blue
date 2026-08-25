@@ -393,3 +393,84 @@ p { color: var(--text-dim); line-height: 1.6; }
     transform: translateY(-2px);
     box-shadow: 0 15px 25px rgba(0, 209, 255, 0.5);
 }
+
+/* InfinitePay Integration & Instant Deposit UI */
+.deposit-chip-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.deposit-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 10px 6px;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.deposit-chip:hover {
+    background: rgba(0, 102, 255, 0.2);
+    border-color: var(--primary-blue);
+}
+
+.deposit-chip.active {
+    background: linear-gradient(135deg, rgba(0, 102, 255, 0.4), rgba(0, 209, 255, 0.3));
+    border-color: var(--accent-blue);
+    color: #00D1FF;
+    box-shadow: 0 0 12px rgba(0, 209, 255, 0.3);
+}
+
+.infinite-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(0, 209, 255, 0.15), rgba(0, 102, 255, 0.15));
+    border: 1px solid rgba(0, 209, 255, 0.3);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #00D1FF;
+}
+
+.radar-pulse {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(0, 209, 255, 0.2);
+    border: 2px solid var(--accent-blue);
+    margin: 0 auto 15px auto;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: radar-grow 2s infinite ease-out;
+}
+
+.radar-pulse i {
+    font-size: 1.5rem;
+    color: var(--accent-blue);
+}
+
+@keyframes radar-grow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 209, 255, 0.6);
+        transform: scale(0.95);
+    }
+    70% {
+        box-shadow: 0 0 0 20px rgba(0, 209, 255, 0);
+        transform: scale(1.05);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 209, 255, 0);
+        transform: scale(0.95);
+    }
+}
+
