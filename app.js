@@ -753,11 +753,11 @@
 
                     <div class="alert" style="background: rgba(0, 209, 255, 0.08); border: 1px solid rgba(0, 209, 255, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.8rem; line-height: 1.4;">
                         <i class="fa-solid fa-circle-info" style="color: #00D1FF;"></i> <strong>Transferência PIX:</strong> O valor líquido é enviado diretamente para a sua chave cadastrada.<br>
-                        <span style="opacity: 0.8;">Taxa da plataforma: <strong>8%</strong> | Saque mínimo: <strong>R$ 5,00</strong></span>
+                        <span style="opacity: 0.8;">Taxa da plataforma: <strong>8%</strong> | Saque mínimo: <strong>R$ 20,00</strong></span>
                     </div>
                     
                     <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 600;">Valor a Sacar (R$)</label>
-                    <input type="number" id="withdraw-amount" min="5" step="1" oninput="window.onWithdrawAmountInput(this.value)" placeholder="Disponível: R$ ${Number(State.user.available || 0).toFixed(2)}" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; font-size: 1.1rem; font-weight: 700; margin-bottom: 12px;">
+                    <input type="number" id="withdraw-amount" min="20" step="1" oninput="window.onWithdrawAmountInput(this.value)" placeholder="Disponível: R$ ${Number(State.user.available || 0).toFixed(2)}" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; font-size: 1.1rem; font-weight: 700; margin-bottom: 12px;">
                     
                     <!-- Resumo do Saque em Tempo Real -->
                     <div id="withdraw-summary-box" style="background: rgba(0,0,0,0.3); border: 1px dashed var(--glass-border); border-radius: 8px; padding: 12px; margin-bottom: 18px; font-size: 0.8rem; display: flex; flex-direction: column; gap: 6px;">
@@ -1912,8 +1912,8 @@
         const pixKey = (pixKeyInput ? pixKeyInput.value : '').trim();
         const pass = (passInput ? passInput.value : '').trim();
 
-        if (!amount || amount < 5) {
-            alert("Valor inválido. O saque mínimo é R$ 5,00.");
+        if (!amount || amount < 20) {
+            alert("Valor inválido. O saque mínimo é R$ 20,00.");
             return;
         }
         if (!pixKey) {
