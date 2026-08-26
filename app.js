@@ -281,7 +281,7 @@
                 </div>
 
                 <!-- Quick Actions -->
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 30px;">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 25px;">
                     <button class="glass-card" onclick="Router.navigate('wallet'); setTimeout(() => switchWalletTab('dep'), 50);" style="padding: 12px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
                         <i class="fa-solid fa-plus-circle" style="color: var(--secondary-orange); font-size: 1.1rem;"></i>
                         <span style="font-size: 0.7rem; font-weight: 700; color: #ffffff;">Depositar</span>
@@ -298,6 +298,25 @@
                          <i class="fa-solid fa-wallet" style="color: #FF5252; font-size: 1.1rem;"></i>
                         <span style="font-size: 0.7rem; font-weight: 700; color: #ffffff;">Saque</span>
                     </button>
+                </div>
+
+                <!-- Banner Informativo: Nova Regra de Planos (2 Cotas Máximas) -->
+                <div class="glass-card" style="margin-bottom: 25px; background: linear-gradient(135deg, rgba(0, 102, 255, 0.22) 0%, rgba(0, 209, 255, 0.12) 100%); border: 1px solid rgba(0, 209, 255, 0.4); padding: 15px 18px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; gap: 15px; cursor: pointer; box-shadow: 0 6px 24px rgba(0, 102, 255, 0.25);" onclick="Router.navigate('investments')">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div style="background: rgba(0, 209, 255, 0.2); width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #00D1FF; flex-shrink: 0; box-shadow: 0 0 12px rgba(0, 209, 255, 0.4); border: 1px solid rgba(0, 209, 255, 0.3);">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
+                                <span style="background: linear-gradient(90deg, #00D1FF, #0066FF); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px;">NOVA REGRA</span>
+                                <span style="font-size: 0.88rem; font-weight: 700; color: #fff;">Limite de 2 Aportes por Plano</span>
+                            </div>
+                            <p style="font-size: 0.74rem; color: rgba(255,255,255,0.85); margin: 0; line-height: 1.3;">Cada plano só pode ser investido <strong>2 vezes</strong> por usuário. Toque para ver seus limites.</p>
+                        </div>
+                    </div>
+                    <div style="background: rgba(255, 255, 255, 0.1); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #00D1FF; font-size: 0.9rem; flex-shrink: 0;">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </div>
                 </div>
 
                 <!-- Earning Stats -->
@@ -466,7 +485,21 @@
             investments: () => `
             <div class="app-container animate-fade">
                 <h1 style="margin-bottom: 10px;">Planos de Investimento</h1>
-                <p style="margin-bottom: 30px;">Escolha o plano ideal para seu crescimento "The Blue".</p>
+                <p style="margin-bottom: 20px;">Escolha o plano ideal para seu crescimento "The Blue".</p>
+
+                <!-- Banner Informativo da Regra de Cotas -->
+                <div class="glass-card" style="margin-bottom: 25px; border-left: 4px solid #00D1FF; background: linear-gradient(90deg, rgba(0, 209, 255, 0.15) 0%, rgba(0, 102, 255, 0.06) 100%); border-top: 1px solid rgba(0, 209, 255, 0.3); border-right: 1px solid rgba(0, 209, 255, 0.2); border-bottom: 1px solid rgba(0, 209, 255, 0.2); padding: 16px 18px; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 20px rgba(0, 209, 255, 0.15); border-radius: 16px;">
+                    <div style="background: rgba(0, 209, 255, 0.2); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 12px rgba(0, 209, 255, 0.4); border: 1px solid rgba(0, 209, 255, 0.4);">
+                        <i class="fa-solid fa-circle-info" style="color: #00D1FF; font-size: 1.2rem;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <span style="background: #00D1FF; color: #000; font-size: 0.65rem; font-weight: 800; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">Regra Oficial</span>
+                            <p style="font-size: 0.88rem; color: #fff; font-weight: 700; margin: 0;">Limite: Máximo de 2 Aportes por Plano</p>
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-dim); margin: 0; line-height: 1.4;">Para garantir sustentabilidade e oportunidade justa, cada usuário pode realizar <strong>no máximo 2 investimentos ativos</strong> em cada plano.</p>
+                    </div>
+                </div>
 
                 ${State.plans.length === 0 ? '<p style="text-align: center; opacity: 0.5; margin-top: 50px;">Ainda não há planos ativos na plataforma. Aguarde novidades!</p>' : ''}
 
@@ -490,6 +523,12 @@
                 else if (n.includes('ouro') || n.includes('gold')) { icon = '🥇'; color = '#FFD700'; }
                 else if (n.includes('prata') || n.includes('silver')) { icon = '🥈'; color = '#C0C0C0'; }
                 else if (n.includes('bronze')) { icon = '🥉'; color = '#cd7f32'; }
+
+                // Contagem de investimentos do usuário neste plano
+                const userPlanInvs = (State.transactions || []).filter(t => t.type === 'inv' && t.description && t.description.replace('Investimento: ', '').trim().toLowerCase() === String(p.name).trim().toLowerCase());
+                const investedCount = userPlanInvs.length;
+                const maxAllowed = 2;
+                const isLimitReached = investedCount >= maxAllowed;
 
                 if (state === 'LOCKED') {
                     return `
@@ -537,9 +576,27 @@
                                 <div style="position: absolute; top: -10px; right: -30px; background: #FFD700; color: black; font-weight: 900; font-size: 0.6rem; padding: 20px 40px 5px 40px; transform: rotate(45deg); box-shadow: 0 0 15px #FFD70080;">OFERTA VIP</div>
                             ` : ''}
                             
-                            <div style="display: inline-block; background: rgba(0,209,255,0.1); color: var(--accent-blue); font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; margin-bottom: 15px;">
-                                ${p.category || 'Geral'}
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 8px;">
+                                <div style="background: rgba(0,209,255,0.1); color: var(--accent-blue); font-size: 0.7rem; padding: 4px 8px; border-radius: 6px;">
+                                    ${p.category || 'Geral'}
+                                </div>
+
+                                <!-- Badge Contador de Investimentos por Plano -->
+                                ${isLimitReached ? `
+                                    <div style="display: flex; align-items: center; gap: 5px; background: rgba(255, 82, 82, 0.15); color: #FF5252; font-size: 0.7rem; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255, 82, 82, 0.35); font-weight: 700;">
+                                        <i class="fa-solid fa-lock"></i> Limite: 2/2 investidos
+                                    </div>
+                                ` : investedCount === 1 ? `
+                                    <div style="display: flex; align-items: center; gap: 5px; background: rgba(255, 180, 0, 0.15); color: #FFB400; font-size: 0.7rem; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(255, 180, 0, 0.35); font-weight: 700;">
+                                        <i class="fa-solid fa-circle-exclamation"></i> Limite: 1/2 investido (1 restante)
+                                    </div>
+                                ` : `
+                                    <div style="display: flex; align-items: center; gap: 5px; background: rgba(0, 209, 255, 0.1); color: var(--accent-blue); font-size: 0.7rem; padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(0, 209, 255, 0.25); font-weight: 600;">
+                                        <i class="fa-solid fa-chart-pie"></i> Limite: 0/2 investidos (2 disponíveis)
+                                    </div>
+                                `}
                             </div>
+
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
                                     <div style="font-size: 2rem; background: rgba(0,0,0,0.3); width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid ${color}; box-shadow: 0 0 15px ${color}40;">
@@ -556,7 +613,7 @@
                                 </div>
                             </div>
                             
-                            <div style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px; display: flex; justify-content: space-between;">
+                            <div style="margin: 20px 0 12px 0; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px; display: flex; justify-content: space-between;">
                                 <div>
                                     <p style="font-size: 0.7rem;">Mínimo</p>
                                     <p style="font-weight: 600;">R$ ${p.min}</p>
@@ -571,6 +628,26 @@
                                 </div>
                             </div>
 
+                            <!-- Barra de Progresso / Indicador Visual de Cotas -->
+                            <div style="margin-bottom: 15px; padding: 10px 14px; background: rgba(0, 0, 0, 0.25); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.06); display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-user-check" style="font-size: 0.85rem; color: ${isLimitReached ? '#FF5252' : investedCount === 1 ? '#FFB400' : 'var(--accent-blue)'};"></i>
+                                    <div>
+                                        <p style="font-size: 0.72rem; font-weight: 600; color: #fff; margin: 0;">Disponibilidade por Conta</p>
+                                        <p style="font-size: 0.65rem; color: var(--text-dim); margin: 0;">Máximo de 2 aportes por plano</p>
+                                    </div>
+                                </div>
+                                <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                                    <span style="font-size: 0.75rem; font-weight: 800; color: ${isLimitReached ? '#FF5252' : investedCount === 1 ? '#FFB400' : '#4CAF50'};">
+                                        ${investedCount}/2 ${investedCount >= 2 ? '(Esgotado)' : 'utilizado' + (investedCount === 1 ? '' : 's')}
+                                    </span>
+                                    <div style="display: flex; gap: 5px;">
+                                        <span style="display: inline-block; width: 22px; height: 6px; border-radius: 3px; background: ${investedCount >= 1 ? '#4CAF50' : 'rgba(255,255,255,0.15)'}; box-shadow: ${investedCount >= 1 ? '0 0 6px rgba(76,175,80,0.6)' : 'none'};"></span>
+                                        <span style="display: inline-block; width: 22px; height: 6px; border-radius: 3px; background: ${investedCount >= 2 ? '#4CAF50' : 'rgba(255,255,255,0.15)'}; box-shadow: ${investedCount >= 2 ? '0 0 6px rgba(76,175,80,0.6)' : 'none'};"></span>
+                                    </div>
+                                </div>
+                            </div>
+
                             ${isSurpriseActive ? `
                                 <div style="background: rgba(255,215,0,0.1); border: 1px dashed #FFD700; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
                                     <p style="font-size: 0.7rem; color: #FFD700; font-weight: 700; text-transform: uppercase;">🔥 Promoção Ativa! Termina em:</p>
@@ -578,9 +655,15 @@
                                 </div>
                             ` : ''}
 
-                            <button class="btn btn-primary" style="width: 100%; border: none; background: ${isSurpriseActive ? 'linear-gradient(45deg, #FFD700, #FFA500)' : `linear-gradient(45deg, ${color}80, transparent)`}; color: ${isSurpriseActive ? 'black' : 'white'}; font-weight: ${isSurpriseActive ? '900' : 'normal'}; border-top: 1px solid ${color}40;" onclick="handleInvest('${p.id}')">
-                                ${isSurpriseActive ? 'APROVEITAR AGORA' : 'Investir Agora'}
-                            </button>
+                            ${isLimitReached ? `
+                                <button class="btn btn-outline" style="width: 100%; border: 1px solid rgba(255, 82, 82, 0.4); background: rgba(255, 82, 82, 0.08); color: #FF5252; font-weight: 700; cursor: not-allowed; opacity: 0.85;" onclick="alert('⚠️ Limite Atingido: Cada usuário só pode investir 2 vezes no plano ${p.name}. Você já utilizou suas 2 cotas.')">
+                                    <i class="fa-solid fa-lock" style="margin-right: 6px;"></i> Limite Atingido (Máx. 2 por conta)
+                                </button>
+                            ` : `
+                                <button class="btn btn-primary" style="width: 100%; border: none; background: ${isSurpriseActive ? 'linear-gradient(45deg, #FFD700, #FFA500)' : `linear-gradient(45deg, ${color}80, transparent)`}; color: ${isSurpriseActive ? 'black' : 'white'}; font-weight: ${isSurpriseActive ? '900' : 'normal'}; border-top: 1px solid ${color}40;" onclick="handleInvest('${p.id}')">
+                                    ${isSurpriseActive ? 'APROVEITAR AGORA' : (investedCount === 1 ? 'Investir Novamente (2º Aporte)' : 'Investir Agora')}
+                                </button>
+                            `}
                         </div>
                     `;
             }).join('')}
@@ -2017,11 +2100,20 @@
         const plan = State.plans.find(p => p.id === planId);
         if (!plan) return;
 
+        // Verificar limite de 2 investimentos por plano
+        const currentInvs = (State.transactions || []).filter(t => t.type === 'inv' && t.description && t.description.replace('Investimento: ', '').trim().toLowerCase() === String(plan.name).trim().toLowerCase());
+        if (currentInvs.length >= 2) {
+            alert(`⚠️ Limite Atingido: Cada usuário só pode investir no máximo 2 vezes no plano "${plan.name}". Você já possui 2 investimentos ativos neste plano.`);
+            return;
+        }
+
         if (!State.user || Number(State.user.available) < plan.min) {
             alert("Saldo disponível insuficiente. Faça um depósito!");
             Router.navigate('wallet');
             return;
         }
+
+        const currentSlot = currentInvs.length + 1;
 
         // Criar o Modal Customizado de Investimento
         const overlay = document.createElement('div');
@@ -2031,7 +2123,10 @@
         overlay.innerHTML = `
             <div class="glass-card animate-pop" style="width: 90%; max-width: 400px; padding: 30px; text-align: center; border: 1px solid var(--primary-blue);">
                 <div style="font-size: 3rem; margin-bottom: 15px;">🚀</div>
-                <h2 style="color: white; margin-bottom: 10px;">Investir em ${plan.name}</h2>
+                <h2 style="color: white; margin-bottom: 6px;">Investir em ${plan.name}</h2>
+                <div style="display: inline-block; background: rgba(0, 209, 255, 0.12); border: 1px solid rgba(0, 209, 255, 0.3); color: var(--accent-blue); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-bottom: 15px;">
+                    <i class="fa-solid fa-layer-group"></i> Cota ${currentSlot} de 2 permitidas
+                </div>
                 <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 25px;">
                     Quanto você deseja investir?<br>
                     <span style="color: #4CAF50; font-weight: 700;">Mín: R$ ${plan.min} | Máx: R$ ${plan.max}</span>
@@ -2054,6 +2149,14 @@
         document.getElementById('invest-cancel').onclick = () => overlay.remove();
         
         document.getElementById('invest-confirm').onclick = async () => {
+            // Revalidação do limite de 2 investimentos por plano
+            const recheckInvs = (State.transactions || []).filter(t => t.type === 'inv' && t.description && t.description.replace('Investimento: ', '').trim().toLowerCase() === String(plan.name).trim().toLowerCase());
+            if (recheckInvs.length >= 2) {
+                alert(`⚠️ Limite Atingido: Cada usuário só pode investir no máximo 2 vezes no plano "${plan.name}".`);
+                overlay.remove();
+                return;
+            }
+
             const amountInput = document.getElementById('invest-amount-input').value;
             const amount = parseFloat(amountInput);
 
