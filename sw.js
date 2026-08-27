@@ -1,9 +1,9 @@
-const CACHE_NAME = 'the-blue-cache-v6';
+const CACHE_NAME = 'the-blue-cache-v7';
 const urlsToCache = [
   '/',
   '/index.html',
   '/style.css',
-  '/app.js?v=2.5',
+  '/app.js?v=2.6',
   '/manifest.json',
   '/icon.svg'
 ];

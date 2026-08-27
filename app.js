@@ -3284,6 +3284,11 @@
     };
 
     window.handleOpenWithdrawPasswordModal = (initialTab = 'change') => {
+        const existingOverlay = document.getElementById('withdraw-pass-overlay');
+        if (existingOverlay) {
+            existingOverlay.remove();
+        }
+
         const overlay = document.createElement('div');
         overlay.id = 'withdraw-pass-overlay';
         overlay.style = `
@@ -3298,6 +3303,15 @@
             width: 100%; max-width: 430px; padding: 25px; text-align: left;
             box-shadow: 0 12px 48px rgba(0, 102, 255, 0.35); animation: animate-pop 0.3s ease-out;
         `;
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                overlay.remove();
+            }
+        };
 
         let activeTab = initialTab; // 'change' or 'reset'
 
@@ -3359,105 +3373,129 @@
                 </div>
 
                 <div style="display: flex; gap: 10px;">
-                    <button id="withdraw-pass-cancel" class="btn btn-outline" style="flex: 1; padding: 12px; font-weight: 700; border-color: var(--glass-border);">CANCELAR</button>
-                    <button id="withdraw-pass-submit" class="btn btn-primary" style="flex: 1.2; padding: 12px; font-weight: 700; background: linear-gradient(45deg, var(--primary-blue), #00D1FF); border: none;">
+                    <button type="button" id="withdraw-pass-cancel" class="btn btn-outline" style="flex: 1; padding: 12px; font-weight: 700; border-color: var(--glass-border);">CANCELAR</button>
+                    <button type="button" id="withdraw-pass-submit" class="btn btn-primary" style="flex: 1.2; padding: 12px; font-weight: 700; background: linear-gradient(45deg, var(--primary-blue), #00D1FF); border: none;">
                         <i class="fa-solid fa-check"></i> ${activeTab === 'change' ? 'SALVAR SENHA' : 'REDEFINIR AGORA'}
                     </button>
                 </div>
             `;
 
             // Tab switch listeners
-            document.getElementById('tab-withdraw-change').onclick = () => {
-                activeTab = 'change';
-                renderModalContent();
-            };
-            document.getElementById('tab-withdraw-reset').onclick = () => {
-                activeTab = 'reset';
-                renderModalContent();
-            };
-            document.getElementById('withdraw-modal-x').onclick = () => {
-                document.body.removeChild(overlay);
-            };
-            document.getElementById('withdraw-pass-cancel').onclick = () => {
-                document.body.removeChild(overlay);
-            };
+            const tabChange = modal.querySelector('#tab-withdraw-change');
+            if (tabChange) {
+                tabChange.onclick = () => {
+                    activeTab = 'change';
+                    renderModalContent();
+                };
+            }
 
-            document.getElementById('withdraw-pass-submit').onclick = async () => {
-                const submitBtn = document.getElementById('withdraw-pass-submit');
-                const newPass = (document.getElementById('withdraw-pass-new').value || '').trim();
-                const confirmPass = (document.getElementById('withdraw-pass-confirm').value || '').trim();
+            const tabReset = modal.querySelector('#tab-withdraw-reset');
+            if (tabReset) {
+                tabReset.onclick = () => {
+                    activeTab = 'reset';
+                    renderModalContent();
+                };
+            }
 
-                if (!newPass || !confirmPass) {
-                    alert("Por favor, preencha a nova senha e a confirmação.");
-                    return;
-                }
+            const btnX = modal.querySelector('#withdraw-modal-x');
+            if (btnX) {
+                btnX.onclick = () => {
+                    overlay.remove();
+                };
+            }
 
-                if (newPass.length < 4) {
-                    alert("A nova senha financeira de saque deve ter no mínimo 4 dígitos.");
-                    return;
-                }
+            const btnCancel = modal.querySelector('#withdraw-pass-cancel');
+            if (btnCancel) {
+                btnCancel.onclick = () => {
+                    overlay.remove();
+                };
+            }
 
-                if (newPass !== confirmPass) {
-                    alert("A nova senha e a confirmação não conferem!");
-                    return;
-                }
+            const btnSubmit = modal.querySelector('#withdraw-pass-submit');
+            if (btnSubmit) {
+                btnSubmit.onclick = async () => {
+                    const inputNew = modal.querySelector('#withdraw-pass-new');
+                    const inputConfirm = modal.querySelector('#withdraw-pass-confirm');
+                    const newPass = (inputNew ? inputNew.value : '').trim();
+                    const confirmPass = (inputConfirm ? inputConfirm.value : '').trim();
 
-                if (activeTab === 'change') {
-                    const currentPass = (document.getElementById('withdraw-pass-current').value || '').trim();
-                    if (!currentPass) {
-                        alert("Por favor, digite sua senha de saque atual.");
-                        return;
-                    }
-                    if (currentPass !== State.user.withdraw_pass) {
-                        alert("A senha de saque atual informada está incorreta.");
-                        return;
-                    }
-                } else {
-                    const loginPass = (document.getElementById('withdraw-pass-login-auth').value || '').trim();
-                    if (!loginPass) {
-                        alert("Por favor, digite sua senha de login do app para confirmar sua identidade.");
-                        return;
-                    }
-                    if (loginPass !== State.user.password) {
-                        alert("Senha de login do app incorreta. Não foi possível redefinir a senha de saque.");
-                        return;
-                    }
-                }
-
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Atualizando...';
-
-                try {
-                    const { error } = await supabase.from('users').update({ withdraw_pass: newPass }).eq('phone', State.user.phone);
-                    if (error) {
-                        alert("Erro ao atualizar senha de saque: " + error.message);
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = `<i class="fa-solid fa-check"></i> ${activeTab === 'change' ? 'SALVAR SENHA' : 'REDEFINIR AGORA'}`;
+                    if (!newPass || !confirmPass) {
+                        alert("Por favor, preencha a nova senha e a confirmação.");
                         return;
                     }
 
-                    State.user.withdraw_pass = newPass;
-                    if (window.confetti) confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
-                    alert(`✅ Senha de saque ${activeTab === 'change' ? 'alterada' : 'redefinida'} com sucesso!\nGuarde-a com segurança para seus futuros saques.`);
-                    document.body.removeChild(overlay);
-                } catch (err) {
-                    console.error(err);
-                    alert("Erro de conexão ao salvar: " + err.message);
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = `<i class="fa-solid fa-check"></i> ${activeTab === 'change' ? 'SALVAR SENHA' : 'REDEFINIR AGORA'}`;
-                }
-            };
+                    if (newPass.length < 4) {
+                        alert("A nova senha financeira de saque deve ter no mínimo 4 dígitos.");
+                        return;
+                    }
+
+                    if (newPass !== confirmPass) {
+                        alert("A nova senha e a confirmação não conferem!");
+                        return;
+                    }
+
+                    if (activeTab === 'change') {
+                        const inputCurrent = modal.querySelector('#withdraw-pass-current');
+                        const currentPass = (inputCurrent ? inputCurrent.value : '').trim();
+                        if (!currentPass) {
+                            alert("Por favor, digite sua senha de saque atual.");
+                            return;
+                        }
+                        if (currentPass !== State.user.withdraw_pass) {
+                            alert("A senha de saque atual informada está incorreta.");
+                            return;
+                        }
+                    } else {
+                        const inputLogin = modal.querySelector('#withdraw-pass-login-auth');
+                        const loginPass = (inputLogin ? inputLogin.value : '').trim();
+                        if (!loginPass) {
+                            alert("Por favor, digite sua senha de login do app para confirmar sua identidade.");
+                            return;
+                        }
+                        if (loginPass !== State.user.password) {
+                            alert("Senha de login do app incorreta. Não foi possível redefinir a senha de saque.");
+                            return;
+                        }
+                    }
+
+                    btnSubmit.disabled = true;
+                    btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Atualizando...';
+
+                    try {
+                        const { error } = await supabase.from('users').update({ withdraw_pass: newPass }).eq('phone', State.user.phone);
+                        if (error) {
+                            alert("Erro ao atualizar senha de saque: " + error.message);
+                            btnSubmit.disabled = false;
+                            btnSubmit.innerHTML = `<i class="fa-solid fa-check"></i> ${activeTab === 'change' ? 'SALVAR SENHA' : 'REDEFINIR AGORA'}`;
+                            return;
+                        }
+
+                        State.user.withdraw_pass = newPass;
+                        if (window.confetti) confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+                        alert(`✅ Senha de saque ${activeTab === 'change' ? 'alterada' : 'redefinida'} com sucesso!\nGuarde-a com segurança para seus futuros saques.`);
+                        overlay.remove();
+                    } catch (err) {
+                        console.error(err);
+                        alert("Erro de conexão ao salvar: " + err.message);
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerHTML = `<i class="fa-solid fa-check"></i> ${activeTab === 'change' ? 'SALVAR SENHA' : 'REDEFINIR AGORA'}`;
+                    }
+                };
+            }
         };
 
         renderModalContent();
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
     };
 
     window.handleOpenChangePasswordModal = (initialType = 'access') => {
         if (initialType === 'withdraw') {
             window.handleOpenWithdrawPasswordModal();
             return;
+        }
+
+        const existingOverlay = document.getElementById('change-pass-overlay');
+        if (existingOverlay) {
+            existingOverlay.remove();
         }
 
         const overlay = document.createElement('div');
@@ -3496,67 +3534,76 @@
             <input type="password" id="change-pass-confirm" placeholder="Confirme a nova senha" class="input-field" style="width: 100%; padding: 11px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
 
             <div style="display: flex; gap: 10px;">
-                <button id="change-pass-cancel" class="btn btn-outline" style="flex: 1; padding: 12px; font-weight: 700;">CANCELAR</button>
-                <button id="change-pass-submit" class="btn btn-primary" style="flex: 1; padding: 12px; font-weight: 700;">SALVAR</button>
+                <button type="button" id="change-pass-cancel" class="btn btn-outline" style="flex: 1; padding: 12px; font-weight: 700;">CANCELAR</button>
+                <button type="button" id="change-pass-submit" class="btn btn-primary" style="flex: 1; padding: 12px; font-weight: 700;">SALVAR</button>
             </div>
         `;
 
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
 
-        document.getElementById('change-pass-x').onclick = () => {
-            document.body.removeChild(overlay);
-        };
-        document.getElementById('change-pass-cancel').onclick = () => {
-            document.body.removeChild(overlay);
+        overlay.onclick = (e) => {
+            if (e.target === overlay) overlay.remove();
         };
 
-        document.getElementById('change-pass-submit').onclick = async () => {
-            const currentPass = (document.getElementById('change-pass-current').value || '').trim();
-            const newPass = (document.getElementById('change-pass-new').value || '').trim();
-            const confirmPass = (document.getElementById('change-pass-confirm').value || '').trim();
+        const btnX = modal.querySelector('#change-pass-x');
+        if (btnX) btnX.onclick = () => overlay.remove();
 
-            if (!currentPass || !newPass || !confirmPass) {
-                alert("Por favor, preencha todos os campos.");
-                return;
-            }
+        const btnCancel = modal.querySelector('#change-pass-cancel');
+        if (btnCancel) btnCancel.onclick = () => overlay.remove();
 
-            if (newPass !== confirmPass) {
-                alert("A nova senha e a confirmação não conferem!");
-                return;
-            }
+        const btnSubmit = modal.querySelector('#change-pass-submit');
+        if (btnSubmit) {
+            btnSubmit.onclick = async () => {
+                const inputCurrent = modal.querySelector('#change-pass-current');
+                const inputNew = modal.querySelector('#change-pass-new');
+                const inputConfirm = modal.querySelector('#change-pass-confirm');
 
-            if (currentPass !== State.user.password) {
-                alert("A senha de acesso atual está incorreta.");
-                return;
-            }
-            if (newPass.length < 6) {
-                alert("A nova senha de acesso deve ter no mínimo 6 dígitos.");
-                return;
-            }
+                const currentPass = (inputCurrent ? inputCurrent.value : '').trim();
+                const newPass = (inputNew ? inputNew.value : '').trim();
+                const confirmPass = (inputConfirm ? inputConfirm.value : '').trim();
 
-            const submitBtn = document.getElementById('change-pass-submit');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
-
-            try {
-                const { error } = await supabase.from('users').update({ password: newPass }).eq('phone', State.user.phone);
-                if (error) {
-                    alert("Erro ao alterar senha: " + error.message);
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = 'SALVAR';
+                if (!currentPass || !newPass || !confirmPass) {
+                    alert("Por favor, preencha todos os campos.");
                     return;
                 }
-                State.user.password = newPass;
-                if (window.confetti) confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
-                alert("✅ Senha de acesso alterada com sucesso!");
-                document.body.removeChild(overlay);
-            } catch (e) {
-                alert("Erro ao alterar senha: " + e.message);
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'SALVAR';
-            }
-        };
+
+                if (newPass !== confirmPass) {
+                    alert("A nova senha e a confirmação não conferem!");
+                    return;
+                }
+
+                if (currentPass !== State.user.password) {
+                    alert("A senha de acesso atual está incorreta.");
+                    return;
+                }
+                if (newPass.length < 6) {
+                    alert("A nova senha de acesso deve ter no mínimo 6 dígitos.");
+                    return;
+                }
+
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+
+                try {
+                    const { error } = await supabase.from('users').update({ password: newPass }).eq('phone', State.user.phone);
+                    if (error) {
+                        alert("Erro ao alterar senha: " + error.message);
+                        btnSubmit.disabled = false;
+                        btnSubmit.innerHTML = 'SALVAR';
+                        return;
+                    }
+                    State.user.password = newPass;
+                    if (window.confetti) confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+                    alert("✅ Senha de acesso alterada com sucesso!");
+                    overlay.remove();
+                } catch (e) {
+                    alert("Erro ao alterar senha: " + e.message);
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = 'SALVAR';
+                }
+            };
+        }
     };
 
     window.handleLogout = () => {
