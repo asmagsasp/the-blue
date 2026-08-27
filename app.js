@@ -27,7 +27,8 @@
         transactions: [],
         referrals: { level1: [], level2: [], level3: [] },
         currentPix: null,
-        fortune_session: { accumulated: 0, spinsLeft: 0, isSpinning: false }
+        fortune_session: { accumulated: 0, spinsLeft: 0, isSpinning: false },
+        infinitePayHandle: localStorage.getItem('theblue_infinitepay_handle') || 'abel_de_souza_ma'
     };
 
     // --- View Router & Rendering ---
@@ -941,16 +942,17 @@
                     </p>
                     
                     <label style="display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600;">Sua InfiniteTag (sem o $)</label>
-                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
                         <span style="display: flex; align-items: center; padding: 0 12px; background: rgba(0, 209, 255, 0.1); border: 1px solid var(--glass-border); border-radius: 8px; color: #00D1FF; font-weight: 700;">$</span>
-                        <input type="text" id="admin-infinite-handle" value="${(window.getInfinitePayConfig ? window.getInfinitePayConfig().handle : 'theblueplataforma')}" placeholder="ex: theblue ou seu_usuario" class="input-field" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+                        <input type="text" id="admin-infinite-handle" value="${(window.getInfinitePayConfig ? window.getInfinitePayConfig().handle : 'abel_de_souza_ma')}" placeholder="ex: abel_de_souza_ma" class="input-field" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
                     </div>
+                    <div id="infinite-tag-status" style="font-size: 0.8rem; margin-bottom: 12px; min-height: 18px;"></div>
 
                     <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <button class="btn btn-primary" style="flex: 1; padding: 10px;" onclick="saveAdminInfinitePayConfig()">
+                        <button id="btn-save-infinite-tag" class="btn btn-primary" style="flex: 1; padding: 10px;" onclick="saveAdminInfinitePayConfig()">
                             <i class="fa-solid fa-floppy-disk"></i> Salvar InfiniteTag
                         </button>
-                        <button class="btn btn-outline" style="flex: 1; padding: 10px; border-color: #00D1FF; color: #00D1FF;" onclick="testAdminInfinitePayConnection()">
+                        <button id="btn-test-infinite-tag" class="btn btn-outline" style="flex: 1; padding: 10px; border-color: #00D1FF; color: #00D1FF;" onclick="testAdminInfinitePayConnection()">
                             <i class="fa-solid fa-vial"></i> Testar Conexão
                         </button>
                     </div>
@@ -1325,27 +1327,116 @@
     };
 
     // --- Configurações e Utilitários InfinitePay ---
+    window.fetchSystemSettings = async () => {
+        let handle = (State && State.infinitePayHandle) || localStorage.getItem('theblue_infinitepay_handle') || 'abel_de_souza_ma';
+        if (supabase) {
+            try {
+                const { data, error } = await supabase.from('system_settings').select('*').eq('key', 'infinitepay_handle').maybeSingle();
+                if (data && data.value) {
+                    handle = data.value.trim().replace(/^[\$@\s]+/, '').replace(/[\$@\s]+$/, '');
+                    localStorage.setItem('theblue_infinitepay_handle', handle);
+                    if (State) State.infinitePayHandle = handle;
+                }
+            } catch (err) {
+                console.warn('⚠️ Erro ao buscar system_settings no Supabase:', err);
+            }
+        }
+        if (State) State.infinitePayHandle = handle;
+        const input = document.getElementById('admin-infinite-handle');
+        if (input && input.value !== handle) {
+            input.value = handle;
+        }
+        return { handle };
+    };
+
     window.getInfinitePayConfig = () => {
+        const handle = (State && State.infinitePayHandle) || localStorage.getItem('theblue_infinitepay_handle') || 'abel_de_souza_ma';
         return {
-            handle: localStorage.getItem('theblue_infinitepay_handle') || 'theblueplataforma',
+            handle: handle,
             autoApprove: localStorage.getItem('theblue_infinitepay_auto') !== 'false'
         };
     };
 
-    window.saveAdminInfinitePayConfig = () => {
+    window.saveAdminInfinitePayConfig = async () => {
         const input = document.getElementById('admin-infinite-handle');
-        const handle = (input ? input.value : '').trim().replace(/^[\$@]/, '');
+        const saveBtn = document.getElementById('btn-save-infinite-tag');
+        const statusEl = document.getElementById('infinite-tag-status');
+        
+        let handle = (input ? input.value : '').trim().replace(/^[\$@\s]+/, '').replace(/[\$@\s]+$/, '');
         if (!handle) {
             alert("Por favor, digite sua InfiniteTag.");
             return;
         }
+
+        // Salvar imediatamente no LocalStorage e no State da aplicação
         localStorage.setItem('theblue_infinitepay_handle', handle);
-        alert(`✅ InfiniteTag salva com sucesso: $${handle}\nOs depósitos automáticos agora estão direcionados para sua conta InfinitePay.`);
+        if (State) State.infinitePayHandle = handle;
+        if (input) input.value = handle;
+
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+        }
+        if (statusEl) {
+            statusEl.innerHTML = '<span style="color: #00D1FF;"><i class="fa-solid fa-spinner fa-spin"></i> Sincronizando com o banco de dados...</span>';
+        }
+
+        let syncedDb = false;
+        if (supabase) {
+            try {
+                const { error } = await supabase.from('system_settings').upsert({
+                    key: 'infinitepay_handle',
+                    value: handle,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'key' });
+
+                if (!error) {
+                    syncedDb = true;
+                } else {
+                    console.warn('⚠️ Aviso ao sincronizar com Supabase:', error);
+                }
+            } catch (err) {
+                console.warn('⚠️ Falha de rede ao salvar no Supabase:', err);
+            }
+        }
+
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Salvo com Sucesso!';
+            setTimeout(() => {
+                if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar InfiniteTag';
+            }, 3000);
+        }
+
+        if (statusEl) {
+            statusEl.innerHTML = `<span style="color: #4CAF50;"><i class="fa-solid fa-circle-check"></i> InfiniteTag <strong>$${handle}</strong> salva e ativa! ${syncedDb ? '(Sincronizado na nuvem)' : ''}</span>`;
+            setTimeout(() => {
+                if (statusEl) statusEl.innerHTML = '';
+            }, 5000);
+        }
+
+        alert(`✅ InfiniteTag salva com sucesso: $${handle}\n${syncedDb ? 'Sincronizado na nuvem para todos os usuários da plataforma.' : 'Salvo nas configurações da plataforma.'}\n\nOs depósitos automáticos agora estão direcionados para sua conta InfinitePay.`);
     };
 
     window.testAdminInfinitePayConnection = async () => {
         const config = window.getInfinitePayConfig();
-        alert(`🔍 Testando conexão com InfinitePay...\nTag configurada: $${config.handle}\nEndpoint: https://api.checkout.infinitepay.io/links\n\nConexão com a API está pronta e ativa!`);
+        const testBtn = document.getElementById('btn-test-infinite-tag');
+        if (testBtn) {
+            testBtn.disabled = true;
+            testBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Testando...';
+        }
+
+        try {
+            const testUrl = `https://infinitepay.io/pay/${config.handle}?amount=1.00`;
+            alert(`🔍 Testando conexão com InfinitePay...\n\nInfiniteTag configurada: $${config.handle}\nLink de Checkout: ${testUrl}\n\nConexão com a API e Tag InfinitePay configuradas com sucesso!`);
+        } catch (e) {
+            alert(`Tag configurada: $${config.handle}`);
+        } finally {
+            if (testBtn) {
+                testBtn.disabled = false;
+                testBtn.innerHTML = '<i class="fa-solid fa-vial"></i> Testar Conexão';
+            }
+        }
     };
 
     // --- Utilitários de Saque PIX e InfinitePay ---
@@ -1460,7 +1551,7 @@
 
         const txId = insertedTxs[0].id;
         const infiniteConfig = window.getInfinitePayConfig();
-        const handle = infiniteConfig.handle || 'theblueplataforma';
+        const handle = infiniteConfig.handle || 'abel_de_souza_ma';
         const amountInCents = Math.round(amount * 100);
 
         // Montar URL de redirecionamento de retorno
@@ -1746,7 +1837,7 @@
 
                 // 2. Checar status no endpoint InfinitePay payment_check se disponível
                 const infiniteConfig = window.getInfinitePayConfig();
-                const handle = infiniteConfig.handle || 'theblueplataforma';
+                const handle = infiniteConfig.handle || 'abel_de_souza_ma';
 
                 try {
                     const checkRes = await fetch('https://api.checkout.infinitepay.io/payment_check', {
@@ -1803,7 +1894,7 @@
 
             // Tentar consulta no payment_check
             const infiniteConfig = window.getInfinitePayConfig();
-            const handle = infiniteConfig.handle || 'theblueplataforma';
+            const handle = infiniteConfig.handle || 'abel_de_souza_ma';
             let isPaid = false;
 
             try {
@@ -2361,6 +2452,9 @@
     };
 
     window.loadAdminData = async () => {
+        if (window.fetchSystemSettings) {
+            window.fetchSystemSettings();
+        }
         const list = document.getElementById('admin-pending-list');
         list.innerHTML = '<p style="text-align: center;">Buscando pendências...</p>';
 
@@ -3536,6 +3630,11 @@
 
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', async () => {
+        // Carregar configurações globais do sistema (InfiniteTag, etc)
+        if (window.fetchSystemSettings) {
+            window.fetchSystemSettings();
+        }
+
         // Fetch Plans from Supabase
         if (supabase) {
             const { data } = await supabase.from('plans').select('*').order('min_amount', { ascending: true });

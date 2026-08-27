@@ -141,6 +141,28 @@ BEGIN
 END;
 $$;
 
+/* 5. Tabela de Configurações Globais do Sistema (system_settings) */
+CREATE TABLE IF NOT EXISTS public.system_settings (
+  key text PRIMARY KEY,
+  value text NOT NULL,
+  updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Leitura de configuracoes" ON public.system_settings;
+CREATE POLICY "Leitura de configuracoes" ON public.system_settings FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Insercao de configuracoes" ON public.system_settings;
+CREATE POLICY "Insercao de configuracoes" ON public.system_settings FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Atualizacao de configuracoes" ON public.system_settings;
+CREATE POLICY "Atualizacao de configuracoes" ON public.system_settings FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Exclusao de configuracoes" ON public.system_settings;
+CREATE POLICY "Exclusao de configuracoes" ON public.system_settings FOR DELETE USING (true);
+
+-- Garantir que a InfiniteTag padrão seja abel_de_souza_ma
+INSERT INTO public.system_settings (key, value)
+VALUES ('infinitepay_handle', 'abel_de_souza_ma')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+
 -- Exemplo de agendamento automático no pg_cron (Executa diariamente às 00:00 BRT / 03:00 UTC):
 -- SELECT cron.schedule('credit-investment-yields-midnight', '0 3 * * *', 'SELECT public.process_daily_yields();');
 
