@@ -775,8 +775,13 @@
                     <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 600;">Sua Chave PIX de Destino</label>
                     <input type="text" id="withdraw-pix-key" placeholder="CPF, E-mail, Celular ou Chave Aleatória" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
 
-                    <label style="display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 600;">Senha Financeira de Saque</label>
-                    <input type="password" id="withdraw-pass" placeholder="Sua senha financeira (6 dígitos)" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label style="font-size: 0.85rem; font-weight: 600; margin: 0;">Senha Financeira de Saque</label>
+                        <a href="#" onclick="event.preventDefault(); if(window.handleOpenWithdrawPasswordModal) window.handleOpenWithdrawPasswordModal('reset');" style="font-size: 0.75rem; color: #00D1FF; text-decoration: none; display: flex; align-items: center; gap: 4px;">
+                            <i class="fa-solid fa-rotate-left"></i> Esqueci / Resetar
+                        </a>
+                    </div>
+                    <input type="password" id="withdraw-pass" placeholder="Sua senha financeira (mín. 4 dígitos)" class="input-field" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
                     
                     <button id="btn-confirm-withdraw" class="btn btn-primary" style="width: 100%; padding: 15px; font-size: 1rem; font-weight: 700; background: linear-gradient(135deg, #00D1FF, #0055FF); border: none; box-shadow: 0 4px 15px rgba(0, 209, 255, 0.4);" onclick="handleWithdraw()">
                         <i class="fa-solid fa-paper-plane"></i> Confirmar Solicitação de Saque
@@ -1140,18 +1145,35 @@
                             <i class="fa-solid fa-chevron-right" style="color: var(--text-dim); font-size: 0.8rem;"></i>
                         </button>
 
-                        <!-- Botão: Alterar Senha -->
-                        <button class="btn btn-outline" style="width: 100%; padding: 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);" onclick="handleOpenChangePasswordModal()">
+                        <!-- Botão: Alterar Senha de Acesso -->
+                        <button class="btn btn-outline" style="width: 100%; padding: 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);" onclick="handleOpenChangePasswordModal('access')">
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <div style="background: rgba(0, 209, 255, 0.15); width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                                     <i class="fa-solid fa-key" style="color: var(--accent-blue); font-size: 1.1rem;"></i>
                                 </div>
                                 <div>
-                                    <p style="font-weight: 700; color: white; font-size: 0.9rem; margin: 0;">Alterar Senha</p>
-                                    <p style="font-size: 0.72rem; color: var(--text-dim); margin: 0;">Atualizar senha de acesso ou saque</p>
+                                    <p style="font-weight: 700; color: white; font-size: 0.9rem; margin: 0;">Alterar Senha de Acesso</p>
+                                    <p style="font-size: 0.72rem; color: var(--text-dim); margin: 0;">Atualizar senha de login no app</p>
                                 </div>
                             </div>
                             <i class="fa-solid fa-chevron-right" style="color: var(--text-dim); font-size: 0.8rem;"></i>
+                        </button>
+
+                        <!-- Botão: Senha de Saque (Alterar / Resetar) -->
+                        <button class="btn btn-outline" style="width: 100%; padding: 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; background: rgba(0, 209, 255, 0.04); border: 1px solid rgba(0, 209, 255, 0.35); box-shadow: 0 4px 15px rgba(0, 209, 255, 0.08);" onclick="handleOpenWithdrawPasswordModal()">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="background: rgba(0, 209, 255, 0.2); width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(0, 209, 255, 0.4);">
+                                    <i class="fa-solid fa-shield-halved" style="color: #00D1FF; font-size: 1.15rem;"></i>
+                                </div>
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <p style="font-weight: 700; color: white; font-size: 0.9rem; margin: 0;">Senha de Saque</p>
+                                        <span style="font-size: 0.65rem; background: rgba(0,209,255,0.25); color: #00D1FF; padding: 2px 7px; border-radius: 4px; font-weight: 700;">Segurança</span>
+                                    </div>
+                                    <p style="font-size: 0.72rem; color: #A0B2C1; margin: 0;">Alterar ou resetar senha financeira de saque</p>
+                                </div>
+                            </div>
+                            <i class="fa-solid fa-chevron-right" style="color: #00D1FF; font-size: 0.8rem;"></i>
                         </button>
 
                         ${['19999995149', '1934585300'].includes(State.user && State.user.phone ? State.user.phone.replace(/\D/g, '') : '') ? `
@@ -3261,13 +3283,189 @@
         };
     };
 
-    window.handleOpenChangePasswordModal = () => {
+    window.handleOpenWithdrawPasswordModal = (initialTab = 'change') => {
+        const overlay = document.createElement('div');
+        overlay.id = 'withdraw-pass-overlay';
+        overlay.style = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center;
+            z-index: 10000; backdrop-filter: blur(8px); padding: 20px;
+        `;
+
+        const modal = document.createElement('div');
+        modal.style = `
+            background: #121824; border: 1px solid rgba(0, 209, 255, 0.35); border-radius: 18px;
+            width: 100%; max-width: 430px; padding: 25px; text-align: left;
+            box-shadow: 0 12px 48px rgba(0, 102, 255, 0.35); animation: animate-pop 0.3s ease-out;
+        `;
+
+        let activeTab = initialTab; // 'change' or 'reset'
+
+        const renderModalContent = () => {
+            modal.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                    <h3 style="color: white; margin: 0; display: flex; align-items: center; gap: 8px; font-size: 1.15rem;">
+                        <i class="fa-solid fa-shield-halved" style="color: #00D1FF;"></i> Senha de Saque
+                    </h3>
+                    <button id="withdraw-modal-x" style="background: none; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer; padding: 4px;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <p style="font-size: 0.78rem; color: var(--text-dim); margin-bottom: 18px;">
+                    Gerencie a senha financeira necessária para transferências e saques via PIX.
+                </p>
+
+                <!-- Tabs: Alterar vs Resetar -->
+                <div style="display: flex; background: rgba(255,255,255,0.06); border-radius: 10px; padding: 4px; margin-bottom: 18px; border: 1px solid var(--glass-border);">
+                    <button type="button" id="tab-withdraw-change" 
+                            style="flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.3s; ${activeTab === 'change' ? 'background: var(--primary-blue); color: white; box-shadow: 0 4px 12px rgba(0,102,255,0.4);' : 'background: transparent; color: var(--text-dim);'}">
+                        <i class="fa-solid fa-key" style="margin-right: 5px;"></i> Alterar Senha
+                    </button>
+                    <button type="button" id="tab-withdraw-reset" 
+                            style="flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.3s; ${activeTab === 'reset' ? 'background: #00D1FF; color: #000; font-weight: 800; box-shadow: 0 4px 12px rgba(0,209,255,0.4);' : 'background: transparent; color: var(--text-dim);'}">
+                        <i class="fa-solid fa-rotate-left" style="margin-right: 5px;"></i> Esqueci / Resetar
+                    </button>
+                </div>
+
+                ${activeTab === 'change' ? `
+                    <!-- Modo: Alterar Senha de Saque -->
+                    <div style="margin-bottom: 14px;">
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Senha de Saque Atual</label>
+                        <input type="password" id="withdraw-pass-current" placeholder="Sua senha de saque atual" class="input-field" style="width: 100%; padding: 11px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+                    </div>
+                ` : `
+                    <!-- Modo: Resetar Senha de Saque via Senha de Login -->
+                    <div style="background: rgba(0, 209, 255, 0.08); border: 1px solid rgba(0, 209, 255, 0.3); border-radius: 10px; padding: 12px; margin-bottom: 15px;">
+                        <p style="font-size: 0.75rem; color: #00D1FF; margin: 0; line-height: 1.4;">
+                            <i class="fa-solid fa-circle-info"></i> <strong>Esqueceu sua senha de saque?</strong><br>
+                            Confirme sua <strong>Senha de Acesso (Login do App)</strong> para validar sua identidade e redefinir sua senha financeira de saque.
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 14px;">
+                        <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Senha de Acesso ao App (Login)</label>
+                        <input type="password" id="withdraw-pass-login-auth" placeholder="Digite sua senha de login" class="input-field" style="width: 100%; padding: 11px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+                    </div>
+                `}
+
+                <div style="margin-bottom: 14px;">
+                    <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Nova Senha de Saque</label>
+                    <input type="password" id="withdraw-pass-new" placeholder="Mínimo de 4 dígitos" class="input-field" style="width: 100%; padding: 11px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Confirmar Nova Senha de Saque</label>
+                    <input type="password" id="withdraw-pass-confirm" placeholder="Repita a nova senha de saque" class="input-field" style="width: 100%; padding: 11px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button id="withdraw-pass-cancel" class="btn btn-outline" style="flex: 1; padding: 12px; font-weight: 700; border-color: var(--glass-border);">CANCELAR</button>
+                    <button id="withdraw-pass-submit" class="btn btn-primary" style="flex: 1.2; padding: 12px; font-weight: 700; background: linear-gradient(45deg, var(--primary-blue), #00D1FF); border: none;">
+                        <i class="fa-solid fa-check"></i> ${activeTab === 'change' ? 'SALVAR SENHA' : 'REDEFINIR AGORA'}
+                    </button>
+                </div>
+            `;
+
+            // Tab switch listeners
+            document.getElementById('tab-withdraw-change').onclick = () => {
+                activeTab = 'change';
+                renderModalContent();
+            };
+            document.getElementById('tab-withdraw-reset').onclick = () => {
+                activeTab = 'reset';
+                renderModalContent();
+            };
+            document.getElementById('withdraw-modal-x').onclick = () => {
+                document.body.removeChild(overlay);
+            };
+            document.getElementById('withdraw-pass-cancel').onclick = () => {
+                document.body.removeChild(overlay);
+            };
+
+            document.getElementById('withdraw-pass-submit').onclick = async () => {
+                const submitBtn = document.getElementById('withdraw-pass-submit');
+                const newPass = (document.getElementById('withdraw-pass-new').value || '').trim();
+                const confirmPass = (document.getElementById('withdraw-pass-confirm').value || '').trim();
+
+                if (!newPass || !confirmPass) {
+                    alert("Por favor, preencha a nova senha e a confirmação.");
+                    return;
+                }
+
+                if (newPass.length < 4) {
+                    alert("A nova senha financeira de saque deve ter no mínimo 4 dígitos.");
+                    return;
+                }
+
+                if (newPass !== confirmPass) {
+                    alert("A nova senha e a confirmação não conferem!");
+                    return;
+                }
+
+                if (activeTab === 'change') {
+                    const currentPass = (document.getElementById('withdraw-pass-current').value || '').trim();
+                    if (!currentPass) {
+                        alert("Por favor, digite sua senha de saque atual.");
+                        return;
+                    }
+                    if (currentPass !== State.user.withdraw_pass) {
+                        alert("A senha de saque atual informada está incorreta.");
+                        return;
+                    }
+                } else {
+                    const loginPass = (document.getElementById('withdraw-pass-login-auth').value || '').trim();
+                    if (!loginPass) {
+                        alert("Por favor, digite sua senha de login do app para confirmar sua identidade.");
+                        return;
+                    }
+                    if (loginPass !== State.user.password) {
+                        alert("Senha de login do app incorreta. Não foi possível redefinir a senha de saque.");
+                        return;
+                    }
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Atualizando...';
+
+                try {
+                    const { error } = await supabase.from('users').update({ withdraw_pass: newPass }).eq('phone', State.user.phone);
+                    if (error) {
+                        alert("Erro ao atualizar senha de saque: " + error.message);
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = `<i class="fa-solid fa-check"></i> ${activeTab === 'change' ? 'SALVAR SENHA' : 'REDEFINIR AGORA'}`;
+                        return;
+                    }
+
+                    State.user.withdraw_pass = newPass;
+                    if (window.confetti) confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+                    alert(`✅ Senha de saque ${activeTab === 'change' ? 'alterada' : 'redefinida'} com sucesso!\nGuarde-a com segurança para seus futuros saques.`);
+                    document.body.removeChild(overlay);
+                } catch (err) {
+                    console.error(err);
+                    alert("Erro de conexão ao salvar: " + err.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = `<i class="fa-solid fa-check"></i> ${activeTab === 'change' ? 'SALVAR SENHA' : 'REDEFINIR AGORA'}`;
+                }
+            };
+        };
+
+        renderModalContent();
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+    };
+
+    window.handleOpenChangePasswordModal = (initialType = 'access') => {
+        if (initialType === 'withdraw') {
+            window.handleOpenWithdrawPasswordModal();
+            return;
+        }
+
         const overlay = document.createElement('div');
         overlay.id = 'change-pass-overlay';
         overlay.style = `
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center;
-            z-index: 10000; backdrop-filter: blur(5px); padding: 20px;
+            z-index: 10000; backdrop-filter: blur(8px); padding: 20px;
         `;
 
         const modal = document.createElement('div');
@@ -3278,23 +3476,24 @@
         `;
 
         modal.innerHTML = `
-            <h3 style="color: white; margin-bottom: 5px; text-align: center;"><i class="fa-solid fa-key" style="color: var(--accent-blue);"></i> Alterar Senha</h3>
-            <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 20px; text-align: center;">Atualize sua senha de acesso ou senha financeira de saque.</p>
-
-            <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Qual senha deseja alterar?</label>
-            <select id="change-pass-type" class="input-field" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
-                <option value="access" style="background:#111;">Senha de Acesso ao App</option>
-                <option value="withdraw" style="background:#111;">Senha Financeira (de Saque)</option>
-            </select>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <h3 style="color: white; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-key" style="color: var(--accent-blue);"></i> Alterar Senha de Acesso
+                </h3>
+                <button id="change-pass-x" style="background: none; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer; padding: 4px;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 20px;">Atualize sua senha de login no app The Blue.</p>
 
             <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Senha Atual</label>
-            <input type="password" id="change-pass-current" placeholder="••••••••" class="input-field" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+            <input type="password" id="change-pass-current" placeholder="Sua senha de login atual" class="input-field" style="width: 100%; padding: 11px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
 
-            <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Nova Senha</label>
-            <input type="password" id="change-pass-new" placeholder="Mínimo 6 dígitos" class="input-field" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
+            <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Nova Senha de Acesso</label>
+            <input type="password" id="change-pass-new" placeholder="Mínimo 6 dígitos" class="input-field" style="width: 100%; padding: 11px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 15px;">
 
             <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 6px;">Confirmar Nova Senha</label>
-            <input type="password" id="change-pass-confirm" placeholder="Confirme a nova senha" class="input-field" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
+            <input type="password" id="change-pass-confirm" placeholder="Confirme a nova senha" class="input-field" style="width: 100%; padding: 11px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; margin-bottom: 20px;">
 
             <div style="display: flex; gap: 10px;">
                 <button id="change-pass-cancel" class="btn btn-outline" style="flex: 1; padding: 12px; font-weight: 700;">CANCELAR</button>
@@ -3305,15 +3504,17 @@
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
 
+        document.getElementById('change-pass-x').onclick = () => {
+            document.body.removeChild(overlay);
+        };
         document.getElementById('change-pass-cancel').onclick = () => {
             document.body.removeChild(overlay);
         };
 
         document.getElementById('change-pass-submit').onclick = async () => {
-            const passType = document.getElementById('change-pass-type').value;
-            const currentPass = document.getElementById('change-pass-current').value;
-            const newPass = document.getElementById('change-pass-new').value;
-            const confirmPass = document.getElementById('change-pass-confirm').value;
+            const currentPass = (document.getElementById('change-pass-current').value || '').trim();
+            const newPass = (document.getElementById('change-pass-new').value || '').trim();
+            const confirmPass = (document.getElementById('change-pass-confirm').value || '').trim();
 
             if (!currentPass || !newPass || !confirmPass) {
                 alert("Por favor, preencha todos os campos.");
@@ -3325,43 +3526,36 @@
                 return;
             }
 
-            if (passType === 'access') {
-                if (currentPass !== State.user.password) {
-                    alert("A senha de acesso atual está incorreta.");
-                    return;
-                }
-                if (newPass.length < 6) {
-                    alert("A nova senha de acesso deve ter no mínimo 6 dígitos.");
-                    return;
-                }
+            if (currentPass !== State.user.password) {
+                alert("A senha de acesso atual está incorreta.");
+                return;
+            }
+            if (newPass.length < 6) {
+                alert("A nova senha de acesso deve ter no mínimo 6 dígitos.");
+                return;
+            }
 
+            const submitBtn = document.getElementById('change-pass-submit');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+
+            try {
                 const { error } = await supabase.from('users').update({ password: newPass }).eq('phone', State.user.phone);
                 if (error) {
                     alert("Erro ao alterar senha: " + error.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'SALVAR';
                     return;
                 }
                 State.user.password = newPass;
+                if (window.confetti) confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
                 alert("✅ Senha de acesso alterada com sucesso!");
-            } else {
-                if (currentPass !== State.user.withdraw_pass) {
-                    alert("A senha financeira atual está incorreta.");
-                    return;
-                }
-                if (newPass.length < 4) {
-                    alert("A nova senha financeira deve ter no mínimo 4 dígitos.");
-                    return;
-                }
-
-                const { error } = await supabase.from('users').update({ withdraw_pass: newPass }).eq('phone', State.user.phone);
-                if (error) {
-                    alert("Erro ao alterar senha financeira: " + error.message);
-                    return;
-                }
-                State.user.withdraw_pass = newPass;
-                alert("✅ Senha financeira alterada com sucesso!");
+                document.body.removeChild(overlay);
+            } catch (e) {
+                alert("Erro ao alterar senha: " + e.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'SALVAR';
             }
-
-            document.body.removeChild(overlay);
         };
     };
 
