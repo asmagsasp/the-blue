@@ -2121,6 +2121,17 @@
                 }
             }
 
+            // 6. Abrir WhatsApp para notificar o administrador (1934585300)
+            const userPhone = State.user && State.user.phone ? State.user.phone : '';
+            const formattedAmount = amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const waMsg = `OLá investidor ${userPhone}, seu saque no valor de ${formattedAmount} reais será processado em breve.`;
+            const waUrl = `https://wa.me/551934585300?text=${encodeURIComponent(waMsg)}`;
+            try {
+                window.open(waUrl, '_blank');
+            } catch (wErr) {
+                console.warn("Não foi possível abrir o WhatsApp automaticamente:", wErr);
+            }
+
             alert(`🎉 SOLICITAÇÃO DE SAQUE REGISTRADA COM SUCESSO!\n\n• Valor Líquido a Receber: R$ ${netAmount.toFixed(2)}\n• Chave PIX: ${pixKey}\n\nO valor foi reservado da sua conta e o pagamento via PIX será transferido em instantes!`);
 
             Router.navigate('wallet');
