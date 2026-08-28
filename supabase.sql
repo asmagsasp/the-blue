@@ -166,3 +166,28 @@ ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 -- Exemplo de agendamento automático no pg_cron (Executa diariamente às 00:00 BRT / 03:00 UTC):
 -- SELECT cron.schedule('credit-investment-yields-midnight', '0 3 * * *', 'SELECT public.process_daily_yields();');
 
+/* 6. Tabela de Push Notifications e Mensagens Pop-up (broadcast_notifications) */
+CREATE TABLE IF NOT EXISTS public.broadcast_notifications (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  title text NOT NULL,
+  message text NOT NULL,
+  type text DEFAULT 'info' NOT NULL, -- 'info', 'success', 'warning', 'urgent', 'reward'
+  target_phone text DEFAULT 'all' NOT NULL, -- 'all' ou número específico
+  action_text text,
+  action_view text,
+  created_by text,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.broadcast_notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Leitura de notificacoes" ON public.broadcast_notifications;
+CREATE POLICY "Leitura de notificacoes" ON public.broadcast_notifications FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Insercao de notificacoes" ON public.broadcast_notifications;
+CREATE POLICY "Insercao de notificacoes" ON public.broadcast_notifications FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Atualizacao de notificacoes" ON public.broadcast_notifications;
+CREATE POLICY "Atualizacao de notificacoes" ON public.broadcast_notifications FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Exclusao de notificacoes" ON public.broadcast_notifications;
+CREATE POLICY "Exclusao de notificacoes" ON public.broadcast_notifications FOR DELETE USING (true);
+
+CREATE INDEX IF NOT EXISTS idx_broadcast_target ON public.broadcast_notifications (target_phone);
+CREATE INDEX IF NOT EXISTS idx_broadcast_created ON public.broadcast_notifications (created_at DESC);

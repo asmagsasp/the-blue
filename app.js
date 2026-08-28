@@ -88,6 +88,8 @@
                     app.innerHTML = Router.views.admin();
                     if (window.loadAdminStats) window.loadAdminStats();
                     if (window.loadAdminData) window.loadAdminData();
+                    if (window.loadAdminNotificationsHistory) window.loadAdminNotificationsHistory();
+                    if (window.updatePushPreview) window.updatePushPreview();
                     break;
                 case 'pix_checkout':
                     app.innerHTML = Router.views.pixCheckout();
@@ -936,6 +938,138 @@
                     </div>
                 </div>
 
+                <!-- Módulo de Push Notifications & Mensagens Pop-up em Tempo Real -->
+                <div class="glass-card" style="margin-top: 20px; border-left: 4px solid #00D1FF;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h3 style="color: #00D1FF;"><i class="fa-solid fa-tower-broadcast"></i> Push Notification (Pop-up em Tempo Real)</h3>
+                        <span class="infinite-badge"><i class="fa-solid fa-satellite-dish"></i> Broadcast Ao Vivo</span>
+                    </div>
+                    <p style="font-size: 0.8rem; opacity: 0.8; margin-bottom: 15px;">
+                        Envie mensagens e alertas instantâneos que saltam como <strong>Pop-up animado</strong> na tela dos usuários logados com efeito sonoro e botão de ação direta.
+                    </p>
+
+                    <!-- Modelos Rápidos -->
+                    <label style="display: block; margin-bottom: 6px; font-size: 0.75rem; font-weight: 700; color: var(--accent-blue); text-transform: uppercase; letter-spacing: 0.5px;">
+                        ⚡ Modelos Prontos de Mensagem:
+                    </label>
+                    <div class="push-template-chips">
+                        <button type="button" class="push-template-chip" onclick="applyPushTemplate('promo')">
+                            🚀 Super Bônus
+                        </button>
+                        <button type="button" class="push-template-chip" onclick="applyPushTemplate('bonus')">
+                            🎁 Bônus Fidelidade
+                        </button>
+                        <button type="button" class="push-template-chip" onclick="applyPushTemplate('wheel')">
+                            🍀 Giro na Roleta
+                        </button>
+                        <button type="button" class="push-template-chip" onclick="applyPushTemplate('urgent')">
+                            🔥 Oferta Relâmpago
+                        </button>
+                        <button type="button" class="push-template-chip" onclick="applyPushTemplate('alert')">
+                            ⚠️ Aviso Oficial
+                        </button>
+                    </div>
+
+                    <!-- Tipo Visual do Pop-up -->
+                    <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 600;">Estilo Visual / Categoria</label>
+                    <div class="push-type-grid">
+                        <button type="button" class="push-type-btn type-info active" data-type="info" onclick="setPushType('info')">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>Informativo</span>
+                        </button>
+                        <button type="button" class="push-type-btn type-success" data-type="success" onclick="setPushType('success')">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>Sucesso</span>
+                        </button>
+                        <button type="button" class="push-type-btn type-warning" data-type="warning" onclick="setPushType('warning')">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span>Alerta</span>
+                        </button>
+                        <button type="button" class="push-type-btn type-urgent" data-type="urgent" onclick="setPushType('urgent')">
+                            <i class="fa-solid fa-fire-flame-curved"></i>
+                            <span>Urgente</span>
+                        </button>
+                        <button type="button" class="push-type-btn type-reward" data-type="reward" onclick="setPushType('reward')">
+                            <i class="fa-solid fa-crown"></i>
+                            <span>Bônus VIP</span>
+                        </button>
+                    </div>
+
+                    <!-- Destinatário -->
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 600;">Público Alvo (Destinatário)</label>
+                        <select id="admin-push-target" class="input-field" style="width: 100%; padding: 10px; border-radius: 8px; background: #111; color: white; border: 1px solid var(--glass-border); margin-bottom: 8px;" onchange="document.getElementById('admin-push-phone-wrapper').style.display = this.value === 'custom' ? 'block' : 'none'">
+                            <option value="all">👥 Todos os Usuários Logados (Broadcast Global)</option>
+                            <option value="custom">👤 Usuário Específico (Telefone)</option>
+                        </select>
+                        <div id="admin-push-phone-wrapper" style="display: none;">
+                            <input type="text" id="admin-push-phone" placeholder="Digite o telefone do cliente ex: 11999998888" class="input-field" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+                        </div>
+                    </div>
+
+                    <!-- Título -->
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 600;">Título da Notificação</label>
+                        <input type="text" id="admin-push-title" value="🚀 Super Bônus de Depósito Ativo!" placeholder="Ex: 🚀 Super Bônus de Depósito Liberado!" class="input-field" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white;" oninput="updatePushPreview()">
+                    </div>
+
+                    <!-- Mensagem -->
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 600;">Mensagem do Comunicado</label>
+                        <textarea id="admin-push-message" rows="3" placeholder="Digite o texto detalhado que será exibido no pop-up..." class="input-field" style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; resize: vertical;" oninput="updatePushPreview()">Aproveite hoje 10% de rendimento extra em todos os novos aportes da plataforma. Acesse e multiplique seus rendimentos!</textarea>
+                    </div>
+
+                    <!-- Botão de Ação Opcional -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.75rem; font-weight: 600;">Texto do Botão (Opcional)</label>
+                            <input type="text" id="admin-push-action-text" value="Ver Planos de Investimento" placeholder="Ex: Ver Planos" class="input-field" style="width: 100%; padding: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: 8px; color: white; font-size: 0.8rem;" oninput="updatePushPreview()">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.75rem; font-weight: 600;">Destino ao Clicar</label>
+                            <select id="admin-push-action-view" class="input-field" style="width: 100%; padding: 8px; border-radius: 8px; background: #111; color: white; border: 1px solid var(--glass-border); font-size: 0.8rem;">
+                                <option value="investments" selected>📈 Aba Investir (Planos)</option>
+                                <option value="wallet">💼 Aba Carteira (Depósito/Saque)</option>
+                                <option value="fortune_wheel">🍀 Roda da Fortuna</option>
+                                <option value="referral">👥 Aba Indique & Ganhe</option>
+                                <option value="profile">👤 Perfil & Suporte</option>
+                                <option value="dashboard">🏠 Tela Inicial</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Live Preview Container -->
+                    <label style="display: block; margin-bottom: 8px; font-size: 0.75rem; font-weight: 700; color: var(--accent-blue); text-transform: uppercase;">
+                        👁️ Pré-visualização Ao Vivo do Pop-up:
+                    </label>
+                    <div id="admin-push-preview-container" style="margin-bottom: 15px; border: 1px dashed rgba(0, 209, 255, 0.3); border-radius: 14px; padding: 12px; background: rgba(0,0,0,0.25);">
+                        <!-- Preview injetado via JS -->
+                    </div>
+
+                    <!-- Ações de Envio e Teste -->
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                        <button id="btn-send-broadcast" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 0.95rem; background: linear-gradient(135deg, #00D1FF, #0066FF); border: none; font-weight: 800; box-shadow: 0 4px 15px rgba(0, 209, 255, 0.3);" onclick="handleSendBroadcastNotification()">
+                            <i class="fa-solid fa-paper-plane"></i> Disparar Notificação Instantânea (Pop-up)
+                        </button>
+                        <button type="button" class="btn btn-outline" style="width: 100%; padding: 8px; font-size: 0.8rem; border-color: rgba(255,255,255,0.2);" onclick="testInAppPushNotification()">
+                            <i class="fa-solid fa-vial"></i> Testar Pop-up na Minha Tela (Simulação)
+                        </button>
+                    </div>
+
+                    <!-- Histórico de Envios -->
+                    <div style="border-top: 1px solid var(--glass-border); padding-top: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h4 style="font-size: 0.85rem; color: white;"><i class="fa-solid fa-clock-rotate-left"></i> Histórico de Notificações Enviadas</h4>
+                            <button class="btn btn-outline" style="padding: 4px 8px; font-size: 0.7rem; border-color: var(--accent-blue); color: var(--accent-blue);" onclick="loadAdminNotificationsHistory()">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </button>
+                        </div>
+                        <div id="admin-push-history-list" style="display: flex; flex-direction: column; gap: 8px;">
+                            <p style="text-align: center; font-size: 0.75rem; opacity: 0.5;">Carregando histórico...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Configurações InfinitePay -->
                 <div class="glass-card" style="margin-top: 20px; border-left: 4px solid #00D1FF;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -1345,6 +1479,17 @@
         // Checar e creditar rendimentos das 00:00
         if (window.checkAndProcessMidnightYields) {
             window.checkAndProcessMidnightYields(user.phone);
+        }
+
+        // Iniciar canal de Push Notifications e checar comunicados pendentes
+        if (window.initPushNotificationsRealtime) {
+            window.initPushNotificationsRealtime();
+        }
+        if (window.checkPendingPushNotifications) {
+            window.checkPendingPushNotifications();
+        }
+        if ('Notification' in window && Notification.permission === 'default') {
+            try { Notification.requestPermission(); } catch (e) {}
         }
     };
 
@@ -2999,6 +3144,520 @@
         document.body.removeChild(a);
     };
 
+    // ==========================================================
+    // Sistema de Push Notification & Pop-up em Tempo Real
+    // ==========================================================
+    let realtimePushChannel = null;
+    let currentPushType = 'info';
+
+    function safeEscapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    // Modelos pré-definidos de mensagem para o Admin
+    window.PUSH_TEMPLATES = {
+        promo: {
+            title: '🚀 Super Bônus de Depósito Ativo!',
+            message: 'Aproveite hoje 10% de rendimento extra em todos os novos aportes da plataforma. Acesse e multiplique seus rendimentos!',
+            type: 'success',
+            actionText: 'Ver Planos de Investimento',
+            actionView: 'investments'
+        },
+        bonus: {
+            title: '🎁 Bônus Creditado na Sua Conta!',
+            message: 'Parabéns! Uma nova bonificação de fidelidade foi disponibilizada na sua carteira. Confira seu saldo disponível agora mesmo.',
+            type: 'reward',
+            actionText: 'Acessar Minha Carteira',
+            actionView: 'wallet'
+        },
+        wheel: {
+            title: '🍀 Giro Grátis Liberado na Roleta!',
+            message: 'Uma nova rodada na Roda da Fortuna foi liberada para você concorrer a prêmios em dinheiro e saldo na carteira. Gire já!',
+            type: 'reward',
+            actionText: 'Girar Roleta da Sorte',
+            actionView: 'fortune_wheel'
+        },
+        urgent: {
+            title: '🔥 Oferta Relâmpago VIP Limitada!',
+            message: 'Novo plano exclusivo com retorno prioritário foi aberto para poucas vagas. Garanta a sua antes do encerramento das cotas!',
+            type: 'urgent',
+            actionText: 'Garantir Vaga no Plano',
+            actionView: 'investments'
+        },
+        alert: {
+            title: '⚠️ Comunicado Oficial da Direção',
+            message: 'Informamos que o processamento de saques e depósitos via PIX está operando com velocidade máxima e liberação instantânea.',
+            type: 'warning',
+            actionText: 'Estou Ciente',
+            actionView: ''
+        }
+    };
+
+    window.applyPushTemplate = (key) => {
+        const tpl = window.PUSH_TEMPLATES[key];
+        if (!tpl) return;
+
+        const titleInput = document.getElementById('admin-push-title');
+        const msgInput = document.getElementById('admin-push-message');
+        const actTextInput = document.getElementById('admin-push-action-text');
+        const actViewInput = document.getElementById('admin-push-action-view');
+
+        if (titleInput) titleInput.value = tpl.title;
+        if (msgInput) msgInput.value = tpl.message;
+        if (actTextInput) actTextInput.value = tpl.actionText;
+        if (actViewInput && tpl.actionView) actViewInput.value = tpl.actionView;
+
+        window.setPushType(tpl.type);
+    };
+
+    window.setPushType = (type) => {
+        currentPushType = type;
+        document.querySelectorAll('.push-type-btn').forEach(btn => {
+            if (btn.getAttribute('data-type') === type) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        window.updatePushPreview();
+    };
+
+    window.updatePushPreview = () => {
+        const previewBox = document.getElementById('admin-push-preview-container');
+        if (!previewBox) return;
+
+        const title = (document.getElementById('admin-push-title') ? document.getElementById('admin-push-title').value.trim() : '') || 'Título da Notificação';
+        const msg = (document.getElementById('admin-push-message') ? document.getElementById('admin-push-message').value.trim() : '') || 'A mensagem que os usuários receberão aparecerá aqui...';
+        const actionText = document.getElementById('admin-push-action-text') ? document.getElementById('admin-push-action-text').value.trim() : '';
+        const type = currentPushType || 'info';
+
+        const typeConfig = {
+            info: { badge: '🔵 INFORMATIVO', icon: 'fa-solid fa-circle-info', color: '#00D1FF', bg: 'rgba(0, 209, 255, 0.15)' },
+            success: { badge: '🟢 NOVIDADE / SUCESSO', icon: 'fa-solid fa-circle-check', color: '#4CAF50', bg: 'rgba(76, 175, 80, 0.15)' },
+            warning: { badge: '🟡 ALERTA / AVISO', icon: 'fa-solid fa-triangle-exclamation', color: '#FF9800', bg: 'rgba(255, 152, 0, 0.15)' },
+            urgent: { badge: '🔴 URGENTE / ATENÇÃO', icon: 'fa-solid fa-fire-flame-curved', color: '#FF5252', bg: 'rgba(255, 82, 82, 0.15)' },
+            reward: { badge: '👑 BÔNUS / VIP', icon: 'fa-solid fa-crown', color: '#FFD700', bg: 'rgba(255, 215, 0, 0.15)' }
+        }[type] || { badge: '🔵 INFORMATIVO', icon: 'fa-solid fa-bell', color: '#00D1FF', bg: 'rgba(0, 209, 255, 0.15)' };
+
+        previewBox.innerHTML = `
+            <div class="push-popup-card type-${type}" style="max-width: 100%; box-shadow: 0 8px 25px rgba(0,0,0,0.4); pointer-events: none; animation: none;">
+                <div class="push-popup-header">
+                    <span class="push-popup-badge" style="color: ${typeConfig.color}; background: ${typeConfig.bg};">
+                        <i class="${typeConfig.icon}"></i> ${typeConfig.badge}
+                    </span>
+                    <span style="font-size: 0.7rem; color: var(--text-dim);"><i class="fa-solid fa-clock"></i> Agora</span>
+                </div>
+                <div class="push-popup-icon-circle" style="color: ${typeConfig.color}; background: ${typeConfig.bg};">
+                    <i class="${typeConfig.icon}"></i>
+                </div>
+                <div class="push-popup-title">${safeEscapeHtml(title)}</div>
+                <div class="push-popup-body">${safeEscapeHtml(msg)}</div>
+                ${actionText ? `
+                    <div class="push-popup-actions">
+                        <button class="push-popup-action-btn" style="background: ${typeConfig.color}; color: ${type === 'reward' ? '#000' : '#fff'};">
+                            <i class="fa-solid fa-arrow-right"></i> ${safeEscapeHtml(actionText)}
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    };
+
+    // Sintetizador de Som de Notificação Cristalino via Web Audio API
+    window.playNotificationSound = (type = 'info') => {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+
+            const notes = {
+                reward: [523.25, 659.25, 783.99, 1046.50], // C5, E5, G5, C6 (Acorde Maior de Vitória)
+                success: [440, 554.37, 659.25], // A4, C#5, E5
+                urgent: [880, 587.33, 880], // Alerta enfático
+                warning: [440, 440, 550],
+                info: [587.33, 880] // D5, A5
+            }[type] || [587.33, 880];
+
+            let startTime = ctx.currentTime;
+            notes.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = type === 'reward' ? 'triangle' : 'sine';
+                osc.frequency.setValueAtTime(freq, startTime + (i * 0.08));
+
+                gain.gain.setValueAtTime(0, startTime + (i * 0.08));
+                gain.gain.linearRampToValueAtTime(0.2, startTime + (i * 0.08) + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + (i * 0.08) + 0.32);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start(startTime + (i * 0.08));
+                osc.stop(startTime + (i * 0.08) + 0.35);
+            });
+        } catch (e) {
+            console.warn('AudioContext notification sound failed:', e);
+        }
+    };
+
+    // Exibição do Pop-up Interativo na Tela do Usuário Logado
+    window.showInAppPushNotification = (notif) => {
+        if (!notif || !notif.title) return;
+
+        // Se já foi descartada por este usuário neste dispositivo, ignorar
+        if (notif.id && !String(notif.id).startsWith('test_')) {
+            const dismissed = JSON.parse(localStorage.getItem('theblue_dismissed_notifs') || '[]');
+            if (dismissed.includes(notif.id)) return;
+        }
+
+        // Tocar som de notificação
+        window.playNotificationSound(notif.type || 'info');
+
+        // Vibrar se suportado (celulares)
+        if (navigator.vibrate) {
+            try { navigator.vibrate([120, 60, 120]); } catch (e) {}
+        }
+
+        // Disparar Notificação Nativa do Sistema se permitido
+        if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+                if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.ready.then(reg => reg.showNotification(notif.title, { body: notif.message, icon: '/icon.svg' }));
+                } else {
+                    new Notification(notif.title, { body: notif.message, icon: '/icon.svg' });
+                }
+            } catch (e) {}
+        }
+
+        // Remover popups anteriores se houver algum aberto
+        const existing = document.getElementById('theblue-push-overlay');
+        if (existing) existing.remove();
+
+        const type = notif.type || 'info';
+        const typeConfig = {
+            info: { badge: '🔵 INFORMATIVO', icon: 'fa-solid fa-circle-info', color: '#00D1FF', bg: 'rgba(0, 209, 255, 0.15)', btnText: 'Entendi' },
+            success: { badge: '🟢 NOVIDADE / SUCESSO', icon: 'fa-solid fa-circle-check', color: '#4CAF50', bg: 'rgba(76, 175, 80, 0.15)', btnText: 'Aproveitar' },
+            warning: { badge: '🟡 ALERTA / AVISO', icon: 'fa-solid fa-triangle-exclamation', color: '#FF9800', bg: 'rgba(255, 152, 0, 0.15)', btnText: 'Estou Ciente' },
+            urgent: { badge: '🔴 URGENTE / ATENÇÃO', icon: 'fa-solid fa-fire-flame-curved', color: '#FF5252', bg: 'rgba(255, 82, 82, 0.15)', btnText: 'Ver Detalhes' },
+            reward: { badge: '👑 BÔNUS ESPECIAL / VIP', icon: 'fa-solid fa-crown', color: '#FFD700', bg: 'rgba(255, 215, 0, 0.15)', btnText: 'Resgatar / Ver' }
+        }[type] || { badge: '🔵 COMUNICADO', icon: 'fa-solid fa-bell', color: '#00D1FF', bg: 'rgba(0, 209, 255, 0.15)', btnText: 'OK' };
+
+        const overlay = document.createElement('div');
+        overlay.id = 'theblue-push-overlay';
+        overlay.className = 'push-popup-overlay';
+
+        const hasAction = notif.action_text && notif.action_text.trim();
+
+        overlay.innerHTML = `
+            <div class="push-popup-card type-${type}">
+                <div class="push-popup-header">
+                    <span class="push-popup-badge" style="color: ${typeConfig.color}; background: ${typeConfig.bg};">
+                        <i class="${typeConfig.icon}"></i> ${typeConfig.badge}
+                    </span>
+                    <button id="push-btn-close-x" class="push-popup-close-btn" title="Fechar">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="push-popup-icon-circle" style="color: ${typeConfig.color}; background: ${typeConfig.bg};">
+                    <i class="${typeConfig.icon}"></i>
+                </div>
+
+                <div class="push-popup-title">${safeEscapeHtml(notif.title)}</div>
+                <div class="push-popup-body">${safeEscapeHtml(notif.message)}</div>
+
+                <div class="push-popup-actions">
+                    ${hasAction ? `
+                        <button id="push-btn-action" class="push-popup-action-btn" style="background: ${typeConfig.color}; color: ${type === 'reward' ? '#000' : '#fff'};">
+                            <i class="fa-solid fa-arrow-right"></i> ${safeEscapeHtml(notif.action_text)}
+                        </button>
+                    ` : ''}
+                    <button id="push-btn-dismiss" class="push-popup-dismiss-btn">
+                        ${hasAction ? 'Agora Não' : typeConfig.btnText}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const dismiss = () => {
+            if (notif.id && !String(notif.id).startsWith('test_')) {
+                const dismissed = JSON.parse(localStorage.getItem('theblue_dismissed_notifs') || '[]');
+                if (!dismissed.includes(notif.id)) {
+                    dismissed.push(notif.id);
+                    localStorage.setItem('theblue_dismissed_notifs', JSON.stringify(dismissed));
+                }
+            }
+            overlay.remove();
+        };
+
+        const closeBtn = overlay.querySelector('#push-btn-close-x');
+        if (closeBtn) closeBtn.onclick = dismiss;
+
+        const dismissBtn = overlay.querySelector('#push-btn-dismiss');
+        if (dismissBtn) dismissBtn.onclick = dismiss;
+
+        const actionBtn = overlay.querySelector('#push-btn-action');
+        if (actionBtn) {
+            actionBtn.onclick = () => {
+                dismiss();
+                if (notif.action_view) {
+                    if (notif.action_view.startsWith('http')) {
+                        window.open(notif.action_view, '_blank');
+                    } else if (Router && Router.navigate) {
+                        Router.navigate(notif.action_view);
+                    }
+                }
+            };
+        }
+    };
+
+    // Disparo de Push Notification pelo Admin
+    window.handleSendBroadcastNotification = async () => {
+        const titleEl = document.getElementById('admin-push-title');
+        const msgEl = document.getElementById('admin-push-message');
+        const targetTypeEl = document.getElementById('admin-push-target');
+        const targetPhoneEl = document.getElementById('admin-push-phone');
+        const actionTextEl = document.getElementById('admin-push-action-text');
+        const actionViewEl = document.getElementById('admin-push-action-view');
+        const sendBtn = document.getElementById('btn-send-broadcast');
+
+        const title = titleEl ? titleEl.value.trim() : '';
+        const message = msgEl ? msgEl.value.trim() : '';
+        const isCustomTarget = targetTypeEl && targetTypeEl.value === 'custom';
+        const target_phone = isCustomTarget ? (targetPhoneEl ? targetPhoneEl.value.trim() : '') : 'all';
+        const action_text = actionTextEl ? actionTextEl.value.trim() : '';
+        const action_view = actionViewEl ? actionViewEl.value.trim() : '';
+        const type = currentPushType || 'info';
+
+        if (!title || !message) {
+            alert("Por favor, preencha o Título e a Mensagem do comunicado.");
+            return;
+        }
+
+        if (isCustomTarget && !target_phone) {
+            alert("Por favor, informe o telefone do usuário destinatário.");
+            return;
+        }
+
+        if (!confirm(`Confirmar disparo desta notificação em tempo real para ${target_phone === 'all' ? 'TODOS OS USUÁRIOS LOGADOS' : 'o usuário ' + target_phone}?`)) {
+            return;
+        }
+
+        if (sendBtn) {
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Disparando...';
+        }
+
+        const notifPayload = {
+            title,
+            message,
+            type,
+            target_phone,
+            action_text,
+            action_view,
+            created_by: State.user ? State.user.phone : 'admin'
+        };
+
+        try {
+            // 1. Salvar na tabela do Supabase (para histórico e entrega em reconexões)
+            let savedRecord = null;
+            if (supabase) {
+                const { data, error } = await supabase.from('broadcast_notifications').insert([notifPayload]).select().single();
+                if (error) {
+                    console.warn('Erro ao salvar no banco broadcast_notifications:', error);
+                } else {
+                    savedRecord = data;
+                }
+            }
+
+            // 2. Disparar via Realtime Broadcast Channel para entrega instantânea
+            const realtimePayload = savedRecord || { ...notifPayload, id: 'temp_' + Date.now(), created_at: new Date().toISOString() };
+            
+            if (supabase) {
+                const channel = supabase.channel('theblue-push-channel');
+                await channel.send({
+                    type: 'broadcast',
+                    event: 'push_notification',
+                    payload: realtimePayload
+                });
+            }
+
+            alert("🚀 Notificação disparada com sucesso para os usuários conectados!");
+
+            // Limpar formulário
+            if (titleEl) titleEl.value = '';
+            if (msgEl) msgEl.value = '';
+            if (actionTextEl) actionTextEl.value = '';
+            window.updatePushPreview();
+
+            // Recarregar histórico de notificações
+            if (window.loadAdminNotificationsHistory) {
+                window.loadAdminNotificationsHistory();
+            }
+        } catch (err) {
+            console.error("Erro ao disparar notificação:", err);
+            alert("Erro ao disparar notificação: " + err.message);
+        } finally {
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Disparar Notificação Instantânea (Pop-up)';
+            }
+        }
+    };
+
+    // Teste de simulação na tela do próprio Admin
+    window.testInAppPushNotification = () => {
+        const title = (document.getElementById('admin-push-title') ? document.getElementById('admin-push-title').value.trim() : '') || '🚀 Teste de Notificação Pop-up';
+        const message = (document.getElementById('admin-push-message') ? document.getElementById('admin-push-message').value.trim() : '') || 'Esta é uma demonstração de como a mensagem aparecerá ao vivo na tela dos usuários logados com som de alerta!';
+        const action_text = (document.getElementById('admin-push-action-text') ? document.getElementById('admin-push-action-text').value.trim() : '') || 'Ver Demonstração';
+        const action_view = (document.getElementById('admin-push-action-view') ? document.getElementById('admin-push-action-view').value.trim() : '') || 'investments';
+        const type = currentPushType || 'info';
+
+        window.showInAppPushNotification({
+            id: 'test_' + Date.now(),
+            title,
+            message,
+            type,
+            action_text,
+            action_view
+        });
+    };
+
+    // Carregar histórico de notificações no painel administrativo
+    window.loadAdminNotificationsHistory = async () => {
+        const container = document.getElementById('admin-push-history-list');
+        if (!container || !supabase) return;
+
+        container.innerHTML = '<p style="text-align: center; font-size: 0.8rem; opacity: 0.5;"><i class="fa-solid fa-spinner fa-spin"></i> Carregando histórico...</p>';
+
+        try {
+            const { data, error } = await supabase.from('broadcast_notifications').select('*').order('created_at', { ascending: false }).limit(10);
+            if (error || !data || data.length === 0) {
+                container.innerHTML = '<p style="text-align: center; font-size: 0.8rem; opacity: 0.5;">Nenhuma notificação enviada ainda.</p>';
+                return;
+            }
+
+            container.innerHTML = data.map(item => {
+                const dateStr = new Date(item.created_at).toLocaleString('pt-BR');
+                const badgeColor = {
+                    info: '#00D1FF',
+                    success: '#4CAF50',
+                    warning: '#FF9800',
+                    urgent: '#FF5252',
+                    reward: '#FFD700'
+                }[item.type] || '#00D1FF';
+
+                return `
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-left: 3px solid ${badgeColor}; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <span style="font-size: 0.65rem; font-weight: 700; color: ${badgeColor}; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">
+                                    ${(item.type || 'info').toUpperCase()}
+                                </span>
+                                <span style="font-size: 0.7rem; color: var(--text-dim);">${dateStr}</span>
+                                <span style="font-size: 0.7rem; color: var(--accent-blue);">
+                                    <i class="fa-solid fa-user-group"></i> ${item.target_phone === 'all' ? 'Todos' : item.target_phone}
+                                </span>
+                            </div>
+                            <p style="font-weight: 700; color: white; font-size: 0.85rem; margin-bottom: 2px;">${safeEscapeHtml(item.title)}</p>
+                            <p style="font-size: 0.75rem; color: var(--text-dim); line-height: 1.4;">${safeEscapeHtml(item.message)}</p>
+                        </div>
+                        <button class="btn btn-outline" style="padding: 6px 10px; color: #FF5252; border-color: rgba(255,82,82,0.3); font-size: 0.75rem;" onclick="deleteBroadcastNotification('${item.id}')" title="Excluir do Histórico">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        } catch (e) {
+            container.innerHTML = '<p style="text-align: center; font-size: 0.8rem; color: #FF5252;">Erro ao carregar histórico.</p>';
+        }
+    };
+
+    window.deleteBroadcastNotification = async (id) => {
+        if (!confirm("Deseja realmente remover esta notificação do histórico?")) return;
+        if (!supabase) return;
+
+        try {
+            await supabase.from('broadcast_notifications').delete().eq('id', id);
+            window.loadAdminNotificationsHistory();
+        } catch (e) {
+            alert("Erro ao excluir: " + e.message);
+        }
+    };
+
+    // Inicialização do Canal Realtime de Notificações
+    window.initPushNotificationsRealtime = () => {
+        if (!supabase) return;
+
+        if (realtimePushChannel) return;
+
+        realtimePushChannel = supabase.channel('theblue-push-channel');
+
+        realtimePushChannel
+            .on('broadcast', { event: 'push_notification' }, (payload) => {
+                const notif = payload.payload;
+                if (!notif) return;
+                
+                const userPhone = State.user ? State.user.phone : null;
+                if (notif.target_phone === 'all' || (userPhone && notif.target_phone === userPhone)) {
+                    window.showInAppPushNotification(notif);
+                }
+            })
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'broadcast_notifications' }, (payload) => {
+                const notif = payload.new;
+                if (!notif) return;
+                const userPhone = State.user ? State.user.phone : null;
+                if (notif.target_phone === 'all' || (userPhone && notif.target_phone === userPhone)) {
+                    window.showInAppPushNotification(notif);
+                }
+            })
+            .subscribe((status) => {
+                console.log('📡 Canal de Push Notification Realtime:', status);
+            });
+    };
+
+    // Checagem de Notificações Recentes ao Iniciar ou Logar
+    window.checkPendingPushNotifications = async () => {
+        if (!supabase || !State.user) return;
+
+        try {
+            const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+            const { data, error } = await supabase
+                .from('broadcast_notifications')
+                .select('*')
+                .gte('created_at', cutoff)
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            if (error || !data || data.length === 0) return;
+
+            const userPhone = State.user.phone;
+            const dismissed = JSON.parse(localStorage.getItem('theblue_dismissed_notifs') || '[]');
+
+            const unread = data.find(n => 
+                (n.target_phone === 'all' || n.target_phone === userPhone) &&
+                !dismissed.includes(n.id)
+            );
+
+            if (unread) {
+                setTimeout(() => {
+                    window.showInAppPushNotification(unread);
+                }, 900);
+            }
+        } catch (e) {
+            console.warn('Erro ao verificar notificações pendentes:', e);
+        }
+    };
+
     window.copyRef = () => {
         const input = document.querySelector('input[readonly]');
         input.select();
@@ -3882,6 +4541,11 @@
 
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', async () => {
+        // Inicializar canal Realtime de Push Notifications
+        if (window.initPushNotificationsRealtime) {
+            window.initPushNotificationsRealtime();
+        }
+
         // Carregar configurações globais do sistema (InfiniteTag, etc)
         if (window.fetchSystemSettings) {
             window.fetchSystemSettings();
@@ -3927,6 +4591,11 @@
                     // Checar rendimentos de meia-noite no auto-login
                     if (window.checkAndProcessMidnightYields) {
                         window.checkAndProcessMidnightYields(userResponse.data.phone);
+                    }
+
+                    // Checar notificações push pendentes no auto-login
+                    if (window.checkPendingPushNotifications) {
+                        window.checkPendingPushNotifications();
                     }
                 } else {
                     // Se usuário não foi encontrado, limpa a sessão salva
