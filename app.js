@@ -408,20 +408,22 @@
         `,
 
             fortune_wheel: () => {
-                const totalInvested = State.user.invested || 0;
-                const totalEarned = Math.floor(totalInvested / 1000) * 3;
-                const totalRemaining = totalEarned - (State.user.spins_used || 0);
+                const userInvs = (State.transactions || []).filter(t => t.type === 'inv');
+                const totalInvestments = userInvs.length;
+                const totalEarned = totalInvestments;
+                const totalRemaining = Math.max(0, totalEarned - (State.user.spins_used || 0));
 
                 if (!State.fortune_session.isActive) {
-                    State.fortune_session.spinsLeft = Math.min(totalRemaining, 3);
+                    State.fortune_session.spinsLeft = totalRemaining;
                     State.fortune_session.accumulated = 0;
+                    State.fortune_session.sessionSpinsCount = 0;
                     State.fortune_session.isActive = true;
                 }
 
                 return `
                 <div class="app-container animate-fade" style="text-align: center;">
                     <h1>Roda da Fortuna</h1>
-                    <p style="margin-bottom: 20px;">Gire e ganhe prêmios reais! <br>A cada R$ 1.000 investidos, você ganha 3 giros.</p>
+                    <p style="margin-bottom: 20px;">Gire e ganhe prêmios reais! <br><strong>Cada investimento realizado</strong> dá direito a <strong>1 giro na roleta</strong>.</p>
 
                     <div class="glass-card" style="margin-bottom: 20px; border-left: 4px solid var(--accent-blue);">
                         <div style="display: flex; justify-content: space-around;">
@@ -477,8 +479,8 @@
                     <div id="fortune-msg" style="margin-top: 20px; font-size: 0.9rem; font-weight: 600; min-height: 20px;"></div>
 
                     <div style="margin-top: 30px; font-size: 0.75rem; opacity: 0.6; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px;">
-                        <p>Total Investido: <strong>R$ ${totalInvested.toFixed(2)}</strong></p>
-                        <p>Giros Totais Ganhos: <strong>${totalEarned}</strong></p>
+                        <p>Investimentos Realizados: <strong>${totalInvestments}</strong></p>
+                        <p>Giros Totais Ganhos: <strong>${totalEarned} giro${totalEarned !== 1 ? 's' : ''}</strong></p>
                         <p>Giros já utilizados: <strong>${State.user.spins_used || 0}</strong></p>
                     </div>
                 </div>
@@ -3886,6 +3888,7 @@
 
         State.fortune_session.isSpinning = true;
         State.fortune_session.spinsLeft--;
+        State.fortune_session.sessionSpinsCount = (State.fortune_session.sessionSpinsCount || 0) + 1;
 
         const wheel = document.getElementById('main-wheel');
         const spinBtn = document.getElementById('spin-btn');
@@ -3898,16 +3901,6 @@
 
         // Logic for landing
         // 8 segments, 45deg each. Starts at -22.5.
-        // Segments relative to pointer (at top, 0deg target):
-        // Index 0 (82, 55): R$ 5 (0-45deg)
-        // Index 1 (65, 80): PERDEU TUDO (45-90)
-        // Index 2 (45, 85): R$ 20 (90-135)
-        // Index 3 (18, 70): R$ 10 (135-180)
-        // Index 4 (15, 45): PERDEU TUDO (180-225)
-        // Index 5 (35, 20): R$ 50 (225-270)
-        // Index 6 (55, 15): R$ 100 (270-315)
-        // Index 7 (80, 35): R$ 5 (315-360)
-
         const prizes = [
             { label: 'R$ 5', value: 5 },
             { label: 'PERDEU TUDO', value: -1 },
@@ -3930,8 +3923,6 @@
             State.fortune_session.isSpinning = false;
 
             // Calculate which segment is at the pointer (top is index 0 in our logic)
-            // The pointer is at 0 degrees. The wheel rotated by currentRotation.
-            // Normalize currentRotation to 0-359.
             const normalized = (360 - (currentRotation % 360)) % 360;
             const segmentIdx = Math.floor(normalized / 45);
             const prize = prizes[segmentIdx];
@@ -3939,15 +3930,18 @@
             if (prize.value === -1) {
                 State.fortune_session.accumulated = 0;
                 fortuneMsg.innerHTML = '<span style="color: #FF5252;">😱 AH NÃO! Você caiu no PERDEU TUDO!</span>';
-                // Only mark as used on DB if they lost or claimed
+                await finalizeSpinsUsed(1);
+                State.fortune_session.sessionSpinsCount = Math.max(0, (State.fortune_session.sessionSpinsCount || 1) - 1);
             } else {
                 State.fortune_session.accumulated += prize.value;
                 fortuneMsg.innerHTML = `<span style="color: #4CAF50;">💰 PARABÉNS! Ganhou ${prize.label}!</span>`;
             }
 
             // Sync with UI
-            document.getElementById('fortune-accumulated').innerText = `R$ ${State.fortune_session.accumulated.toFixed(2)}`;
-            document.getElementById('fortune-spins').innerText = State.fortune_session.spinsLeft;
+            const accEl = document.getElementById('fortune-accumulated');
+            const spinsEl = document.getElementById('fortune-spins');
+            if (accEl) accEl.innerText = `R$ ${State.fortune_session.accumulated.toFixed(2)}`;
+            if (spinsEl) spinsEl.innerText = State.fortune_session.spinsLeft;
 
             // Re-enable buttons
             spinBtn.disabled = State.fortune_session.spinsLeft <= 0;
@@ -3959,11 +3953,11 @@
             // If spins ended, they MUST claim (if > 0) or it ends
             if (State.fortune_session.spinsLeft === 0) {
                 if (State.fortune_session.accumulated > 0) {
-                    fortuneMsg.innerHTML += '<br>Giros acabaram! Resgate seu prêmio agora.';
+                    fortuneMsg.innerHTML += '<br>Giros acabaram! Resgate seu prêmio acumulado agora.';
                 } else {
-                    fortuneMsg.innerHTML += '<br>Que pena! Tente investir mais para ganhar novos giros.';
-                    await finalizeSpinsUsed(1); // Increment used
+                    fortuneMsg.innerHTML += '<br>Faça novos investimentos para ganhar mais giros!';
                     State.fortune_session.isActive = false;
+                    State.fortune_session.sessionSpinsCount = 0;
                     setTimeout(() => Router.render(), 2000);
                 }
             }
@@ -3974,6 +3968,7 @@
         if (State.fortune_session.isSpinning || State.fortune_session.accumulated <= 0) return;
 
         const prize = State.fortune_session.accumulated;
+        const spinsToFinalize = State.fortune_session.sessionSpinsCount || 1;
 
         const { error: txError } = await supabase.from('transactions').insert([{
             user_phone: State.user.phone,
@@ -4000,11 +3995,12 @@
             return;
         }
 
-        await finalizeSpinsUsed(1); // Consumed the session
+        await finalizeSpinsUsed(spinsToFinalize);
 
         State.user.available = newAvailable;
         State.user.balance = newBalance;
         State.fortune_session.accumulated = 0;
+        State.fortune_session.sessionSpinsCount = 0;
         State.fortune_session.isActive = false;
 
         if (typeof confetti === 'function') {
@@ -4020,9 +4016,11 @@
         Router.render();
     };
 
-    async function finalizeSpinsUsed(count) {
-        const newSpinsUsed = (State.user.spins_used || 0) + (count * 3); // Each session is 3 spins used
-        await supabase.from('users').update({ spins_used: newSpinsUsed }).eq('phone', State.user.phone);
+    async function finalizeSpinsUsed(count = 1) {
+        const newSpinsUsed = (State.user.spins_used || 0) + count;
+        if (supabase && State.user) {
+            await supabase.from('users').update({ spins_used: newSpinsUsed }).eq('phone', State.user.phone);
+        }
         State.user.spins_used = newSpinsUsed;
     }
 
