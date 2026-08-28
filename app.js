@@ -441,26 +441,26 @@
                     <div class="wheel-container">
                         <div class="wheel-pointer"></div>
                         <div id="main-wheel" class="wheel">
-                            <svg viewBox="0 0 100 100" style="width: 100%; height: 100%; transform: rotate(-22.5deg);">
+                            <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
                                 <circle cx="50" cy="50" r="50" fill="#111" />
-                                <path d="M50 50 L100 50 A50 50 0 0 1 85.3 85.3 Z" fill="#4CAF50" />
-                                <path d="M50 50 L85.3 85.3 A50 50 0 0 1 50 100 Z" fill="#FF5252" />
-                                <path d="M50 50 L50 100 A50 50 0 0 1 14.7 85.3 Z" fill="#00D1FF" />
-                                <path d="M50 50 L14.7 85.3 A50 50 0 0 1 0 50 Z" fill="#FFD700" />
-                                <path d="M50 50 L0 50 A50 50 0 0 1 14.7 14.7 Z" fill="#FF5252" />
-                                <path d="M50 50 L14.7 14.7 A50 50 0 0 1 50 0 Z" fill="#9C27B0" />
-                                <path d="M50 50 L50 0 A50 50 0 0 1 85.3 14.7 Z" fill="#FFD700" />
-                                <path d="M50 50 L85.3 14.7 A50 50 0 0 1 100 50 Z" fill="#4CAF50" />
+                                <path d="M 50 50 L 30.87 3.81 A 50 50 0 0 1 69.13 3.81 Z" fill="#FFD700" />
+                                <path d="M 50 50 L 69.13 3.81 A 50 50 0 0 1 96.19 30.87 Z" fill="#4CAF50" />
+                                <path d="M 50 50 L 96.19 30.87 A 50 50 0 0 1 96.19 69.13 Z" fill="#FF5252" />
+                                <path d="M 50 50 L 96.19 69.13 A 50 50 0 0 1 69.13 96.19 Z" fill="#00D1FF" />
+                                <path d="M 50 50 L 69.13 96.19 A 50 50 0 0 1 30.87 96.19 Z" fill="#9C27B0" />
+                                <path d="M 50 50 L 30.87 96.19 A 50 50 0 0 1 3.81 69.13 Z" fill="#FF5252" />
+                                <path d="M 50 50 L 3.81 69.13 A 50 50 0 0 1 3.81 30.87 Z" fill="#FF9800" />
+                                <path d="M 50 50 L 3.81 30.87 A 50 50 0 0 1 30.87 3.81 Z" fill="#4CAF50" />
                                 
-                                <g font-size="3.6" font-weight="900" fill="white" style="pointer-events: none; text-anchor: middle; dominant-baseline: central;">
-                                    <text x="81.4" y="63.0" transform="rotate(22.5, 81.4, 63.0)">R$ 5</text>
-                                    <text x="63.0" y="81.4" transform="rotate(67.5, 63.0, 81.4)" font-size="2.5">PERDEU TUDO</text>
-                                    <text x="37.0" y="81.4" transform="rotate(112.5, 37.0, 81.4)">R$ 20</text>
-                                    <text x="18.6" y="63.0" transform="rotate(157.5, 18.6, 63.0)">R$ 10</text>
-                                    <text x="18.6" y="37.0" transform="rotate(202.5, 18.6, 37.0)" font-size="2.5">PERDEU TUDO</text>
-                                    <text x="37.0" y="18.6" transform="rotate(247.5, 37.0, 18.6)">R$ 50</text>
-                                    <text x="63.0" y="18.6" transform="rotate(292.5, 63.0, 18.6)">R$ 100</text>
-                                    <text x="81.4" y="37.0" transform="rotate(337.5, 81.4, 37.0)">R$ 5</text>
+                                <g font-weight="900" fill="white" style="pointer-events: none; text-anchor: middle; dominant-baseline: central;">
+                                    <text x="50.00" y="16.00" transform="rotate(0, 50.00, 16.00)" font-size="3.4">R$ 100</text>
+                                    <text x="74.04" y="25.96" transform="rotate(45, 74.04, 25.96)" font-size="3.4">R$ 5</text>
+                                    <text x="84.00" y="50.00" transform="rotate(90, 84.00, 50.00)" font-size="2.2">PERDEU TUDO</text>
+                                    <text x="74.04" y="74.04" transform="rotate(135, 74.04, 74.04)" font-size="3.4">R$ 20</text>
+                                    <text x="50.00" y="84.00" transform="rotate(180, 50.00, 84.00)" font-size="3.4">R$ 10</text>
+                                    <text x="25.96" y="74.04" transform="rotate(225, 25.96, 74.04)" font-size="2.2">PERDEU TUDO</text>
+                                    <text x="16.00" y="50.00" transform="rotate(270, 16.00, 50.00)" font-size="3.4">R$ 50</text>
+                                    <text x="25.96" y="25.96" transform="rotate(315, 25.96, 25.96)" font-size="3.4">R$ 5</text>
                                 </g>
                             </svg>
                         </div>
@@ -3899,33 +3899,34 @@
         if (claimBtn) claimBtn.style.display = 'none';
         fortuneMsg.innerHTML = "Sorteando prêmio...";
 
-        // Logic for landing
-        // 8 segments, 45deg each. Starts at -22.5.
+        // 8 segmentos ordenados no sentido horário iniciando no TOPO (0°):
         const prizes = [
-            { label: 'R$ 5', value: 5 },
-            { label: 'PERDEU TUDO', value: -1 },
-            { label: 'R$ 20', value: 20 },
-            { label: 'R$ 10', value: 10 },
-            { label: 'PERDEU TUDO', value: -1 },
-            { label: 'R$ 50', value: 50 },
-            { label: 'R$ 100', value: 100 },
-            { label: 'R$ 5', value: 5 }
+            { label: 'R$ 100', value: 100 },      // Index 0: 0° (Topo)
+            { label: 'R$ 5', value: 5 },          // Index 1: 45°
+            { label: 'PERDEU TUDO', value: -1 },  // Index 2: 90°
+            { label: 'R$ 20', value: 20 },        // Index 3: 135°
+            { label: 'R$ 10', value: 10 },        // Index 4: 180°
+            { label: 'PERDEU TUDO', value: -1 },  // Index 5: 225°
+            { label: 'R$ 50', value: 50 },        // Index 6: 270°
+            { label: 'R$ 5', value: 5 }           // Index 7: 315°
         ];
 
-        // Random spin
-        const extraDegrees = Math.floor(Math.random() * 360);
-        const spins = 5 + Math.floor(Math.random() * 5); // 5 to 10 full spins
-        currentRotation += (spins * 360) + extraDegrees;
+        // 1. Sorteia o segmento com garantia de correspondência visual
+        const targetIdx = Math.floor(Math.random() * prizes.length);
+        const prize = prizes[targetIdx];
+
+        // 2. Calcula o ângulo exato para alinhar o setor sorteado perfeitamente com o ponteiro do topo
+        const targetAngle = (360 - (targetIdx * 45)) % 360;
+        const jitter = (Math.random() - 0.5) * 20; // Variação segura de +/- 10° dentro da fatia de 45°
+        const fullSpins = 5 + Math.floor(Math.random() * 3); // 5 a 7 voltas completas
+
+        const currentBase = Math.floor(currentRotation / 360) * 360;
+        currentRotation = currentBase + (fullSpins * 360) + targetAngle + jitter;
 
         wheel.style.transform = `rotate(${currentRotation}deg)`;
 
         setTimeout(async () => {
             State.fortune_session.isSpinning = false;
-
-            // Calculate which segment is at the pointer (top is index 0 in our logic)
-            const normalized = (360 - (currentRotation % 360)) % 360;
-            const segmentIdx = Math.floor(normalized / 45);
-            const prize = prizes[segmentIdx];
 
             if (prize.value === -1) {
                 State.fortune_session.accumulated = 0;
@@ -3950,7 +3951,7 @@
                 claimBtn.disabled = false;
             }
 
-            // If spins ended, they MUST claim (if > 0) or it ends
+            // If spins ended
             if (State.fortune_session.spinsLeft === 0) {
                 if (State.fortune_session.accumulated > 0) {
                     fortuneMsg.innerHTML += '<br>Giros acabaram! Resgate seu prêmio acumulado agora.';
