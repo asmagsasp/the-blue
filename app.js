@@ -674,7 +674,9 @@
             </div>
         `,
 
-            wallet: () => `
+            wallet: () => {
+                const hasInvested = (Number(State.user && State.user.invested || 0) > 0) || ((State.transactions || []).some(t => t.type === 'inv'));
+                return `
             <div class="app-container animate-fade">
                 <h1>Minha Carteira</h1>
                 <p style="margin-bottom: 25px;">Gerencie seus depósitos e saques com segurança.</p>
@@ -754,6 +756,25 @@
                         <span class="infinite-badge" style="border-color: rgba(0, 209, 255, 0.4); color: #00D1FF; background: rgba(0, 209, 255, 0.1);"><i class="fa-solid fa-bolt"></i> PIX Rápido</span>
                     </div>
 
+                    ${!hasInvested ? `
+                        <div style="background: rgba(255, 82, 82, 0.12); border: 1px solid rgba(255, 82, 82, 0.4); border-left: 4px solid #FF5252; padding: 14px; border-radius: 10px; margin-bottom: 18px;">
+                            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                                <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 82, 82, 0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class="fa-solid fa-lock" style="color: #FF5252; font-size: 1.1rem;"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <h4 style="color: #FF5252; font-size: 0.95rem; margin-bottom: 4px; font-weight: 700;">Requisito Obrigatório para Saque</h4>
+                                    <p style="font-size: 0.8rem; color: #FFF; opacity: 0.9; line-height: 1.4; margin-bottom: 10px;">
+                                        Para habilitar a solicitação de saques via PIX, você precisa ter <strong>ao menos um plano de investimento ativo</strong> na plataforma.
+                                    </p>
+                                    <button class="btn btn-primary" style="padding: 8px 14px; font-size: 0.8rem; background: linear-gradient(135deg, #0066FF, #00D1FF); border: none;" onclick="Router.navigate('investments')">
+                                        <i class="fa-solid fa-chart-line"></i> Conhecer Planos de Investimento
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
                     <div class="alert" style="background: rgba(0, 209, 255, 0.08); border: 1px solid rgba(0, 209, 255, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.8rem; line-height: 1.4;">
                         <i class="fa-solid fa-circle-info" style="color: #00D1FF;"></i> <strong>Transferência PIX:</strong> O valor líquido é enviado diretamente para a sua chave cadastrada.<br>
                         <span style="opacity: 0.8;">Taxa da plataforma: <strong>8%</strong> | Saque mínimo: <strong>R$ 20,00</strong></span>
@@ -809,7 +830,8 @@
                     <button class="btn btn-primary" style="width: 100%;" onclick="handleTransfer()">Realizar Transferência</button>
                 </div>
             </div>
-        `,
+        `;
+            },
 
             pixCheckout: () => `
             <div class="app-container animate-fade" style="text-align: center; padding-top: 20px;">
@@ -2161,6 +2183,43 @@
 
     window.handleWithdraw = async () => {
         if (window.isWithdrawing) return;
+
+        // 0. Condição Obrigatória: Permitir saque apenas se o investidor tiver investido em algum plano
+        const hasInvestedLocal = Number(State.user && State.user.invested || 0) > 0 || (State.transactions || []).some(t => t.type === 'inv');
+        let hasInvested = hasInvestedLocal;
+
+        if (!hasInvested && supabase && State.user) {
+            try {
+                const { data: invCheck } = await supabase
+                    .from('transactions')
+                    .select('id')
+                    .eq('user_phone', State.user.phone)
+                    .eq('type', 'inv')
+                    .limit(1);
+                if (invCheck && invCheck.length > 0) {
+                    hasInvested = true;
+                }
+            } catch (e) {
+                console.warn("Erro ao checar histórico de investimentos:", e);
+            }
+        }
+
+        if (!hasInvested) {
+            if (window.showInAppPushNotification) {
+                window.showInAppPushNotification({
+                    id: 'withdraw_blocked_' + Date.now(),
+                    title: '🔒 Saque Bloqueado',
+                    message: 'Para solicitar saques via PIX na plataforma The Blue, é obrigatório possuir ao menos um plano de investimento ativo.\n\nAcesse agora a aba Investir para escolher seu plano e liberar seus saques!',
+                    type: 'warning',
+                    action_text: 'Ver Planos de Investimento',
+                    action_view: 'investments'
+                });
+            } else {
+                alert("🔒 Saque Bloqueado: É necessário investir em algum plano antes de realizar saques. Acesse a aba 'Investir'!");
+                Router.navigate('investments');
+            }
+            return;
+        }
 
         const amountInput = document.getElementById('withdraw-amount');
         const pixKeyInput = document.getElementById('withdraw-pix-key');
