@@ -1076,6 +1076,9 @@
                         <button type="button" class="btn btn-outline" style="width: 100%; padding: 8px; font-size: 0.8rem; border-color: rgba(255,255,255,0.2);" onclick="testInAppPushNotification()">
                             <i class="fa-solid fa-vial"></i> Testar Pop-up na Minha Tela (Simulação)
                         </button>
+                        <button type="button" id="btn-deactivate-broadcast" class="btn btn-outline" style="width: 100%; padding: 10px; font-size: 0.85rem; border-color: rgba(255, 82, 82, 0.4); color: #FF5252; background: rgba(255, 82, 82, 0.08); font-weight: 700; border-radius: 8px;" onclick="handleDeactivateBroadcast()">
+                            <i class="fa-solid fa-ban"></i> Desativar Broadcast & Limpar Pop-up dos Usuários
+                        </button>
                     </div>
 
                     <!-- Histórico de Envios -->
@@ -3653,6 +3656,60 @@
         }
     };
 
+    // Desativar Broadcast e Encerrar Pop-ups em Tempo Real
+    window.handleDeactivateBroadcast = async () => {
+        if (!confirm("⚠️ Deseja realmente DESATIVAR a mensagem de broadcast e fechar os pop-ups da tela de todos os usuários agora?")) {
+            return;
+        }
+
+        const deactBtn = document.getElementById('btn-deactivate-broadcast');
+        if (deactBtn) {
+            deactBtn.disabled = true;
+            deactBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Desativando...';
+        }
+
+        try {
+            // 1. Remover notificações ativas do banco de dados para evitar reabertura em novas conexões
+            if (supabase) {
+                const { error } = await supabase.from('broadcast_notifications').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                if (error) {
+                    console.warn("Aviso ao limpar tabela de notificações:", error);
+                }
+            }
+
+            // 2. Disparar evento de encerramento em tempo real para todos os clientes conectados
+            if (supabase) {
+                const channel = supabase.channel('theblue-push-channel');
+                await channel.send({
+                    type: 'broadcast',
+                    event: 'dismiss_push_notification',
+                    payload: { action: 'clear_all', timestamp: Date.now() }
+                });
+            }
+
+            // 3. Fechar pop-up local se houver
+            const localOverlay = document.getElementById('theblue-push-overlay');
+            if (localOverlay) {
+                localOverlay.style.animation = 'pushFadeOut 0.3s ease-out forwards';
+                setTimeout(() => { if (localOverlay) localOverlay.remove(); }, 300);
+            }
+
+            alert("✅ Transmissão de broadcast desativada com sucesso! Todos os pop-ups foram encerrados.");
+
+            if (window.loadAdminNotificationsHistory) {
+                window.loadAdminNotificationsHistory();
+            }
+        } catch (err) {
+            console.error("Erro ao desativar broadcast:", err);
+            alert("Erro ao desativar broadcast: " + err.message);
+        } finally {
+            if (deactBtn) {
+                deactBtn.disabled = false;
+                deactBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Desativar Broadcast & Limpar Pop-up dos Usuários';
+            }
+        }
+    };
+
     // Inicialização do Canal Realtime de Notificações
     window.initPushNotificationsRealtime = () => {
         if (!supabase) return;
@@ -3669,6 +3726,14 @@
                 const userPhone = State.user ? State.user.phone : null;
                 if (notif.target_phone === 'all' || (userPhone && notif.target_phone === userPhone)) {
                     window.showInAppPushNotification(notif);
+                }
+            })
+            .on('broadcast', { event: 'dismiss_push_notification' }, () => {
+                console.log('🛑 Broadcast desativado pelo administrador. Fechando pop-up...');
+                const existing = document.getElementById('theblue-push-overlay');
+                if (existing) {
+                    existing.style.animation = 'pushFadeOut 0.3s ease-out forwards';
+                    setTimeout(() => { if (existing) existing.remove(); }, 300);
                 }
             })
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'broadcast_notifications' }, (payload) => {

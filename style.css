@@ -757,6 +757,11 @@ p { color: var(--text-dim); line-height: 1.6; }
     to { opacity: 1; }
 }
 
+@keyframes pushFadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.92); }
+}
+
 @keyframes pushPopIn {
     0% {
         opacity: 0;
@@ -782,5 +787,6 @@ p { color: var(--text-dim); line-height: 1.6; }
         opacity: 0;
     }
 }
+
 
 
